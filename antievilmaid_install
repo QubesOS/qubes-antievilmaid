@@ -1,0 +1,114 @@
+#!/bin/sh
+
+BOOTPARTSZ=512M
+BOOTLABEL="antievilmaid"
+
+if [ $# != 3 ] ; then
+    echo
+    echo "usage: $0 <target device> <target boot part #> <current boot dir>"
+    echo "This will:"
+    echo "0) Format your <target boot part>"
+    echo "1) Install TrustedGRUB into <target device>'s MBR and <target boot partition>"
+    echo "2) Copy your current boot images from <current boot dir> onto the <target boot partition>"
+    echo "3) Copy some additional files needed for Anti Evil Maid onto <target boot partition>"
+    echo
+    echo "e.g. $0 /dev/sdc 1 /boot"
+    echo
+    echo "Note: <target boot part #> is counted from 1, which corresonds to /dev/sdX1, and so on."
+    echo "Note: <target device> should be a removable device for this all to make sense."
+    echo "Note: You should ensure that <target boot part #> has bootable flag turned on (use e.g. fdisk)"
+    echo
+    exit 0
+fi
+
+ID=$(id -ur)
+if [ $ID != 0 ] ; then
+    echo "This script should be run as root."
+    exit 1
+fi
+
+TARGET_DEV=$1
+TARGET_BOOT_PARTNO=$2
+CURRENT_BOOT_PART=$3
+
+TMP_DIR=`mktemp -d /tmp/antievilmaid-XXXXXXX`
+
+if ! [ -b $TARGET_DEV ] ; then
+    echo Wrong target device: $TARGET_DEV
+    exit 1
+fi
+
+if ! [ -d $CURRENT_BOOT_PART/grub ] ; then
+    echo "$CURRENT_BOOT_PART doesn't seem to be a boot directory..."
+    exit 1
+fi
+
+TARGET_PART=${TARGET_DEV}${TARGET_BOOT_PARTNO}
+if ! [ -b $TARGET_PART ] ; then
+    echo "Boot partition doesn't exist: $TARGET_PART!"
+    exit 1
+fi
+
+echo "About to format device: $TARGET_PART..."
+echo "ALL DATA WILL BE ERASED on this partition!"
+echo -n "Type uppercase 'yes' in order to proceed... "
+
+read PROMPT
+if [ $PROMPT != "YES" ] ; then
+    exit 1
+fi
+
+echo "--> Formatting as ext4..."
+mkfs.ext4 -q $TARGET_PART
+
+echo "--> Labeling as '$BOOTLABEL'..."
+e2label $TARGET_PART $BOOTLABEL
+
+echo "--> Mounting new boot partition..."
+MNT=$TMP_DIR/mnt
+mkdir $MNT
+mount $TARGET_PART $MNT || exit 1
+
+
+unmount_and_die () {
+    umount $MNT && rm -fr $MNT || exit 1
+    rm -fr $TMP_DIR
+    exit 1
+}
+
+
+echo "--> Copying your boot images and grub.conf..."
+for f in $CURRENT_BOOT_PART/* ; do
+    [ -d $f ] && continue
+    cp $f $MNT/ || unmount_and_die
+done
+mkdir $MNT/grub
+cp $CURRENT_BOOT_PART/grub/grub.conf $MNT/grub || unmount_and_die
+ln -s grub.conf $MNT/grub/menu.lst
+
+echo "--> Copying TrustedGRUB stage* files..."
+cp /usr/lib/antievilmaid/trustedgrub/stage1 $MNT/grub/ || unmount_and_die
+cp /usr/lib/antievilmaid/trustedgrub/stage2 $MNT/grub/ || unmount_and_die
+
+echo "--> Copying TPM files..."
+mkdir $MNT/antievilmaid/
+if ! [ -f /var/lib/tpm/system.data ] ; then
+    echo "No /var/lib/tpm/system.data file found."
+    echo "Seems like you havn't taken ownership of your TPM device..."
+    echo "You can use tpm_takeownership to do this."
+    unmount_and_die
+fi
+cp /var/lib/tpm/system.data $MNT/antievilmaid/ || unmount_and_die
+
+echo "--> Unmounting new boot partition..."
+umount $MNT && rm -fr $MNT || exit 1
+
+echo "--> Installing Trusted GRUB on the target device..."
+echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
+/usr/lib/antievilmaid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
+root (hd0,$(($TARGET_BOOT_PARTNO-1)))
+setup (hd0)
+quit
+EOF
+
+rm -fr $TMP_DIR || exit 1

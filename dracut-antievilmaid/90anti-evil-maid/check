@@ -1,0 +1,5 @@
+#!/bin/bash
+
+which tpm_unsealdata  >/dev/null 2>&1 || exit 1
+
+exit 0
