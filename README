@@ -7,6 +7,15 @@ Evil Maid attacks.
 
 For more information and discussion about potential attacks see: TODO
 
+Building
+=========
+
+make all
+
+This should build rpms and put them into rpm/x86_64/ subdir.
+
+Building has only been tested on a x86_64 systems.
+
 Installation
 =============
 
