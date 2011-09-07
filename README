@@ -1,0 +1,128 @@
+Intro
+======
+
+Anti Evil Maid is an implementation of a TPM-based static trusted boot for
+dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a primary goal to prevent
+Evil Maid attacks.
+
+For more information and discussion about potential attacks see: TODO
+
+Installation
+=============
+
+The instructions below assume Qubes OS or regular Fedora.
+
+1) Enable TPM in BIOS.
+
+2) Verify TPM support under your OS/Dom0.
+
+a) Install tpm-tools and trousers packages (in Dom0 on Qubes).
+
+b) Start the TrouSerS daemon (this should also load tpm driver into kernel):
+
+# /etc/init.d/tcsd start
+
+c) Verify the kernel support for TPM:
+
+# find /sys/devices -name pcrs
+# cat <path_to_pcrs>
+
+If you see something like this:
+
+PCR-00: 67 DC B4 8C AB 8D C7 9B 28 84 D9 15 69 DE 82 F2 F0 E1 2A D8 
+PCR-01: 11 75 9A 19 E5 BD E8 4E DA 1C 01 EC 53 87 FD 50 18 E1 94 1E 
+PCR-02: 4B 43 98 82 65 04 E9 F4 14 78 26 F9 ED EA 92 91 6D FD AF D5 
+PCR-03: B2 A8 3B 0E BF 2F 83 74 29 9A 5B 2B DF C3 1E A9 55 AD 72 36 
+PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73 
+(...)
+
+... then your TPM is supported by your kernel.
+
+3) Take ownership of your TPM. This, among other things, would generate
+the TPM SRK key used for sealing process:
+
+# tpm_takeownership -y -z
+
+NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership, and also you SHOULD pass an additional argument to kernel (see point 4.e below).
+
+4) Install Anti Evil
+
+a) Install Anti Evil Maid packages:
+
+- anti-evil-maid-trustedgrub
+- anti-evil-maid-dracut
+- anti-evil-maid
+
+b) Find a USB stick, create a boot partition, set bootable flag, don't
+format with any fs. Use fdisk or parted.
+
+c) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
+
+E.g. assuming your stick is /dev/sdc, boot partition is the 1st one, and
+your existing boot files (images, grub conf) are available at /boot:
+
+# /usr/lib/antievilmaid/antievilmaid_install /dev/sdc 1 /boot
+
+d) Mount the stick's boot partition:
+
+# mkdir /mnt/antievilmaid
+# mount LABEL=antievilmaid /mnt/antievilmaid
+
+e) Edit grub.conf on the stick and add the following argument to kernel args:
+
+rd.antievilmaid
+
+NOTE: in case you decided to use non-default password for the SRK key, you should also pass "rd.antievilmaid.asksrkpass" argument to kernel, in addition to the above argument.
+
+f) Regenerate initramfs used to boot your system:
+
+# dracut --force /mnt/antievilmaid/<the actual initramfs>
+
+g) Unmount the stick, reboot the system from the stick...
+
+5) Seal secret passphrase
+
+a) Mount the stick again:
+
+# mount LABEL=antievilmaid /mnt/antievilmaid
+
+b) Seal your secret passphrase to the TPM to select PCR registers, e.g.:
+
+# echo "My secret passphrase..." | tpm_sealdata -z -o
+/boot/antievilmaid/sealed_secret.blob --pcr 0 --pcr 1 --pcr 2 --pcr 3
+--pcr 4 --pcr 8 --pcr 9 --pcr 12 --pcr 14
+
+TCG spec defines the following PCRs that you might want to seal to:
+
+PCR 0-3: BIOS, Option ROMs, Platform Config
+PCR 4  : MBR (Grub stage1)
+PCR 5-7: OEM-specific, probably safe to skip
+PCR 8,9: GRUB stage2
+PCR 12 : GRUB args (xen, kernel args)
+PCR 14 : The actual files loaded by GRUB (xen, kernel, initrd)
+
+c) Unmount the stick, reboot your system.
+
+Now, every time you boot your system (from your Anti Evil Maid stick)
+you should see your secret passphrase displayed *before* the LUKS
+disk encryption passphrase prompt.
+
+System and kernel upgrades
+===========================
+
+1) Kernel upgrade
+
+When performing a kernel upgrade you should ensure that your Anti Evil Maid stick is mounted at /boot. This way the new kernel post install script should automatically add kernel and initramfs to your stick and update grub.conf correctly.
+
+After kernel upgrade you would need to boot the new kernel and reseal secrets to the new PCR values (PCR14 would now be different obviously) as it is explained in point 5 above.
+
+2) BIOS/firmware upgrade
+
+If you updated your BIOS or Option ROM firmware, you would need to reseal secrets to new PCR values (PCRs 0-4 would change). Again, this requires that you boot from the stick after the upgrade and reseal the secret like it was explained in point 5 above.
+
+Attacks prevented and not-prevented
+====================================
+
+For a discussion of potential attacks against Anti Evil Maid, see the article referenced at the beginning.
+
+
