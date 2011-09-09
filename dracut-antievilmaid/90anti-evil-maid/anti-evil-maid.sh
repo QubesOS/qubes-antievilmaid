@@ -51,3 +51,9 @@ echo
 info "Unmounting the antievilmaid device..."
 umount /dev/antievilmaid
 
+if ! getarg rd.antievilmaid.dontforcestickremoval; then
+    echo "Please remove your Anti Evil Maid stick before proceeding..."
+    while [ -b /dev/antievilmaid ]; do
+	    sleep 0.1
+    done
+fi
