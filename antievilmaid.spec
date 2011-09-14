@@ -18,7 +18,9 @@ Anti Evil Maid for initramfs-based systems.
 
 mkdir -p $RPM_BUILD_ROOT/usr/lib/antievilmaid/
 cp antievilmaid_install $RPM_BUILD_ROOT/usr/lib/antievilmaid/
+cp README $RPM_BUILD_ROOT/usr/lib/antievilmaid/
 
 %files
 /usr/lib/antievilmaid/antievilmaid_install
+/usr/lib/antievilmaid/README
 
