@@ -98,7 +98,7 @@ a) Mount the stick again:
 b) Seal your secret passphrase to the TPM to select PCR registers, e.g.:
 
 # echo "My secret passphrase..." | tpm_sealdata -z -o
-/boot/antievilmaid/sealed_secret.blob --pcr 0 --pcr 1 --pcr 2 --pcr 3
+/mnt/antievilmaid/sealed_secret.blob --pcr 0 --pcr 1 --pcr 2 --pcr 3
 --pcr 4 --pcr 8 --pcr 9 --pcr 12 --pcr 14
 
 TCG spec defines the following PCRs that you might want to seal to:
