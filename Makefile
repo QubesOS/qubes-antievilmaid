@@ -16,3 +16,5 @@ $(RPMS_DIR)/x86_64/anti-evil-maid-dracut-$(VERSION)*.rpm :
 
 $(RPMS_DIR)/x86_64/anti-evil-maid-trustedgrub-$(VERSION_TRUSTEDGRUB)*.rpm :
 	cd TrustedGRUB && make all
+
+clean:
