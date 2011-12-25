@@ -87,6 +87,16 @@ f) Regenerate initramfs used to boot your system:
 
 # dracut --force /mnt/antievilmaid/<the actual initramfs>
 
+IMPORTANT: ensure that your (previous) /boot partition is not in the
+/etc/fstab. This is especially important if you don't have /boot on your disk
+(so you installed /boot on some removable disk right from the beginning, which
+is a good idea, BTW). In case you forgot to remove /boot entry from /etc/fstab,
+then your system boot will fail because antievilmaid requires you to remove the
+booting stick before proceeding with further boot, as a special security
+precation, see:
+
+http://git.qubes-os.org/?p=joanna/antievilmaid.git;a=commit;h=5e8e879bfbe394a696b07479ae731422f553e28e
+
 g) Unmount the stick, reboot the system from the stick...
 
 5) Seal secret passphrase
