@@ -21,4 +21,11 @@ $(RPMS_DIR)/x86_64/anti-evil-maid-dracut-$(VERSION)*.rpm :
 $(RPMS_DIR)/x86_64/anti-evil-maid-trustedgrub-$(VERSION_TRUSTEDGRUB)*.rpm :
 	cd TrustedGRUB && make all
 
+update-repo-current:
+	ln -f $(RPMS_DIR)/x86_64/*.rpm ../yum/current-release/current/dom0/rpm/
+
+update-repo-current-testing:
+	ln -f $(RPMS_DIR)/x86_64/*.rpm ../yum/current-release/current-testing/dom0/rpm/
+
+
 clean:
