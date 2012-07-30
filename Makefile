@@ -7,6 +7,10 @@ all:	\
 	$(RPMS_DIR)/x86_64/anti-evil-maid-dracut-$(VERSION)*.rpm \
 	$(RPMS_DIR)/x86_64/anti-evil-maid-trustedgrub-$(VERSION_TRUSTEDGRUB)*.rpm \
 
+get-sources:
+	make -C TrustedGRUB get-sources
+verify-sources:
+	make -C TrustedGRUB verify-sources
 
 $(RPMS_DIR)/x86_64/anti-evil-maid-$(VERSION)*.rpm :
 	rpmbuild --define "_rpmdir $(RPMS_DIR)" -bb antievilmaid.spec
