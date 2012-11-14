@@ -22,12 +22,10 @@ all: get-sources verify-sources rpms
 get-sources: $(SRC_FILE)
 
 $(SRC_FILE):
-	@echo -n "Downloading TrustedGRUB sources..."
 	@wget -q $(SRC_URL)
-	@echo "OK."
 
 verify-sources:
-	@sha1sum -c checksums.sha1
+	@sha1sum --quiet -c checksums.sha1
 
 rpms:
 	rpmbuild $(RPM_DEFINES) -bb trustedgrub.spec
