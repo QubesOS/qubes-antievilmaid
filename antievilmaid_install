@@ -15,7 +15,7 @@ if [ $# != 3 ] ; then
     echo "e.g. $0 /dev/sdc 1 /boot"
     echo
     echo "Note: <target boot part #> is counted from 1, which corresonds to /dev/sdX1, and so on."
-    echo "Note: <target device> should be a removable device for this all to make sense."
+    echo "Note: <target device> should typically be a removable device"
     echo "Note: You should ensure that <target boot part #> has bootable flag turned on (use e.g. fdisk)"
     echo
     exit 0
