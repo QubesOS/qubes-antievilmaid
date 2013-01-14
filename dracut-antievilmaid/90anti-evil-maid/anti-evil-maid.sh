@@ -32,7 +32,7 @@ cp /antievilmaid/antievilmaid/system.data /var/lib/tpm/
 /usr/sbin/tcsd
 
 if getarg rd.antievilmaid.png_secret; then
-    TPMARGS="-o /usr/share/plymouth/themes/qubes/lock.png"
+    TPMARGS="-o /usr/share/plymouth/themes/qubes/secret.png"
 else
     TPMARGS=""
     /bin/plymouth hide-splash
@@ -54,6 +54,13 @@ echo
 
 info "Unmounting the antievilmaid device..."
 umount /dev/antievilmaid
+
+# Verify if the unsealed PNG secret seems valid and replace the lock icon
+if getarg rd.antievilmaid.png_secret; then
+    if file /usr/share/plymouth/themes/qubes/secret.png | grep PNG > /dev/null ; then
+        cp /usr/share/plymouth/themes/qubes/secret.png /usr/share/plymouth/themes/qubes/lock.png
+    fi
+fi
 
 if ! getarg rd.antievilmaid.dontforcestickremoval; then
     # Pause progress till the user remove the stick
