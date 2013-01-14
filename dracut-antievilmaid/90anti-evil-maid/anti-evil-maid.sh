@@ -31,12 +31,16 @@ mkdir -p /var/lib/tpm/
 cp /antievilmaid/antievilmaid/system.data /var/lib/tpm/
 /usr/sbin/tcsd
 
-/bin/plymouth hide-splash
+if getarg rd.antievilmaid.png_secret; then
+    TPMARGS="-o /usr/share/plymouth/themes/qubes/lock.png"
+else
+    TPMARGS=""
+    /bin/plymouth hide-splash
+fi
 
-TPMARGS=""
 if ! getarg rd.antievilmaid.asksrkpass; then
     info "Using default SRK password"
-    TPMARGS="-z"
+    TPMARGS="$TPMARGS -z"
 fi
 
 echo "Attempting to unseal the secret passphrase from the TPM..."

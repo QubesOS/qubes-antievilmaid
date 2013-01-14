@@ -53,6 +53,7 @@ the TPM SRK key used for sealing process:
 # tpm_takeownership -y -z
 
 NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership, and also you SHOULD pass an additional argument to kernel (see point 4.e below).
+NOTE: if your tpm has already been owned in the past, you can reset it from the BIOS or by running tpm_clear.
 
 4) Install Anti Evil
 
@@ -77,11 +78,12 @@ d) Mount the stick's boot partition:
 # mkdir /mnt/antievilmaid
 # mount LABEL=antievilmaid /mnt/antievilmaid
 
-e) Edit grub.conf on the stick and add the following argument to kernel args:
+e) Edit grub.conf on the stick and add the following argument to kernel args (line module /vmlinuz):
 
 rd.antievilmaid
 
 NOTE: in case you decided to use non-default password for the SRK key, you should also pass "rd.antievilmaid.asksrkpass" argument to kernel, in addition to the above argument.
+NOTE: in case you plan to use a png sealed secret, you should also pass "rd.antievilmaid.png_secret" argument to kernel
 
 f) Regenerate initramfs used to boot your system:
 
@@ -109,6 +111,8 @@ b) Seal your secret passphrase to the TPM to select PCR registers, e.g.:
 
 # echo "My secret passphrase..." | tpm_sealdata -z -o
 /mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 0 --pcr 1 --pcr 2 --pcr 3 --pcr 4 --pcr 8 --pcr 9 --pcr 12 --pcr 14
+
+Note: Use cat pngfile.png | insead of echo if you want to use a png secret
 
 TCG spec defines the following PCRs that you might want to seal to:
 
