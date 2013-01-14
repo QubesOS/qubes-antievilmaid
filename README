@@ -5,7 +5,9 @@ Anti Evil Maid is an implementation of a TPM-based static trusted boot for
 dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a primary goal to prevent
 Evil Maid attacks.
 
-For more information and discussion about potential attacks see: TODO
+For more information and discussion about potential attacks see:
+
+http://theinvisiblethings.blogspot.com/2011/09/anti-evil-maid.html
 
 Building
 =========
@@ -82,8 +84,12 @@ e) Edit grub.conf on the stick and add the following argument to kernel args (li
 
 rd.antievilmaid
 
-NOTE: in case you decided to use non-default password for the SRK key, you should also pass "rd.antievilmaid.asksrkpass" argument to kernel, in addition to the above argument.
-NOTE: in case you plan to use a png sealed secret, you should also pass "rd.antievilmaid.png_secret" argument to kernel
+NOTE: in case you decided to use a non-default password for the SRK key, you
+should also pass "rd.antievilmaid.asksrkpass" argument to kernel, in addition
+to the above argument.
+
+NOTE: in case you plan to use a png sealed secret, you
+should also pass "rd.antievilmaid.png_secret" argument to kernel
 
 f) Regenerate initramfs used to boot your system:
 
@@ -112,7 +118,7 @@ b) Seal your secret passphrase to the TPM to select PCR registers, e.g.:
 # echo "My secret passphrase..." | tpm_sealdata -z -o
 /mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 0 --pcr 1 --pcr 2 --pcr 3 --pcr 4 --pcr 8 --pcr 9 --pcr 12 --pcr 14
 
-Note: Use cat pngfile.png | insead of echo if you want to use a png secret
+Note: Use 'cat pngfile.png |' instead of 'echo ... |' above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passprase prompt.
 
 TCG spec defines the following PCRs that you might want to seal to:
 
