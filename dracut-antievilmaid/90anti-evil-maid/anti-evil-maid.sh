@@ -56,8 +56,14 @@ info "Unmounting the antievilmaid device..."
 umount /dev/antievilmaid
 
 if ! getarg rd.antievilmaid.dontforcestickremoval; then
+    # Pause progress till the user remove the stick
+    /bin/plymouth pause-progress
+
     echo "Please remove your Anti Evil Maid stick before proceeding..."
+    /bin/plymouth message --text="Please remove your Anti Evil Maid stick an continue the boot process only if your secret appears on the screen..."
     while [ -b /dev/antievilmaid ]; do
 	    sleep 0.1
     done
+
+    /bin/plymouth unpause-progress
 fi
