@@ -1,6 +1,6 @@
 #!/bin/sh
 if getarg rd.antievilmaid; then
-    echo "Anti Evil Maid v1.0.5 (C) 2011-2012 by Invisible Things Lab"
+    echo "Anti Evil Maid v1.0.6 (C) 2011-2012 by Invisible Things Lab"
     # We need to hook the cryptroot ask to ensure
     # that AVM executes before the crypptroot ask prompt!
     mv /sbin/cryptroot-ask /sbin/cryptroot-ask.orig
