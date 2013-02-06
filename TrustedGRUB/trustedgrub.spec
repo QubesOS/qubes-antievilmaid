@@ -34,4 +34,4 @@ cp TrustedGRUB-%{version}/grub/grub $RPM_BUILD_ROOT/usr/lib/antievilmaid/trusted
 rm -rf $RPM_BUILD_ROOT;
 
 %files
-%dir /usr/lib/antievilmaid/trustedgrub/*
+/usr/lib/antievilmaid/trustedgrub
