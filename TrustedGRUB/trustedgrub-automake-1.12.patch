@@ -1,0 +1,11 @@
+--- build_tgrub.sh.orig	2013-02-06 12:17:24.522363084 +0100
++++ build_tgrub.sh	2013-02-06 12:18:26.623619746 +0100
+@@ -29,6 +29,8 @@
+     echo "Need automake and autoconf"
+     exit -1
+ else
++    # pkglibdir is forbidden to use with DATA files
++    sed -i "s#pkglib#mypkglib#" TrustedGRUB-1.1.5/stage*/Makefile.am
+     cd ${TRUSTEDGRUB_VERSION}
+     aclocal >& $VERBOSE
+     if [ $? != 0 ]; then exit 501; fi
