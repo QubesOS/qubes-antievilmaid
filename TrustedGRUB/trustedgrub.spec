@@ -12,6 +12,7 @@ URL:            http://trustedgrub.sf.net
 ExclusiveArch:  x86_64
 BuildRequires:  glibc(x86-32) glibc-devel(x86-32) libgcc(x86-32)
 Source:		TrustedGRUB-%{version}.tar.gz
+Patch0:		trustedgrub-automake-1.12.patch
 
 
 %description
@@ -19,6 +20,7 @@ TrustedGRUB for Anti Evil Maid.
 
 %prep 
 %setup -n TrustedGRUB-%{version}
+%patch0 -p0
 
 %build
 ./build_tgrub.sh
@@ -34,4 +36,4 @@ cp TrustedGRUB-%{version}/grub/grub $RPM_BUILD_ROOT/usr/lib/antievilmaid/trusted
 rm -rf $RPM_BUILD_ROOT;
 
 %files
-%dir /usr/lib/antievilmaid/trustedgrub/*
+/usr/lib/antievilmaid/trustedgrub

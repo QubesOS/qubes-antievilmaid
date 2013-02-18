@@ -25,5 +25,5 @@ cp -r 90anti-evil-maid $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
 
 %files
 /etc/dracut.conf.d/anti-evil-maid.conf
-%dir /usr/share/dracut/modules.d/90anti-evil-maid/*
+/usr/share/dracut/modules.d/90anti-evil-maid
 

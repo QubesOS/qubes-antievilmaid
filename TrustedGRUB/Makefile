@@ -7,6 +7,7 @@ WORKDIR := $(shell pwd)
 SPECDIR ?= $(WORKDIR)
 BUILDDIR ?= $(WORKDIR)
 RPMDIR ?= $(WORKDIR)/../rpm
+SRCRPMDIR ?= $(WORKDIR)/../srpm
 SOURCEDIR := $(WORKDIR)
 
 RPM_DEFINES := --define "_sourcedir $(SOURCEDIR)" \
