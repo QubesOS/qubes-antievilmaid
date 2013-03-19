@@ -1,5 +1,12 @@
 %{!?version: %define version %(cat version)}
 
+%if 0%{?qubes_builder}
+%define version %(cat dracut-antievilmaid/version)
+%define _builddir %(pwd)/dracut-antievilmaid
+%else
+%define _builddir %(pwd)
+%endif
+
 Name:		anti-evil-maid-dracut
 Version:	%{version}
 Release:	1%{?dist}
@@ -9,8 +16,6 @@ Requires:	dracut trousers tpm-tools
 Vendor:		Invisible Things Lab
 License:	GPL
 URL:		http://www.qubes-os.org
-
-%define _builddir %(pwd)
 
 %description
 Dracut module and conf file to enable Anti Evil Maid support.

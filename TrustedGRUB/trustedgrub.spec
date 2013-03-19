@@ -1,6 +1,11 @@
 %{!?version: %define version %(cat version)}
 
-%define _builddir %(pwd)
+%if 0%{?qubes_builder}
+%define _builddir %(pwd)/TrustedGRUB
+%define _sourcedir %(pwd)/TrustedGRUB
+%define version %(cat TrustedGRUB/version)
+%endif
+
 Name:		anti-evil-maid-trustedgrub
 Version:	%{version}
 Release:	1%{dist}
