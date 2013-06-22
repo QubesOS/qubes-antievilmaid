@@ -25,10 +25,10 @@ Dracut module and conf file to enable Anti Evil Maid support.
 mkdir -p $RPM_BUILD_ROOT/etc/dracut.conf.d
 cp anti-evil-maid.conf $RPM_BUILD_ROOT/etc/dracut.conf.d/
 
-mkdir -p $RPM_BUILD_ROOT/usr/share/dracut/modules.d
-cp -r 90anti-evil-maid $RPM_BUILD_ROOT/usr/share/dracut/modules.d/
+mkdir -p $RPM_BUILD_ROOT/usr/lib/dracut/modules.d
+cp -r 90anti-evil-maid $RPM_BUILD_ROOT/usr/lib/dracut/modules.d/
 
 %files
 /etc/dracut.conf.d/anti-evil-maid.conf
-/usr/share/dracut/modules.d/90anti-evil-maid
+/usr/lib/dracut/modules.d/90anti-evil-maid
 
