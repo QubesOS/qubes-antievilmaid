@@ -1,0 +1,16 @@
+[Unit]
+Description=Anti Evil Maid system authentication
+DefaultDependencies=no
+Before=systemd-ask-password-plymouth.service systemd-ask-password-console.service basic.target shutdown.target
+ConditionKernelCommandLine=rd.antievilmaid
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/sbin/anti-evil-maid
+StandardInput=tty-force
+StandardOutput=inherit
+StandardError=inherit
+#TimeoutSec=0
+
+
