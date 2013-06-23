@@ -15,21 +15,24 @@ instmods tpm_tis
 
 }
 
+
 install() {
 
 inst_rules "$moddir/69-anti-evil-maid.rules"
 inst_script "$moddir"/anti-evil-maid.sh /sbin/anti-evil-maid
-inst_script "$moddir"/cryptroot-ask.antievilmaid /sbin/cryptroot-ask.antievilmaid
-inst_hook cmdline 90 "$moddir/parse-anti-evil-maid.sh"
 
 # TPM software stack
 dracut_install -o \
 tpm_unsealdata \
-inst tpm_version \
-inst tcsd \
-inst file \
-inst /usr/share/misc/magic \
-inst grep
+tpm_version \
+tcsd \
+file \
+/usr/share/misc/magic \
+grep
+
+dracut_install -o \
+$systemdsystemunitdir/anti-evil-maid.service \
+$systemdsystemunitdir/sysinit.target.wants/anti-evil-maid.service
 
 # all this crap below is needed for tcsd to start properly...
 dracut_install -o ip
