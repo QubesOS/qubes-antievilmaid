@@ -14,7 +14,7 @@ inst /usr/share/misc/magic
 inst grep
 
 # all this crap below is needed for tcsd to start properly...
-inst ifconfig
+inst ip
 inst "$moddir"/hosts /etc/hosts
 inst "$moddir"/passwd /etc/passwd
 inst "$moddir"/shadow /etc/shadow

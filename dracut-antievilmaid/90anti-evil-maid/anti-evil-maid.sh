@@ -26,7 +26,7 @@ mount /dev/antievilmaid /antievilmaid
 
 info "Initializing TPM..."
 /sbin/modprobe tpm_tis
-ifconfig lo up
+ip link set dev lo up
 mkdir -p /var/lib/tpm/
 cp /antievilmaid/antievilmaid/system.data /var/lib/tpm/
 /usr/sbin/tcsd
