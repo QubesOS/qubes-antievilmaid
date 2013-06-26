@@ -38,7 +38,7 @@ if ! [ -b $TARGET_DEV ] ; then
     exit 1
 fi
 
-if ! [ -d $CURRENT_BOOT_PART/grub ] ; then
+if ! [ -d $CURRENT_BOOT_PART/grub2 ] ; then
     echo "$CURRENT_BOOT_PART doesn't seem to be a boot directory..."
     exit 1
 fi
@@ -76,19 +76,19 @@ unmount_and_die () {
     exit 1
 }
 
-
-echo "--> Copying your boot images and grub.conf..."
+echo "--> Copying your boot images..."
 for f in $CURRENT_BOOT_PART/* ; do
     [ -d $f ] && continue
+    echo "Copying $f"
     cp $f $MNT/ || unmount_and_die
 done
-mkdir $MNT/grub
-cp $CURRENT_BOOT_PART/grub/grub.conf $MNT/grub || unmount_and_die
-ln -s grub.conf $MNT/grub/menu.lst
 
-echo "--> Copying TrustedGRUB stage* files..."
-cp /usr/lib/antievilmaid/trustedgrub/stage1 $MNT/grub/ || unmount_and_die
-cp /usr/lib/antievilmaid/trustedgrub/stage2 $MNT/grub/ || unmount_and_die
+echo "--> Copying grub themes..."
+mkdir -p $MNT/grub2/themes/
+for d in $CURRENT_BOOT_PART/grub2/themes/* ; do
+    echo "Copying theme "`basename $d`
+    cp -r $d $MNT/grub2/themes/
+done
 
 echo "--> Copying TPM files..."
 mkdir $MNT/antievilmaid/
@@ -100,15 +100,28 @@ if ! [ -f /var/lib/tpm/system.data ] ; then
 fi
 cp /var/lib/tpm/system.data $MNT/antievilmaid/ || unmount_and_die
 
+echo "--> Installing GRUB2 on the target device..."
+grub2-install --boot-directory=$MNT $TARGET_DEV
+
 echo "--> Unmounting new boot partition..."
 umount $MNT && rm -fr $MNT || exit 1
 
-echo "--> Installing Trusted GRUB on the target device..."
-echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
-/usr/lib/antievilmaid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
-root (hd0,$(($TARGET_BOOT_PARTNO-1)))
-setup (hd0)
-quit
-EOF
+echo "--> Switching boot partition to antievilmaid..."
+umount $CURRENT_BOOT_PART
+mount $TARGET_PART $CURRENT_BOOT_PART
 
+echo "--> Generating grub configuration..."
+grub2-mkconfig -o $CURRENT_BOOT_PART/grub2/grub.cfg
+
+echo "--> Reswitching boot partition..."
+umount $CURRENT_BOOT_PART
+mount $CURRENT_BOOT_PART
+
+#echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
+#/usr/lib/antievilmaid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
+#root (hd0,$(($TARGET_BOOT_PARTNO-1)))
+#setup (hd0)
+#quit
+#EOF
+#
 rm -fr $TMP_DIR || exit 1
