@@ -65,12 +65,25 @@ You should have installed the following packages to perform the setup:
 - anti-evil-maid-dracut
 - anti-evil-maid
 
+b) SINIT module
+
+You should download the SINIT module required for your system.
+
+Intel documented the required SINIT module depending on your CPU platform in:
+http://software.intel.com/en-us/articles/intel-trusted-execution-technology
+
+You can then download the module and unzip it. All the modules can be downloaded from:
+https://secure-software.intel.com/en-us/protected-download/267276/183305
+
+Finally, you should retrieve the BIN file inside /boot in dom0. Eg: run from dom0 
+$ qvm-run --pass-io vm_name_containing_bin_file 'cat /home/user/path_to_sinit/name_of_sinit_file.BIN' > /boot/name_of_sinit_file.BIN
+
 b) Find a USB stick, create a boot partition, set bootable flag, don't
 format with any fs. Use fdisk or parted.
 
 c) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
 
-Ensure that you don't use the /boot partition, that you don't have any console inside /boot ...
+Ensure that you don't have any console inside /boot or that you are not reading files inside /boot ...
 
 E.g. assuming your stick is /dev/sdc, boot partition is the 1st one, and
 your existing boot files (images, grub conf) are available at /boot:
@@ -82,7 +95,7 @@ d) Mount the stick's boot partition:
 # mkdir /mnt/antievilmaid
 # mount LABEL=antievilmaid /mnt/antievilmaid
 
-e) Edit grub2/grub.cfg on the stick if necessary. This file should work without any change:
+e) Edit grub2/grub.cfg on the stick if necessary. This file should work without any change.
 
 NOTE: in case you decided to use a non-default password for the SRK key, you
 should add the following argument to kernel args (line module /vmlinuz):
@@ -90,10 +103,6 @@ rd.antievilmaid.asksrkpass
 
 NOTE: in case you plan to use a png sealed secret, you
 should also pass "rd.antievilmaid.png_secret" argument to kernel
-
-f) Regenerate initramfs used to boot your system:
-
-# dracut --force /mnt/antievilmaid/<the actual initramfs>
 
 DEPRECATED: ensure that your (previous) /boot partition is not in the
 /etc/fstab. This is especially important if you don't have /boot on your disk
