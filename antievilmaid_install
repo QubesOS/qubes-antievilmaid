@@ -83,6 +83,14 @@ for f in $CURRENT_BOOT_PART/* ; do
     cp $f $MNT/ || unmount_and_die
 done
 
+echo "--> Rebuilding initramfs modules"
+for initramfs in $MNT/initramfs-*.img ; do
+    initramfs=`basename $initramfs`
+    kernelver=`echo $initramfs | sed 's/initramfs-\(.*\).img/\1/'`
+    echo "Generating initramfs $initramfs for kernel $kernelver"
+    dracut --force $MNT/$initramfs $kernelver
+done
+
 echo "--> Copying grub themes..."
 mkdir -p $MNT/grub2/themes/
 for d in $CURRENT_BOOT_PART/grub2/themes/* ; do
@@ -109,6 +117,9 @@ umount $MNT && rm -fr $MNT || exit 1
 echo "--> Switching boot partition to antievilmaid..."
 umount $CURRENT_BOOT_PART
 mount $TARGET_PART $CURRENT_BOOT_PART
+
+echo "--> Hack: disable vanilla generation of tboot entries polluting the grub configuration"
+chmod -x /etc/grub.d/20_linux_tboot
 
 echo "--> Generating grub configuration..."
 grub2-mkconfig -o $CURRENT_BOOT_PART/grub2/grub.cfg
