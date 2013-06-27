@@ -118,8 +118,9 @@ echo "--> Switching boot partition to antievilmaid..."
 umount $CURRENT_BOOT_PART
 mount $TARGET_PART $CURRENT_BOOT_PART
 
-echo "--> Hack: disable vanilla generation of tboot entries polluting the grub configuration"
+echo "--> Disabling vanilla generation of tboot entries polluting the grub configuration"
 chmod -x /etc/grub.d/20_linux_tboot
+chmod -x /etc/grub.d/20_linux_xen_tboot
 
 echo "--> Generating grub configuration..."
 grub2-mkconfig -o $CURRENT_BOOT_PART/grub2/grub.cfg
