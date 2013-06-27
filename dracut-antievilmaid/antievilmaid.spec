@@ -32,8 +32,8 @@ mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/
 cp anti-evil-maid.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
 
 mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/sysinit.target.wants
-cd $RPM_BUILD_ROOT/usr/lib/systemd/system/
-ln -s anti-evil-maid.service sysinit.target.wants/anti-evil-maid.service
+cd $RPM_BUILD_ROOT/usr/lib/systemd/system/sysinit.target.wants
+ln -s ../anti-evil-maid.service anti-evil-maid.service
 
 %files
 /etc/dracut.conf.d/anti-evil-maid.conf
