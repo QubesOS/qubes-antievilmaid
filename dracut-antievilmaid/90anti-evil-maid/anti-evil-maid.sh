@@ -35,7 +35,10 @@ if getarg rd.antievilmaid.png_secret; then
     TPMARGS="-o /usr/share/plymouth/themes/qubes/secret.png"
 else
     TPMARGS=""
-    /bin/plymouth hide-splash
+    # Disable hide-splash because it break keyboard input and the user 
+    # is not able anymore to enter his passphrase or to switch back to 
+    # the splash screen
+    #/bin/plymouth hide-splash
 fi
 
 if ! getarg rd.antievilmaid.asksrkpass; then
@@ -46,7 +49,11 @@ fi
 echo "Attempting to unseal the secret passphrase from the TPM..."
 echo
 
-/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob
+if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
+    /usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob
+else
+    echo "No data to unseal. Do not forget to generate a sealed_secret.blob"
+fi
 
 echo
 echo "Continue the boot process only if the secret above is correct!"
