@@ -46,18 +46,21 @@ if ! getarg rd.antievilmaid.asksrkpass; then
     TPMARGS="$TPMARGS -z"
 fi
 
-echo "Attempting to unseal the secret passphrase from the TPM..."
-echo
+info "Attempting to unseal the secret passphrase from the TPM..."
+/bin/plymouth message --text="Attempting to unseal the secret passphrase from the TPM..."
+/bin/plymouth message --text=""
 
 if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
-    /usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob
+    UNSEALED_SECRET=`/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob`
+    /bin/plymouth message --text="$UNSEALED_SECRET"
 else
-    echo "No data to unseal. Do not forget to generate a sealed_secret.blob"
+    info "No data to unseal."
+    /bin/plymouth message --text="No data to unseal. Do not forget to generate a sealed_secret.blob"
 fi
 
-echo
-echo "Continue the boot process only if the secret above is correct!"
-echo
+/bin/plymouth message --text=""
+/bin/plymouth message --text="Continue the boot process only if the secret above is correct!"
+/bin/plymouth message --text=""
 
 info "Unmounting the antievilmaid device..."
 umount /dev/antievilmaid
@@ -73,7 +76,6 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
     # Pause progress till the user remove the stick
     /bin/plymouth pause-progress
 
-    echo "Please remove your Anti Evil Maid stick before proceeding..."
     /bin/plymouth message --text="Please remove your Anti Evil Maid stick an continue the boot process only if your secret appears on the screen..."
     while [ -b /dev/antievilmaid ]; do
 	    sleep 0.1
