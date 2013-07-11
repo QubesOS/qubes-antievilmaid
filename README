@@ -78,12 +78,19 @@ https://secure-software.intel.com/en-us/protected-download/267276/183305
 Finally, you should retrieve the BIN file inside /boot in dom0. Eg: run from dom0 
 $ qvm-run --pass-io vm_name_containing_bin_file 'cat /home/user/path_to_sinit/name_of_sinit_file.BIN' > /boot/name_of_sinit_file.BIN
 
+NOTE: The SINIT files are digitally signed by Intel. While there is no easy
+way to verify their integrity after downloading (and after copying to Dom0),
+still, the operation of placing such a file into Dom0's /boot filesystem should
+be reasonably safe to do -- after all the file should not be processed by any
+software in Dom0, and only by the SENTER instruction of the processes, which,
+we hope, correctly verifies the signature before executing it...
+
 b) Find a USB stick, create a boot partition, set bootable flag, don't
 format with any fs. Use fdisk or parted.
 
 c) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
 
-Ensure that you don't have any console inside /boot or that you are not reading files inside /boot ...
+Ensure that none of your programs keep open files within /boot, as otherwise it won't be possible to smoothly unmount the /boot.
 
 E.g. assuming your stick is /dev/sdc, boot partition is the 1st one, and
 your existing boot files (images, grub conf) are available at /boot:
