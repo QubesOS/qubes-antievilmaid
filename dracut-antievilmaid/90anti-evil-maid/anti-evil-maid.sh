@@ -10,6 +10,8 @@
 
 . /lib/dracut-lib.sh
 
+command -v ask_for_password >/dev/null || . /lib/dracut-crypt-lib.sh
+
 if [ -d /antievilmaid ] ; then
 	info "/antievilmaid already exists, skipping..."
 	exit 0
@@ -34,7 +36,7 @@ cp /antievilmaid/antievilmaid/system.data /var/lib/tpm/
 if getarg rd.antievilmaid.png_secret; then
     TPMARGS="-o /usr/share/plymouth/themes/qubes/secret.png"
 else
-    TPMARGS=""
+    TPMARGS="-o /tmp/unsealed-secret.txt"
     # Disable hide-splash because it break keyboard input and the user 
     # is not able anymore to enter his passphrase or to switch back to 
     # the splash screen
@@ -51,8 +53,16 @@ info "Attempting to unseal the secret passphrase from the TPM..."
 /bin/plymouth message --text=""
 
 if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
-    UNSEALED_SECRET=`/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob`
-    /bin/plymouth message --text="$UNSEALED_SECRET"
+    #UNSEALED_SECRET=`/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob`
+    #/bin/plymouth message --text="$UNSEALED_SECRET"
+    #we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against dictionary attacks" when there's more than 1 try within a short time... -_- (TCG 2 fixes that)
+    if getarg rd.antievilmaid.asksrkpass; then
+        ask_for_password --cmd "/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob" --prompt "TPM Unseal Password:" --tries 1
+            #--tty-echo-off
+    else
+        /usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob
+    fi
+    /bin/plymouth message --text="`cat /tmp/unsealed-secret.txt 2> /dev/null`"
 else
     info "No data to unseal."
     /bin/plymouth message --text="No data to unseal. Do not forget to generate a sealed_secret.blob"
@@ -76,7 +86,7 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
     # Pause progress till the user remove the stick
     /bin/plymouth pause-progress
 
-    /bin/plymouth message --text="Please remove your Anti Evil Maid stick an continue the boot process only if your secret appears on the screen..."
+    /bin/plymouth message --text="Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
     while [ -b /dev/antievilmaid ]; do
 	    sleep 0.1
     done
