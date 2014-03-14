@@ -32,7 +32,7 @@ grep
 
 dracut_install -o \
 $systemdsystemunitdir/anti-evil-maid.service \
-$systemdsystemunitdir/sysinit.target.wants/anti-evil-maid.service
+$systemdsystemunitdir/initrd.target.wants/anti-evil-maid.service
 
 # all this crap below is needed for tcsd to start properly...
 dracut_install -o ip
