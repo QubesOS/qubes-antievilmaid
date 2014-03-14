@@ -57,7 +57,7 @@ if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
     #/bin/plymouth message --text="$UNSEALED_SECRET"
     #we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against dictionary attacks" when there's more than 1 try within a short time... -_- (TCG 2 fixes that)
     if getarg rd.antievilmaid.asksrkpass; then
-        ask_for_password --cmd "/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob" --prompt "TPM Unseal Password:" --tries 1
+        ask_for_password --cmd "/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob" --prompt "TPM Unseal Password" --tries 1
             #--tty-echo-off
     else
         /usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob
