@@ -88,7 +88,19 @@ we hope, correctly verifies the signature before executing it...
 b) Find a USB stick, create a boot partition, set bootable flag, don't
 format with any fs. Use fdisk or parted.
 
-c) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
+c) Set optional AEM additional flags: edit /etc/default/grub and add there (including the "export" word):
+
+export GRUB_CMDLINE_AEM_FLAGS="flags"
+
+Available flags (multiple flags can be separated by spaces):
+ - rd.antievilmaid.asksrkpass: in case you decided to use a non-default
+    password for the SRK key
+ - rd.antievilmaid.png_secret: in case you plan to use a png sealed secret
+ - rd.antievilmaid.dontforcestickremoval: in case if you don't want to remove
+    the AEM stick during system startup (it is generally bad idea to use this
+    flag, but can be useful in some unusal setups)
+
+d) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
 
 Ensure that none of your programs keep open files within /boot, as otherwise it won't be possible to smoothly unmount the /boot.
 
@@ -96,20 +108,6 @@ E.g. assuming your stick is /dev/sdc, boot partition is the 1st one, and
 your existing boot files (images, grub conf) are available at /boot:
 
 # /usr/lib/antievilmaid/antievilmaid_install /dev/sdc 1 /boot
-
-d) Mount the stick's boot partition:
-
-# mkdir /mnt/antievilmaid
-# mount LABEL=antievilmaid /mnt/antievilmaid
-
-e) Edit grub2/grub.cfg on the stick if necessary. This file should work without any change.
-
-NOTE: in case you decided to use a non-default password for the SRK key, you
-should add the following argument to kernel args (line module /vmlinuz):
-rd.antievilmaid.asksrkpass
-
-NOTE: in case you plan to use a png sealed secret, you
-should also pass "rd.antievilmaid.png_secret" argument to kernel
 
 DEPRECATED: ensure that your (previous) /boot partition is not in the
 /etc/fstab. This is especially important if you don't have /boot on your disk
@@ -121,7 +119,7 @@ precation, see:
 
 http://git.qubes-os.org/?p=joanna/antievilmaid.git;a=commit;h=5e8e879bfbe394a696b07479ae731422f553e28e
 
-g) Unmount the stick, reboot the system from the stick, Choose one of the entries called Qubes OS AEM boot...
+e) Reboot the system from the stick, Choose one of the entries called Qubes OS AEM boot...
 
 5) Seal secret passphrase
 

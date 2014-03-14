@@ -126,7 +126,7 @@ linux_entry ()
 	echo	'$xmessage'
 	module	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args}
 	echo	'$lmessage'
-	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} rd.antievilmaid
+	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} rd.antievilmaid ${GRUB_CMDLINE_AEM_FLAGS}
 EOF
   if test -n "${initrd}" ; then
     # TRANSLATORS: ramdisk isn't identifier. Should be translated.
