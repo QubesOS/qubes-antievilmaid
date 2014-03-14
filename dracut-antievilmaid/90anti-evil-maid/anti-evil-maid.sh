@@ -91,5 +91,7 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
 	    sleep 0.1
     done
 
+    /bin/plymouth hide-message --text="`cat /tmp/unsealed-secret.txt 2> /dev/null`"
     /bin/plymouth unpause-progress
 fi
+rm -f /tmp/unsealed-secret.txt
