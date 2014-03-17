@@ -85,7 +85,15 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
 	    sleep 0.1
     done
 
+    # hide the secret
     /bin/plymouth hide-message --text="`cat /tmp/unsealed-secret.txt 2> /dev/null`"
+    # hide remaining messages
+    /bin/plymouth hide-message --text="Attempting to unseal the secret passphrase from the TPM..."
+    /bin/plymouth hide-message --text=""
+    /bin/plymouth hide-message --text=""
+    /bin/plymouth hide-message --text="Continue the boot process only if the secret above is correct!"
+    /bin/plymouth hide-message --text=""
+    /bin/plymouth hide-message --text="Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
     /bin/plymouth unpause-progress
 fi
 rm -f /tmp/unsealed-secret.txt
