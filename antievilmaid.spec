@@ -21,9 +21,9 @@ cp antievilmaid_install $RPM_BUILD_ROOT/usr/lib/antievilmaid/
 cp README $RPM_BUILD_ROOT/usr/lib/antievilmaid/
 
 mkdir -p $RPM_BUILD_ROOT/etc/grub.d/
-cp 40_linux_xen_tboot $RPM_BUILD_ROOT/etc/grub.d/
+cp 19_linux_xen_tboot $RPM_BUILD_ROOT/etc/grub.d/
 
 %files
 /usr/lib/antievilmaid/antievilmaid_install
 /usr/lib/antievilmaid/README
-/etc/grub.d/40_linux_xen_tboot
+/etc/grub.d/19_linux_xen_tboot
