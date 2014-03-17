@@ -37,10 +37,6 @@ if getarg rd.antievilmaid.png_secret; then
     TPMARGS="-o /usr/share/plymouth/themes/qubes/secret.png"
 else
     TPMARGS="-o /tmp/unsealed-secret.txt"
-    # Disable hide-splash because it break keyboard input and the user 
-    # is not able anymore to enter his passphrase or to switch back to 
-    # the splash screen
-    #/bin/plymouth hide-splash
 fi
 
 if ! getarg rd.antievilmaid.asksrkpass; then
@@ -53,8 +49,6 @@ info "Attempting to unseal the secret passphrase from the TPM..."
 /bin/plymouth message --text=""
 
 if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
-    #UNSEALED_SECRET=`/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob`
-    #/bin/plymouth message --text="$UNSEALED_SECRET"
     #we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against dictionary attacks" when there's more than 1 try within a short time... -_- (TCG 2 fixes that)
     if getarg rd.antievilmaid.asksrkpass; then
         ask_for_password --cmd "/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob" --prompt "TPM Unseal Password" --tries 1
