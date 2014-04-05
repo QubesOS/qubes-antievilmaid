@@ -1,9 +1,9 @@
 Intro
 ======
 
-Anti Evil Maid is an implementation of a TPM-based static trusted boot for
-dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a primary goal to prevent
-Evil Maid attacks.
+Anti Evil Maid is an implementation of a TPM-based static and dynamic (Intel
+TXT) trusted boot for dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a
+primary goal to prevent Evil Maid attacks.
 
 For more information and discussion about potential attacks see:
 
@@ -32,6 +32,10 @@ a) Install anti-evil-maid packages (in Dom0 on Qubes). It will install all the r
 b) Start the TrouSerS daemon (this should also load tpm driver into kernel):
 
 # /etc/init.d/tcsd start
+
+... or (in case of systems that use systemd):
+
+# systemctl start tcsd
 
 c) Verify the kernel support for TPM:
 
@@ -88,6 +92,11 @@ we hope, correctly verifies the signature before executing it...
 b) Find a USB stick, create a boot partition, set bootable flag, don't
 format with any fs. Use fdisk or parted.
 
+NOTE: when using a GPT partition table (rather than msdos), then you should
+create an additional BIOS boot partition, where the rest of the GRUB code will
+be kept -- please see this page for more info:
+http://www.gnu.org/software/grub/manual/html_node/BIOS-installation.html
+
 c) Set optional AEM additional flags: edit /etc/default/grub and add there (including the "export" word):
 
 export GRUB_CMDLINE_AEM_FLAGS="flags"
@@ -115,9 +124,17 @@ DEPRECATED: ensure that your (previous) /boot partition is not in the
 is a good idea, BTW). In case you forgot to remove /boot entry from /etc/fstab,
 then your system boot will fail because antievilmaid requires you to remove the
 booting stick before proceeding with further boot, as a special security
-precation, see:
+precaution, see:
 
 http://git.qubes-os.org/?p=joanna/antievilmaid.git;a=commit;h=5e8e879bfbe394a696b07479ae731422f553e28e
+
+NOTE: it might still beneficial to remove one's original (stored on local
+harddisk) /boot partition from the fstab. This way whenever one upgrades the
+system (dom0 in case of Qubes OS), and the update process tries to modify files
+in the /boot, an error will occur, reminding the user that the AEM stick should
+be inserted and mounted as /boot for the update. Otherwise the user should
+manually resync the local /boot content (e.g. new kernel and xen images) with
+the AEM /boot.
 
 e) Reboot the system from the stick, Choose one of the entries called Qubes OS AEM boot...
 
