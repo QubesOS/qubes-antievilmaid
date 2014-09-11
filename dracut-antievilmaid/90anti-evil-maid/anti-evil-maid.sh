@@ -12,6 +12,15 @@
 
 command -v ask_for_password >/dev/null || . /lib/dracut-crypt-lib.sh
 
+function message() {
+    if type plymouth >/dev/null 2>&1 && plymouth --ping 2>/dev/null; then
+        /bin/plymouth message --text="$1"
+    else
+        info "$1"
+    fi
+}
+
+
 if [ -d /antievilmaid ] ; then
 	info "/antievilmaid already exists, skipping..."
 	exit 0
@@ -44,9 +53,8 @@ if ! getarg rd.antievilmaid.asksrkpass; then
     TPMARGS="$TPMARGS -z"
 fi
 
-info "Attempting to unseal the secret passphrase from the TPM..."
-/bin/plymouth message --text="Attempting to unseal the secret passphrase from the TPM..."
-/bin/plymouth message --text=""
+message "Attempting to unseal the secret passphrase from the TPM..."
+message ""
 
 if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
     #we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against dictionary attacks" when there's more than 1 try within a short time... -_- (TCG 2 fixes that)
@@ -56,16 +64,20 @@ if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
     else
         /usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob
     fi
-    /bin/plymouth message --text="`cat /tmp/unsealed-secret.txt 2> /dev/null`"
+    message "`cat /tmp/unsealed-secret.txt 2> /dev/null`"
 else
-    info "No data to unseal."
-    /bin/plymouth message --text="No data to unseal. Do not forget to generate a sealed_secret.blob"
+    message "No data to unseal. Do not forget to generate a sealed_secret.blob"
 fi
 
-/bin/plymouth message --text=""
-/bin/plymouth message --text="Continue the boot process only if the secret above is correct!"
-/bin/plymouth message --text=""
-
+if getarg rd.antievilmaid.png_secret; then
+    message --text=""
+    message --text="Continue the boot process only if the secret image next to the password prompt is correct!"
+    message --text=""
+else
+    message --text=""
+    message --text="Continue the boot process only if the secret above is correct!"
+    message --text=""
+fi
 info "Unmounting the antievilmaid device..."
 umount /dev/antievilmaid
 
@@ -80,7 +92,7 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
     # Pause progress till the user remove the stick
     /bin/plymouth pause-progress
 
-    /bin/plymouth message --text="Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
+    message "Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
     while [ -b /dev/antievilmaid ]; do
 	    sleep 0.1
     done
@@ -92,6 +104,7 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
     /bin/plymouth hide-message --text=""
     /bin/plymouth hide-message --text=""
     /bin/plymouth hide-message --text="Continue the boot process only if the secret above is correct!"
+    /bin/plymouth hide-message --text="Continue the boot process only if the secret image next to the password prompt is correct!"
     /bin/plymouth hide-message --text=""
     /bin/plymouth hide-message --text="Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
     /bin/plymouth unpause-progress
