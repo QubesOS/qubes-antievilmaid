@@ -42,8 +42,9 @@ mkdir -p /var/lib/tpm/
 cp /antievilmaid/antievilmaid/system.data /var/lib/tpm/
 /usr/sbin/tcsd
 
+plymouth_theme=/usr/share/plymouth/themes/qubes-dark
 if getarg rd.antievilmaid.png_secret; then
-    TPMARGS="-o /usr/share/plymouth/themes/qubes/secret.png"
+    TPMARGS="-o $plymouth_theme/secret.png"
 else
     TPMARGS="-o /tmp/unsealed-secret.txt"
 fi
@@ -83,8 +84,8 @@ umount /dev/antievilmaid
 
 # Verify if the unsealed PNG secret seems valid and replace the lock icon
 if getarg rd.antievilmaid.png_secret; then
-    if file /usr/share/plymouth/themes/qubes/secret.png | grep PNG > /dev/null ; then
-        cp /usr/share/plymouth/themes/qubes/secret.png /usr/share/plymouth/themes/qubes/lock.png
+    if file $plymouth_theme/secret.png | grep PNG > /dev/null ; then
+        cp $plymouth_theme/secret.png $plymouth_theme/antievilmaid_secret.png
     fi
 fi
 
