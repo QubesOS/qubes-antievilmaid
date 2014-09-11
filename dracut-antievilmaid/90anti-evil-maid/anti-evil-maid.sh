@@ -16,7 +16,7 @@ function message() {
     if type plymouth >/dev/null 2>&1 && plymouth --ping 2>/dev/null; then
         /bin/plymouth message --text="$1"
     else
-        info "$1"
+        echo "$1"
     fi
 }
 
@@ -71,43 +71,45 @@ else
 fi
 
 if getarg rd.antievilmaid.png_secret; then
-    message --text=""
-    message --text="Continue the boot process only if the secret image next to the password prompt is correct!"
-    message --text=""
+    message ""
+    message "Continue the boot process only if the secret image next to the password prompt is correct!"
+    message ""
 else
-    message --text=""
-    message --text="Continue the boot process only if the secret above is correct!"
-    message --text=""
+    message ""
+    message "Continue the boot process only if the secret above is correct!"
+    message ""
 fi
 info "Unmounting the antievilmaid device..."
 umount /dev/antievilmaid
 
 # Verify if the unsealed PNG secret seems valid and replace the lock icon
 if getarg rd.antievilmaid.png_secret; then
-    if file $plymouth_theme/secret.png | grep PNG > /dev/null ; then
+    if file $plymouth_theme/secret.png 2>/dev/null | grep PNG > /dev/null ; then
         cp $plymouth_theme/secret.png $plymouth_theme/antievilmaid_secret.png
     fi
 fi
 
 if ! getarg rd.antievilmaid.dontforcestickremoval; then
     # Pause progress till the user remove the stick
-    /bin/plymouth pause-progress
+    [ -x /bin/plymouth ] && /bin/plymouth pause-progress
 
     message "Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
     while [ -b /dev/antievilmaid ]; do
 	    sleep 0.1
     done
 
-    # hide the secret
-    /bin/plymouth hide-message --text="`cat /tmp/unsealed-secret.txt 2> /dev/null`"
-    # hide remaining messages
-    /bin/plymouth hide-message --text="Attempting to unseal the secret passphrase from the TPM..."
-    /bin/plymouth hide-message --text=""
-    /bin/plymouth hide-message --text=""
-    /bin/plymouth hide-message --text="Continue the boot process only if the secret above is correct!"
-    /bin/plymouth hide-message --text="Continue the boot process only if the secret image next to the password prompt is correct!"
-    /bin/plymouth hide-message --text=""
-    /bin/plymouth hide-message --text="Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
-    /bin/plymouth unpause-progress
+    if [ -x /bin/plymouth ]; then
+        # hide the secret
+        /bin/plymouth hide-message --text="`cat /tmp/unsealed-secret.txt 2> /dev/null`"
+        # hide remaining messages
+        /bin/plymouth hide-message --text="Attempting to unseal the secret passphrase from the TPM..."
+        /bin/plymouth hide-message --text=""
+        /bin/plymouth hide-message --text=""
+        /bin/plymouth hide-message --text="Continue the boot process only if the secret above is correct!"
+        /bin/plymouth hide-message --text="Continue the boot process only if the secret image next to the password prompt is correct!"
+        /bin/plymouth hide-message --text=""
+        /bin/plymouth hide-message --text="Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
+        /bin/plymouth unpause-progress
+    fi
 fi
 rm -f /tmp/unsealed-secret.txt
