@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Anti Evil Maid for dracut by Invisible Things Lab
 # Copyright (C) 2010 Joanna Rutkowska <joanna@invisiblethingslab.com>
@@ -12,14 +12,15 @@
 
 command -v ask_for_password >/dev/null || . /lib/dracut-crypt-lib.sh
 
+PLYMOUTH_MESSAGES=()
 function message() {
     if type plymouth >/dev/null 2>&1 && plymouth --ping 2>/dev/null; then
-        /bin/plymouth message --text="$1"
+        plymouth message --text="$1"
+        PLYMOUTH_MESSAGES+=("$1")
     else
         echo "$1"
     fi
 }
-
 
 if [ -d /antievilmaid ] ; then
     info "/antievilmaid already exists, skipping..."
@@ -99,16 +100,10 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
     done
 
     if [ -x /bin/plymouth ]; then
-        # hide the secret
-        /bin/plymouth hide-message --text="`cat /tmp/unsealed-secret.txt 2> /dev/null`"
-        # hide remaining messages
-        /bin/plymouth hide-message --text="Attempting to unseal the secret passphrase from the TPM..."
-        /bin/plymouth hide-message --text=""
-        /bin/plymouth hide-message --text=""
-        /bin/plymouth hide-message --text="Continue the boot process only if the secret above is correct!"
-        /bin/plymouth hide-message --text="Continue the boot process only if the secret image next to the password prompt is correct!"
-        /bin/plymouth hide-message --text=""
-        /bin/plymouth hide-message --text="Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
+        # hide the secret and our other messages
+        for m in "${PLYMOUTH_MESSAGES[@]}"; do
+            plymouth hide-message --text="$m"
+        done
         /bin/plymouth unpause-progress
     fi
 fi
