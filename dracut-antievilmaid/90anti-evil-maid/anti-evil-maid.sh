@@ -12,6 +12,13 @@
 
 command -v ask_for_password >/dev/null || . /lib/dracut-crypt-lib.sh
 
+shopt -s expand_aliases
+if type plymouth >/dev/null 2>&1; then
+     alias plymouth_maybe=plymouth
+else
+     alias plymouth_maybe=:
+fi
+
 PLYMOUTH_MESSAGES=()
 function message() {
     if type plymouth >/dev/null 2>&1 && plymouth --ping 2>/dev/null; then
@@ -92,19 +99,16 @@ fi
 
 if ! getarg rd.antievilmaid.dontforcestickremoval; then
     # Pause progress till the user remove the stick
-    [ -x /bin/plymouth ] && /bin/plymouth pause-progress
+    plymouth_maybe pause-progress
 
     message "Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
     while [ -b /dev/antievilmaid ]; do
         sleep 0.1
     done
 
-    if [ -x /bin/plymouth ]; then
-        # hide the secret and our other messages
-        for m in "${PLYMOUTH_MESSAGES[@]}"; do
-            plymouth hide-message --text="$m"
-        done
-        /bin/plymouth unpause-progress
-    fi
+    for m in "${PLYMOUTH_MESSAGES[@]}"; do
+        plymouth_maybe hide-message --text="$m"
+    done
+    plymouth_maybe unpause-progress
 fi
 rm -f /tmp/unsealed-secret.txt
