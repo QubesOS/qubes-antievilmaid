@@ -76,9 +76,20 @@ if [ -f "$SEALED_SECRET" ] ; then
     else
         $UNSEAL_CMD
     fi
-    message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
 else
     message "No data to unseal. Do not forget to generate a ${SEALED_SECRET##*/}"
+fi
+
+info "Unmounting the antievilmaid device..."
+umount "$MNT"
+
+if getarg rd.antievilmaid.png_secret; then
+    # Verify if the unsealed PNG secret seems valid and replace the lock icon
+    if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
+        cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
+    fi
+else
+    message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
 fi
 
 if getarg rd.antievilmaid.png_secret; then
@@ -89,15 +100,6 @@ else
     message ""
     message "Continue the boot process only if the secret above is correct!"
     message ""
-fi
-info "Unmounting the antievilmaid device..."
-umount "$MNT"
-
-# Verify if the unsealed PNG secret seems valid and replace the lock icon
-if getarg rd.antievilmaid.png_secret; then
-    if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
-        cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
-    fi
 fi
 
 plymouth_maybe pause-progress
