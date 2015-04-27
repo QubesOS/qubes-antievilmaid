@@ -60,8 +60,8 @@ the TPM SRK key used for sealing process:
 
 # tpm_takeownership -y -z
 
-NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership, and also you SHOULD pass an additional argument to kernel (see point 4.e below).
-NOTE: if your tpm has already been owned in the past, you can reset it by running tpm_clear -z, rebooting and resetting TPM it in the BIOS (eg: TPM Authentication Reset).
+NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership, and also you SHOULD pass an additional argument to kernel (see point 4.c below).
+NOTE: if your tpm has already been owned in the past, you can reset it by running tpm_clear -z, rebooting and resetting TPM in the BIOS (eg: TPM Authentication Reset).
 
 4) Setup Anti Evil Maid
 
