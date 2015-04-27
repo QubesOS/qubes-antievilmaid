@@ -93,14 +93,12 @@ else
 fi
 
 if getarg rd.antievilmaid.png_secret; then
-    message ""
-    message "Continue the boot process only if the secret image next to the password prompt is correct!"
-    message ""
+    WHERE="next to the prompt for it"
 else
-    message ""
-    message "Continue the boot process only if the secret above is correct!"
+    WHERE="above"
     message ""
 fi
+message "Never enter your disk password unless the secret $WHERE is correct!"
 
 plymouth_maybe pause-progress
 if getarg rd.antievilmaid.dontforcestickremoval; then
