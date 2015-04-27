@@ -29,6 +29,8 @@ The instructions below assume Qubes OS or regular Fedora.
 
 a) Install anti-evil-maid packages (in Dom0 on Qubes). It will install all the required dependencies and tools.
 
+# qubes-dom0-update anti-evil-maid
+
 b) Start the TrouSerS daemon (this should also load tpm driver into kernel):
 
 # /etc/init.d/tcsd start
