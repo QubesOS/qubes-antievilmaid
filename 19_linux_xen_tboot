@@ -122,7 +122,7 @@ linux_entry ()
   lmessage="$(gettext_printf "Loading Linux %s ..." ${version})"
   sed "s/^/$submenu_indentation/" << EOF
 	echo	'$tmessage'
-	multiboot	/tboot.gz placeholder logging=memory,serial
+	multiboot	/tboot.gz placeholder logging=memory,serial ${GRUB_CMDLINE_TBOOT}
 	echo	'$xmessage'
 	module	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args}
 	echo	'$lmessage'
