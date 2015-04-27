@@ -9,8 +9,7 @@
 
 
 . /lib/dracut-lib.sh
-
-command -v ask_for_password >/dev/null || . /lib/dracut-crypt-lib.sh
+type ask_for_password >/dev/null 2>&1 || . /lib/dracut-crypt-lib.sh
 
 shopt -s expand_aliases
 if type plymouth >/dev/null 2>&1; then
