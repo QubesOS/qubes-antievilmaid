@@ -22,16 +22,16 @@ function message() {
 
 
 if [ -d /antievilmaid ] ; then
-	info "/antievilmaid already exists, skipping..."
-	exit 0
+    info "/antievilmaid already exists, skipping..."
+    exit 0
 fi
 
-info "Waiting for antievilmaid boot device to become avilable..."
+info "Waiting for antievilmaid boot device to become available..."
 while ! [ -b /dev/antievilmaid ]; do
-	sleep 0.1
+    sleep 0.1
 done
 
-info "Mouting the antievilmaid boot device..."
+info "Mounting the antievilmaid boot device..."
 mkdir /antievilmaid
 mount /dev/antievilmaid /antievilmaid
 
@@ -95,7 +95,7 @@ if ! getarg rd.antievilmaid.dontforcestickremoval; then
 
     message "Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
     while [ -b /dev/antievilmaid ]; do
-	    sleep 0.1
+        sleep 0.1
     done
 
     if [ -x /bin/plymouth ]; then
