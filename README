@@ -146,7 +146,7 @@ a) Mount the stick again:
 
 # mount LABEL=antievilmaid /mnt/antievilmaid
 
-b) Seal your secret passphrase to the TPM to select PCR registers, e.g.:
+b) Start the tcsd daemon again (see 2.b). Then seal your secret passphrase to the TPM to select PCR registers, e.g.:
 
 # echo "My secret passphrase..." | tpm_sealdata -z -o
 /mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 17 --pcr 18 --pcr 19
