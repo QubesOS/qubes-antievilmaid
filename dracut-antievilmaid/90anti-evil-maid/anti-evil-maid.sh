@@ -67,12 +67,13 @@ message "Attempting to unseal the secret from the TPM..."
 message ""
 
 if [ -f "$SEALED_SECRET" ] ; then
+    UNSEAL_CMD="tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET"
     #we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against dictionary attacks" when there's more than 1 try within a short time... -_- (TCG 2 fixes that)
     if getarg rd.antievilmaid.asksrkpass; then
-        ask_for_password --cmd "tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET" --prompt "TPM SRK unseal password" --tries 1
+        ask_for_password --cmd "$UNSEAL_CMD" --prompt "TPM SRK unseal password" --tries 1
             #--tty-echo-off
     else
-        tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET
+        $UNSEAL_CMD
     fi
     message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
 else
