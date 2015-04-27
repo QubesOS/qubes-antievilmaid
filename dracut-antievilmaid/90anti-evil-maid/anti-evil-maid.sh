@@ -57,16 +57,16 @@ mkdir -p /var/lib/tpm/
 cp "$MNT/antievilmaid/system.data" /var/lib/tpm/
 tcsd
 
-TPM_ARGS="-o $UNSEALED_SECRET"
-if ! getarg rd.antievilmaid.asksrkpass; then
-    info "Using default TPM SRK unseal password"
-    TPM_ARGS="$TPM_ARGS -z"
-fi
-
-message "Attempting to unseal the secret from the TPM..."
-message ""
-
 if [ -f "$SEALED_SECRET" ] ; then
+    TPM_ARGS="-o $UNSEALED_SECRET"
+    if ! getarg rd.antievilmaid.asksrkpass; then
+        info "Using default TPM SRK unseal password"
+        TPM_ARGS="$TPM_ARGS -z"
+    fi
+
+    message "Attempting to unseal the secret from the TPM..."
+    message ""
+
     UNSEAL_CMD="tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET"
     if getarg rd.antievilmaid.asksrkpass; then
         # we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against
