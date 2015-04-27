@@ -7,7 +7,14 @@
 # and finally try to unseal the secrets and display them to the user
 #
 
+DEV=/dev/antievilmaid
+MNT=/antievilmaid
+SEALED_SECRET=$MNT/antievilmaid/sealed_secret.blob
+UNSEALED_SECRET=/tmp/unsealed-secret
+PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmaid_secret.png
 
+
+export PATH="/sbin:/usr/sbin:/bin:/usr/bin:$PATH"
 . /lib/dracut-lib.sh
 type ask_for_password >/dev/null 2>&1 || . /lib/dracut-crypt-lib.sh
 
@@ -28,53 +35,48 @@ function message() {
     fi
 }
 
-if [ -d /antievilmaid ] ; then
-    info "/antievilmaid already exists, skipping..."
+
+if [ -d "$MNT" ] ; then
+    info "$MNT already exists, skipping..."
     exit 0
 fi
 
 info "Waiting for antievilmaid boot device to become available..."
-while ! [ -b /dev/antievilmaid ]; do
+while ! [ -b "$DEV" ]; do
     sleep 0.1
 done
 
 info "Mounting the antievilmaid boot device..."
-mkdir /antievilmaid
-mount /dev/antievilmaid /antievilmaid
+mkdir "$MNT"
+mount "$DEV" "$MNT"
 
 info "Initializing TPM..."
-/sbin/modprobe tpm_tis
+modprobe tpm_tis
 ip link set dev lo up
 mkdir -p /var/lib/tpm/
-cp /antievilmaid/antievilmaid/system.data /var/lib/tpm/
-/usr/sbin/tcsd
+cp "$MNT/antievilmaid/system.data" /var/lib/tpm/
+tcsd
 
-plymouth_theme=/usr/share/plymouth/themes/qubes-dark
-if getarg rd.antievilmaid.png_secret; then
-    TPMARGS="-o $plymouth_theme/secret.png"
-else
-    TPMARGS="-o /tmp/unsealed-secret.txt"
-fi
-
+TPM_ARGS="-o $UNSEALED_SECRET"
 if ! getarg rd.antievilmaid.asksrkpass; then
     info "Using default SRK password"
-    TPMARGS="$TPMARGS -z"
+    TPM_ARGS="$TPM_ARGS -z"
 fi
 
 message "Attempting to unseal the secret passphrase from the TPM..."
 message ""
 
-if [ -f /antievilmaid/antievilmaid/sealed_secret.blob ] ; then
+if [ -f "$SEALED_SECRET" ] ; then
     #we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against dictionary attacks" when there's more than 1 try within a short time... -_- (TCG 2 fixes that)
     if getarg rd.antievilmaid.asksrkpass; then
-        ask_for_password --cmd "/usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob" --prompt "TPM Unseal Password" --tries 1
+        ask_for_password --cmd "tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET" --prompt "TPM Unseal Password" --tries 1
             #--tty-echo-off
     else
-        /usr/bin/tpm_unsealdata $TPMARGS -i /antievilmaid/antievilmaid/sealed_secret.blob
+        tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET
     fi
-    message "`cat /tmp/unsealed-secret.txt 2> /dev/null`"
+    message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
 else
-    message "No data to unseal. Do not forget to generate a sealed_secret.blob"
+    message "No data to unseal. Do not forget to generate a ${SEALED_SECRET##*/}"
 fi
 
 if getarg rd.antievilmaid.png_secret; then
@@ -87,12 +89,12 @@ else
     message ""
 fi
 info "Unmounting the antievilmaid device..."
-umount /dev/antievilmaid
+umount "$MNT"
 
 # Verify if the unsealed PNG secret seems valid and replace the lock icon
 if getarg rd.antievilmaid.png_secret; then
-    if file $plymouth_theme/secret.png 2>/dev/null | grep PNG > /dev/null ; then
-        cp $plymouth_theme/secret.png $plymouth_theme/antievilmaid_secret.png
+    if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
+        cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
     fi
 fi
 
@@ -104,7 +106,7 @@ if getarg rd.antievilmaid.dontforcestickremoval; then
     fi
 else
     message "Remove your Anti Evil Maid stick to continue..."
-    while [ -b /dev/antievilmaid ]; do
+    while [ -b "$DEV" ]; do
         sleep 0.1
     done
 fi
@@ -115,4 +117,4 @@ if ! getarg rd.antievilmaid.dontforcestickremoval || ! getarg rd.antievilmaid.pn
         plymouth_maybe hide-message --text="$m"
     done
 fi
-rm -f /tmp/unsealed-secret.txt
+rm -f "$UNSEALED_SECRET"
