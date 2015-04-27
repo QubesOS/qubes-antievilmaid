@@ -97,18 +97,23 @@ if getarg rd.antievilmaid.png_secret; then
     fi
 fi
 
-if ! getarg rd.antievilmaid.dontforcestickremoval; then
-    # Pause progress till the user remove the stick
-    plymouth_maybe pause-progress
-
-    message "Please remove your Anti Evil Maid stick and continue the boot process only if your secret appears on the screen..."
+plymouth_maybe pause-progress
+if getarg rd.antievilmaid.dontforcestickremoval; then
+    if ! getarg rd.antievilmaid.png_secret; then
+        message "Press <SPACE> to continue..."
+        plymouth_maybe watch-keystroke --keys=" "
+    fi
+else
+    message "Remove your Anti Evil Maid stick to continue..."
     while [ -b /dev/antievilmaid ]; do
         sleep 0.1
     done
+fi
+plymouth_maybe unpause-progress
 
+if ! getarg rd.antievilmaid.dontforcestickremoval || ! getarg rd.antievilmaid.png_secret; then
     for m in "${PLYMOUTH_MESSAGES[@]}"; do
         plymouth_maybe hide-message --text="$m"
     done
-    plymouth_maybe unpause-progress
 fi
 rm -f /tmp/unsealed-secret.txt
