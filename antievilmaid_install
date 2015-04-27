@@ -58,41 +58,41 @@ else
 fi
 echo "--> Looks like you're installing to $TYPE"
 
-TMP_DIR=`mktemp -d /tmp/antievilmaid-XXXXXXX`
+    TMP_DIR=`mktemp -d /tmp/antievilmaid-XXXXXXX`
 
-echo "About to format device: $TARGET_PART..."
-echo "ALL DATA WILL BE ERASED on this partition!"
-echo -n "Type uppercase 'yes' in order to proceed... "
+    echo "About to format device: $TARGET_PART..."
+    echo "ALL DATA WILL BE ERASED on this partition!"
+    echo -n "Type uppercase 'yes' in order to proceed... "
 
-read PROMPT
-if [ $PROMPT != "YES" ] ; then
-    exit 1
-fi
+    read PROMPT
+    if [ $PROMPT != "YES" ] ; then
+        exit 1
+    fi
 
-echo "--> Formatting as ext4..."
-mkfs.ext4 -q $TARGET_PART
+    echo "--> Formatting as ext4..."
+    mkfs.ext4 -q $TARGET_PART
 
 echo "--> Labeling as '$BOOTLABEL'..."
 e2label $TARGET_PART $BOOTLABEL
 
-echo "--> Mounting new boot partition..."
-MNT=$TMP_DIR/mnt
-mkdir $MNT
-mount $TARGET_PART $MNT || exit 1
+    echo "--> Mounting new boot partition..."
+    MNT=$TMP_DIR/mnt
+    mkdir $MNT
+    mount $TARGET_PART $MNT || exit 1
 
 
 unmount_and_die () {
-    umount $MNT && rm -fr $MNT || exit 1
-    rm -fr $TMP_DIR
+        umount $MNT && rm -fr $MNT || exit 1
+        rm -fr $TMP_DIR
     exit 1
 }
 
-echo "--> Copying your boot images..."
-for f in $CURRENT_BOOT_PART/* ; do
-    [ -d $f ] && continue
-    echo "Copying $f"
-    cp $f $MNT/ || unmount_and_die
-done
+    echo "--> Copying your boot images..."
+    for f in $CURRENT_BOOT_PART/* ; do
+        [ -d $f ] && continue
+        echo "Copying $f"
+        cp $f $MNT/ || unmount_and_die
+    done
 
 echo "--> Rebuilding initramfs modules"
 for initramfs in $MNT/initramfs-*.img ; do
@@ -102,12 +102,12 @@ for initramfs in $MNT/initramfs-*.img ; do
     dracut --force $MNT/$initramfs $kernelver
 done
 
-echo "--> Copying grub themes..."
-mkdir -p $MNT/grub2/themes/
-for d in $CURRENT_BOOT_PART/grub2/themes/* ; do
-    echo "Copying theme "`basename $d`
-    cp -r $d $MNT/grub2/themes/
-done
+    echo "--> Copying grub themes..."
+    mkdir -p $MNT/grub2/themes/
+    for d in $CURRENT_BOOT_PART/grub2/themes/* ; do
+        echo "Copying theme "`basename $d`
+        cp -r $d $MNT/grub2/themes/
+    done
 
 echo "--> Copying TPM files..."
 mkdir $MNT/antievilmaid/
@@ -119,15 +119,15 @@ if ! [ -f /var/lib/tpm/system.data ] ; then
 fi
 cp /var/lib/tpm/system.data $MNT/antievilmaid/ || unmount_and_die
 
-echo "--> Installing GRUB2 on the target device..."
-grub2-install --boot-directory=$MNT $TARGET_DEV
+    echo "--> Installing GRUB2 on the target device..."
+    grub2-install --boot-directory=$MNT $TARGET_DEV
 
-echo "--> Unmounting new boot partition..."
-umount $MNT && rm -fr $MNT || exit 1
+    echo "--> Unmounting new boot partition..."
+    umount $MNT && rm -fr $MNT || exit 1
 
-echo "--> Switching boot partition to antievilmaid..."
-umount $CURRENT_BOOT_PART
-mount $TARGET_PART $CURRENT_BOOT_PART
+    echo "--> Switching boot partition to antievilmaid..."
+    umount $CURRENT_BOOT_PART
+    mount $TARGET_PART $CURRENT_BOOT_PART
 
 echo "--> Disabling vanilla generation of tboot entries polluting the grub configuration"
 chmod -x /etc/grub.d/20_linux_tboot
@@ -136,15 +136,15 @@ chmod -x /etc/grub.d/20_linux_xen_tboot
 echo "--> Generating grub configuration..."
 grub2-mkconfig -o $CURRENT_BOOT_PART/grub2/grub.cfg
 
-echo "--> Reswitching boot partition..."
-umount $CURRENT_BOOT_PART
-mount $CURRENT_BOOT_PART
+    echo "--> Reswitching boot partition..."
+    umount $CURRENT_BOOT_PART
+    mount $CURRENT_BOOT_PART
 
-#echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
-#/usr/lib/antievilmaid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
-#root (hd0,$(($TARGET_BOOT_PARTNO-1)))
-#setup (hd0)
-#quit
-#EOF
-#
-rm -fr $TMP_DIR || exit 1
+    #echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
+    #/usr/lib/antievilmaid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
+    #root (hd0,$(($TARGET_BOOT_PARTNO-1)))
+    #setup (hd0)
+    #quit
+    #EOF
+    #
+    rm -fr $TMP_DIR || exit 1
