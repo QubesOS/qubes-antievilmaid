@@ -29,6 +29,8 @@ The instructions below assume Qubes OS or regular Fedora.
 
 a) Install anti-evil-maid packages (in Dom0 on Qubes). It will install all the required dependencies and tools.
 
+# qubes-dom0-update anti-evil-maid
+
 b) Start the TrouSerS daemon (this should also load tpm driver into kernel):
 
 # /etc/init.d/tcsd start
@@ -58,8 +60,8 @@ the TPM SRK key used for sealing process:
 
 # tpm_takeownership -y -z
 
-NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership, and also you SHOULD pass an additional argument to kernel (see point 4.e below).
-NOTE: if your tpm has already been owned in the past, you can reset it by running tpm_clear -z, rebooting and resetting TPM it in the BIOS (eg: TPM Authentication Reset).
+NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership, and also you SHOULD pass an additional argument to kernel (see point 4.c below).
+NOTE: if your tpm has already been owned in the past, you can reset it by running tpm_clear -z, rebooting and resetting TPM in the BIOS (eg: TPM Authentication Reset).
 
 4) Setup Anti Evil Maid
 
@@ -144,12 +146,15 @@ a) Mount the stick again:
 
 # mount LABEL=antievilmaid /mnt/antievilmaid
 
-b) Seal your secret passphrase to the TPM to select PCR registers, e.g.:
+b) Start the tcsd daemon again (see 2.b). Then seal your secret passphrase to the TPM to select PCR registers, e.g.:
 
-# echo "My secret passphrase..." | tpm_sealdata -z -o
-/mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 17 --pcr 18 --pcr 19
+# tpm_sealdata -z -o /mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 17 --pcr 18 --pcr 19
+My secret passphrase<ENTER>
+<CTRL+d> (twice if needed)
 
-Note: Use 'cat pngfile.png |' instead of 'echo ... |' above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passprase prompt.
+Notes:
+Leave out the '-z' argument again if you used an SRK password in step 3.
+Add '< my-secret-image.png' at the end of the command above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passprase prompt.
 
 TCG spec defines the following PCRs that you might want to seal to:
 
