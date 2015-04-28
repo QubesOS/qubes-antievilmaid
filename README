@@ -138,6 +138,15 @@ the AEM /boot.
 
 e) Reboot the system from the stick, Choose one of the entries called Qubes OS AEM boot...
 
+f) If a chunk of your installed RAM seems to be missing after the reboot (which can be
+checked by running "xl info" in dom0), add the following line to /etc/default/grub --
+
+export GRUB_CMDLINE_TBOOT="min_ram=0x2000000"
+
+-- and execute the previous two steps again. A discussion of this problem can be found at
+http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611 and by searching
+for "min_ram" in the qubes mailing lists.
+
 5) Seal secret passphrase
 
 a) Mount the stick again:
