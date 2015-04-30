@@ -1,5 +1,5 @@
 [Unit]
-Description=Anti Evil Maid system authentication
+Description=Anti Evil Maid system authentication (Plymouth)
 DefaultDependencies=no
 After=plymouth-start.service
 Before=systemd-ask-password-plymouth.service systemd-ask-password-console.service
