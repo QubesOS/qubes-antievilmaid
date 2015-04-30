@@ -18,22 +18,22 @@ export PATH="/sbin:/usr/sbin:/bin:/usr/bin:$PATH"
 . /lib/dracut-lib.sh
 type ask_for_password >/dev/null 2>&1 || . /lib/dracut-crypt-lib.sh
 
-shopt -s expand_aliases
-if type plymouth >/dev/null 2>&1; then
-     alias plymouth_maybe=plymouth
-else
-     alias plymouth_maybe=:
-fi
 
+# work with or without plymouth
+
+shopt -s expand_aliases
 PLYMOUTH_MESSAGES=()
-function message() {
-    if type plymouth >/dev/null 2>&1 && plymouth --ping 2>/dev/null; then
-        plymouth message --text="$1"
-        PLYMOUTH_MESSAGES+=("$1")
-    else
-        echo "$1"
-    fi
-}
+if plymouth --ping 2>/dev/null; then
+    alias plymouth_active=true
+    function message() {
+        plymouth message --text="$*"
+        PLYMOUTH_MESSAGES+=("$*")
+    }
+else
+    alias plymouth=:
+    alias plymouth_active=false
+    alias message=echo
+fi
 
 
 if [ -d "$MNT" ] ; then
@@ -100,11 +100,11 @@ else
 fi
 message "Never enter your disk password unless the secret $WHERE is correct!"
 
-plymouth_maybe pause-progress
+plymouth pause-progress
 if getarg rd.antievilmaid.dontforcestickremoval; then
     if ! getarg rd.antievilmaid.png_secret; then
         message "Press <SPACE> to continue..."
-        plymouth_maybe watch-keystroke --keys=" "
+        plymouth watch-keystroke --keys=" "
     fi
 else
     message "Remove your Anti Evil Maid stick to continue..."
@@ -112,11 +112,11 @@ else
         sleep 0.1
     done
 fi
-plymouth_maybe unpause-progress
+plymouth unpause-progress
 
 if ! getarg rd.antievilmaid.dontforcestickremoval || ! getarg rd.antievilmaid.png_secret; then
     for m in "${PLYMOUTH_MESSAGES[@]}"; do
-        plymouth_maybe hide-message --text="$m"
+        plymouth hide-message --text="$m"
     done
 fi
 rm -f "$UNSEALED_SECRET"
