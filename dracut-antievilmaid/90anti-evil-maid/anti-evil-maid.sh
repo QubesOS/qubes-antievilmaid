@@ -68,7 +68,6 @@ if [ -f "$SEALED_SECRET" ] ; then
     fi
 
     message "Attempting to unseal the secret from the TPM..."
-    message ""
 
     UNSEAL_CMD="tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET"
     # we try only once as some TCG 1.2 TPMs start "protecting themselves against
@@ -88,20 +87,22 @@ fi
 info "Unmounting the antievilmaid device..."
 umount "$MNT"
 
+
+# display the secret in the next (.png) or the current dialog (.txt)
+
 if getarg rd.antievilmaid.png_secret; then
     # Verify if the unsealed PNG secret seems valid and replace the lock icon
     if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
         cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
     fi
-else
-    message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
-fi
 
-if getarg rd.antievilmaid.png_secret; then
     WHERE="next to the prompt for it"
 else
-    WHERE="above"
     message ""
+    message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
+    message ""
+
+    WHERE="above"
 fi
 message "Never enter your disk password unless the secret $WHERE is correct!"
 
