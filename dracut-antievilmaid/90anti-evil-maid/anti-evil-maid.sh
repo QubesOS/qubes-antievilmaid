@@ -3,7 +3,7 @@
 # Anti Evil Maid for dracut by Invisible Things Lab
 # Copyright (C) 2010 Joanna Rutkowska <joanna@invisiblethingslab.com>
 #
-# Mount our device, read the sealed secret blobs, initilize TPM
+# Mount our device, read the sealed secret blobs, initialize TPM
 # and finally try to unseal the secrets and display them to the user
 #
 
