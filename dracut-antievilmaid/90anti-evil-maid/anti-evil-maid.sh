@@ -37,6 +37,8 @@ else
 fi
 
 
+# mount the AEM device and setup TPM
+
 if [ -d "$MNT" ] ; then
     info "$MNT already exists, skipping..."
     exit 0
@@ -49,7 +51,7 @@ done
 
 info "Mounting the antievilmaid boot device..."
 mkdir "$MNT"
-mount "$DEV" "$MNT"
+mount "$DEV" "$MNT" || exit 1
 
 info "Initializing TPM..."
 modprobe tpm_tis
