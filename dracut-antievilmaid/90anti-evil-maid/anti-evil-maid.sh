@@ -9,6 +9,8 @@
 
 DEV=/dev/antievilmaid
 MNT=/antievilmaid
+TPM_DIR=/var/lib/tpm
+SYSTEM_PS=$MNT/antievilmaid/system.data
 SEALED_SECRET=$MNT/antievilmaid/sealed_secret.blob
 UNSEALED_SECRET=/tmp/unsealed-secret
 PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmaid_secret.png
@@ -52,8 +54,8 @@ mount "$DEV" "$MNT"
 info "Initializing TPM..."
 modprobe tpm_tis
 ip link set dev lo up
-mkdir -p /var/lib/tpm/
-cp "$MNT/antievilmaid/system.data" /var/lib/tpm/
+mkdir -p "$TPM_DIR"
+cp "$SYSTEM_PS" "$TPM_DIR" || exit 1
 tcsd
 
 if [ -f "$SEALED_SECRET" ] ; then
