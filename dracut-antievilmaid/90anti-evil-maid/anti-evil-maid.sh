@@ -16,7 +16,6 @@ PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmai
 
 export PATH="/sbin:/usr/sbin:/bin:/usr/bin:$PATH"
 . /lib/dracut-lib.sh
-type ask_for_password >/dev/null 2>&1 || . /lib/dracut-crypt-lib.sh
 
 
 # work with or without plymouth
@@ -68,13 +67,15 @@ if [ -f "$SEALED_SECRET" ] ; then
     message ""
 
     UNSEAL_CMD="tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET"
-    if getarg rd.antievilmaid.asksrkpass; then
-        # we set tries to 1 as some TCG 1.2 TPMs start "protecting themselves against
-        # dictionary attacks" when there's more than 1 try within a short time... -_-
-        # (TCG 2 fixes that)
-        ask_for_password --cmd "$UNSEAL_CMD" --prompt "TPM SRK unseal password" --tries 1
+    # we try only once as some TCG 1.2 TPMs start "protecting themselves against
+    # dictionary attacks" when there's more than 1 try within a short time... -_-
+    # (TCG 2 fixes that):
+    if plymouth_active && getarg rd.antievilmaid.asksrkpass; then
+        plymouth ask-for-password --command="$UNSEAL_CMD" \
+                                  --prompt="TPM SRK unseal password" \
+                                  --number-of-tries=1
     else
-        $UNSEAL_CMD
+        $UNSEAL_CMD  # has its own prompt when needed ("Enter SRK password:")
     fi
 else
     message "No data to unseal. Do not forget to generate a ${SEALED_SECRET##*/}"
