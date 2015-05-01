@@ -60,6 +60,9 @@ mkdir -p "$TPM_DIR"
 cp "$SYSTEM_PS" "$TPM_DIR" || exit 1
 tcsd
 
+
+# unseal the secret and unmount the AEM device
+
 if [ -f "$SEALED_SECRET" ] ; then
     TPM_ARGS="-o $UNSEALED_SECRET"
     if ! getarg rd.antievilmaid.asksrkpass; then
@@ -104,13 +107,20 @@ else
 
     WHERE="above"
 fi
-message "Never enter your disk password unless the secret $WHERE is correct!"
+message "Never type in your disk password unless the secret $WHERE is correct!"
+
+
+# pause
 
 plymouth pause-progress
 if getarg rd.antievilmaid.dontforcestickremoval; then
     if ! getarg rd.antievilmaid.png_secret; then
-        message "Press <SPACE> to continue..."
-        plymouth watch-keystroke --keys=" "
+        message "Press <ENTER> to continue..."
+        if plymouth_active; then
+            plymouth watch-keystroke --keys=$'\n'
+        else
+            read ignored
+        fi
     fi
 else
     message "Remove your Anti Evil Maid stick to continue..."
@@ -120,9 +130,17 @@ else
 fi
 plymouth unpause-progress
 
+
+# hide the secret
+
 if ! getarg rd.antievilmaid.dontforcestickremoval || ! getarg rd.antievilmaid.png_secret; then
-    for m in "${PLYMOUTH_MESSAGES[@]}"; do
-        plymouth hide-message --text="$m"
-    done
+    if plymouth_active; then
+        for m in "${PLYMOUTH_MESSAGES[@]}"; do
+            plymouth hide-message --text="$m"
+        done
+    else
+        clear
+    fi
 fi
+
 rm -f "$UNSEALED_SECRET"

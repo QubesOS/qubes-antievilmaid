@@ -27,6 +27,7 @@ tpm_unsealdata \
 tpm_version \
 tcsd \
 file \
+clear \
 /usr/share/misc/magic \
 grep
 
