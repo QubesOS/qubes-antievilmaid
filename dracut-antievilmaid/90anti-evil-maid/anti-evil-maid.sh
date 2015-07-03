@@ -13,6 +13,8 @@ TPM_DIR=/var/lib/tpm
 SYSTEM_PS=$MNT/antievilmaid/system.data
 SEALED_SECRET=$MNT/antievilmaid/sealed_secret.blob
 UNSEALED_SECRET=/tmp/unsealed-secret
+LUKS_HEADER_DUMP=/tmp/luks-header-dump
+LUKS_PCR=13
 PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmaid_secret.png
 
 
@@ -60,6 +62,29 @@ mkdir -p "$TPM_DIR"
 cp "$SYSTEM_PS" "$TPM_DIR" || exit 1
 tcsd
 
+
+# Extend PCR with LUKS header(s)
+
+getargs rd.luks.uuid -d rd_LUKS_UUID |
+grep -Eo '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}' |
+sort -u |
+while read luksid; do
+    timeout=100
+    while ! [ -b "/dev/disk/by-uuid/$luksid" ]; do
+        sleep 0.1
+        timeout=$[ $timeout - 1 ]
+        if [ $timeout -le 0 ]; then
+            message "Timeout while waiting for device $luksid"
+            exit 1
+        fi
+    done
+
+    cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" --header-backup-file "$LUKS_HEADER_DUMP" || exit 1
+    luks_header_hash=$(sha1sum "$LUKS_HEADER_DUMP" | cut -f 1 -d ' ')
+    rm -f "$LUKS_HEADER_DUMP"
+    info "Extending PCR $LUKS_PCR with value $luks_header_hash for device $luksid..."
+    tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash" || exit 1
+done
 
 # unseal the secret and unmount the AEM device
 

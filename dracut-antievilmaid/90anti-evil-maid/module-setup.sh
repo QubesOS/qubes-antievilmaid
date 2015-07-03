@@ -25,6 +25,10 @@ inst_script "$moddir"/anti-evil-maid.sh /sbin/anti-evil-maid
 dracut_install -o \
 tpm_unsealdata \
 tpm_version \
+tpm_pcr_extend \
+sha1sum \
+cut \
+sort \
 tcsd \
 file \
 clear \

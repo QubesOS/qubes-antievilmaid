@@ -157,7 +157,7 @@ a) Mount the stick again:
 
 b) Start the tcsd daemon again (see 2.b). Then seal your secret passphrase to the TPM to select PCR registers, e.g.:
 
-# tpm_sealdata -z -o /mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 17 --pcr 18 --pcr 19
+# tpm_sealdata -z -o /mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 13 --pcr 17 --pcr 18 --pcr 19
 My secret passphrase<ENTER>
 <CTRL+d> (twice if needed)
 
@@ -172,6 +172,7 @@ PCR 4  : MBR (Grub stage1)
 PCR 5-7: OEM-specific, probably safe to skip
 PCR 8,9: Trusted GRUB1 stage2
 PCR 12 : Trusted GRUB1 args (xen, kernel args)
+PCR 13 : LUKS header(s)
 PCR 14 : The actual files loaded by Trusted GRUB1 (xen, kernel, initrd)
 PCR 17-19: TBoot Dynamic Root of Trust Measurement (DRTM)
 
