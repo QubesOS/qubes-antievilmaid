@@ -46,11 +46,11 @@ c) Verify the kernel support for TPM:
 
 If you see something like this:
 
-PCR-00: 67 DC B4 8C AB 8D C7 9B 28 84 D9 15 69 DE 82 F2 F0 E1 2A D8 
-PCR-01: 11 75 9A 19 E5 BD E8 4E DA 1C 01 EC 53 87 FD 50 18 E1 94 1E 
-PCR-02: 4B 43 98 82 65 04 E9 F4 14 78 26 F9 ED EA 92 91 6D FD AF D5 
-PCR-03: B2 A8 3B 0E BF 2F 83 74 29 9A 5B 2B DF C3 1E A9 55 AD 72 36 
-PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73 
+PCR-00: 67 DC B4 8C AB 8D C7 9B 28 84 D9 15 69 DE 82 F2 F0 E1 2A D8
+PCR-01: 11 75 9A 19 E5 BD E8 4E DA 1C 01 EC 53 87 FD 50 18 E1 94 1E
+PCR-02: 4B 43 98 82 65 04 E9 F4 14 78 26 F9 ED EA 92 91 6D FD AF D5
+PCR-03: B2 A8 3B 0E BF 2F 83 74 29 9A 5B 2B DF C3 1E A9 55 AD 72 36
+PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73
 (...)
 
 ... then your TPM is supported by your kernel.
@@ -81,7 +81,7 @@ http://software.intel.com/en-us/articles/intel-trusted-execution-technology
 You can then download the module and unzip it. All the modules can be downloaded from:
 https://secure-software.intel.com/en-us/protected-download/267276/183305
 
-Finally, you should retrieve the BIN file inside /boot in dom0. Eg: run from dom0 
+Finally, you should retrieve the BIN file inside /boot in dom0. Eg: run from dom0
 $ qvm-run --pass-io vm_name_containing_bin_file 'cat /home/user/path_to_sinit/name_of_sinit_file.BIN' > /boot/name_of_sinit_file.BIN
 
 NOTE: The SINIT files are digitally signed by Intel. While there is no easy
@@ -109,7 +109,7 @@ Available flags (multiple flags can be separated by spaces):
  - rd.antievilmaid.png_secret: in case you plan to use a png sealed secret
  - rd.antievilmaid.dontforcestickremoval: in case if you don't want to remove
     the AEM stick during system startup (it is generally bad idea to use this
-    flag, but can be useful in some unusal setups)
+    flag, but can be useful in some unusual setups)
 
 d) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
 
@@ -128,7 +128,7 @@ then your system boot will fail because antievilmaid requires you to remove the
 booting stick before proceeding with further boot, as a special security
 precaution, see:
 
-http://git.qubes-os.org/?p=joanna/antievilmaid.git;a=commit;h=5e8e879bfbe394a696b07479ae731422f553e28e
+https://github.com/QubesOS/qubes-antievilmaid/commit/5e8e879bfbe394a696b07479ae731422f553e28e
 
 NOTE: it might still beneficial to remove one's original (stored on local
 harddisk) /boot partition from the fstab. This way whenever one upgrades the
@@ -138,7 +138,7 @@ be inserted and mounted as /boot for the update. Otherwise the user should
 manually resync the local /boot content (e.g. new kernel and xen images) with
 the AEM /boot.
 
-e) Reboot the system from the stick, Choose one of the entries called Qubes OS AEM boot...
+e) Reboot the system from the stick, choose one of the entries called Qubes OS AEM boot...
 
 f) If a chunk of your installed RAM seems to be missing after the reboot (which can be
 checked by running "xl info" in dom0), add the following line to /etc/default/grub --
@@ -163,7 +163,7 @@ My secret passphrase<ENTER>
 
 Notes:
 Leave out the '-z' argument again if you used an SRK password in step 3.
-Add '< my-secret-image.png' at the end of the command above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passprase prompt.
+Add '< my-secret-image.png' at the end of the command above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passphrase prompt.
 
 TCG spec defines the following PCRs that you might want to seal to:
 
