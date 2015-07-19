@@ -1,6 +1,5 @@
 #!/bin/sh
 
-BOOTPARTSZ=512M
 BOOTLABEL="antievilmaid"
 
 if [ $# != 1 -a $# != 2 -o "$1" = -h -o "$1" = --help ] ; then
@@ -160,13 +159,5 @@ if external; then
     echo "--> Reswitching boot partition..."
     umount $CURRENT_BOOT_PART
     mount $CURRENT_BOOT_PART
-
-    #echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
-    #/usr/lib/antievilmaid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
-    #root (hd0,$(($TARGET_BOOT_PARTNO-1)))
-    #setup (hd0)
-    #quit
-    #EOF
-    #
     rm -fr $TMP_DIR || exit 1
 fi
