@@ -3,18 +3,17 @@
 BOOTPARTSZ=512M
 BOOTLABEL="antievilmaid"
 
-if [ $# != 3 ] ; then
+if [ $# != 2 ] ; then
     echo
-    echo "usage: $0 <target device> <target boot part #> <current boot dir>"
+    echo "usage: $0 <target part device> <current boot dir>"
     echo "This will:"
-    echo "0) Format your <target boot part>"
-    echo "1) Install TrustedGRUB into <target device>'s MBR and <target boot partition>"
-    echo "2) Copy your current boot images from <current boot dir> onto the <target boot partition>"
-    echo "3) Copy some additional files needed for Anti Evil Maid onto <target boot partition>"
+    echo "0) Format your <target part device>"
+    echo "1) Install GRUB into <target part device> and the GRUB MBR to its parent device"
+    echo "2) Copy your current boot images from <current boot dir> onto the <target part device>"
+    echo "3) Copy some additional files needed for Anti Evil Maid onto <target part device>"
     echo
-    echo "e.g. $0 /dev/sdc 1 /boot"
+    echo "e.g. $0 /dev/sdc1 /boot"
     echo
-    echo "Note: <target boot part #> is counted from 1, which corresonds to /dev/sdX1, and so on."
     echo "Note: <target device> should typically be a removable device"
     echo
     exit 0
@@ -26,12 +25,11 @@ if [ $ID != 0 ] ; then
     exit 1
 fi
 
-TARGET_DEV=$1
-TARGET_BOOT_PARTNO=$2
-CURRENT_BOOT_PART=$3
+TARGET_PART=$1
+CURRENT_BOOT_PART=$2
 
-if ! [ -b $TARGET_DEV ] ; then
-    echo Wrong target device: $TARGET_DEV
+if ! [ -b $TARGET_PART ] ; then
+    echo "Target partition device doesn't exist: $TARGET_PART"
     exit 1
 fi
 
@@ -40,9 +38,15 @@ if ! [ -d $CURRENT_BOOT_PART/grub2 ] ; then
     exit 1
 fi
 
-TARGET_PART=${TARGET_DEV}${TARGET_BOOT_PARTNO}
-if ! [ -b $TARGET_PART ] ; then
-    echo "Boot partition doesn't exist: $TARGET_PART!"
+TARGET_DEV=$(lsblk -dnp -o PKNAME "$TARGET_PART")
+if ! [ -b "$TARGET_DEV" ] ; then
+    echo "Couldn't find target partition's parent device: $TARGET_DEV"
+    exit 1
+fi
+
+TARGET_BOOT_PARTNO=${TARGET_PART##*[!0-9]}
+if ! [ "$TARGET_BOOT_PARTNO" -gt 0 ] ; then
+    echo "Couldn't extract target partition number"
     exit 1
 fi
 
