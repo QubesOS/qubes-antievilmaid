@@ -48,7 +48,7 @@ if ! [ -b $TARGET_PART ] ; then
 fi
 
 devmm=`mountpoint --devno    "$TARGET_PART"`       || exit 1
-dirmm=`mountpoint --fs-devno "$CURRENT_BOOT_PART"` || exit 1
+dirmm=`mountpoint --fs-devno "$CURRENT_BOOT_PART"` || { echo "$dirmm"; exit 1; }
 if [ "$devmm" = "$dirmm" ]; then  # FIXME: fails on btrfs boot partitions
     alias external=false
     TYPE="the internal boot partition"
