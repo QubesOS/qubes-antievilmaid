@@ -37,9 +37,9 @@ if ! [ -d $CURRENT_BOOT_MNT/grub2 ] ; then
     exit 1
 fi
 
-TARGET_DEV=$(lsblk -dnp -o PKNAME "$TARGET_PART")
-if ! [ -b "$TARGET_DEV" ] ; then
-    echo "Couldn't find target partition's parent device: $TARGET_DEV"
+TARGET_WHOLE=$(lsblk -dnp -o PKNAME "$TARGET_PART")
+if ! [ -b "$TARGET_WHOLE" ] ; then
+    echo "Couldn't find target partition's parent device: $TARGET_WHOLE"
     exit 1
 fi
 
@@ -76,7 +76,7 @@ if external; then
     mkfs.ext4 -q $TARGET_PART
 
     echo "--> Setting bootable flag..."
-    parted ${TARGET_DEV} set ${TARGET_BOOT_PARTNO} boot on
+    parted ${TARGET_WHOLE} set ${TARGET_BOOT_PARTNO} boot on
 fi
 
 echo "--> Labeling as '$BOOTLABEL'..."
@@ -138,7 +138,7 @@ cp /var/lib/tpm/system.data $MNT/antievilmaid/ || unmount_and_die
 
 if external; then
     echo "--> Installing GRUB2 on the target device..."
-    grub2-install --boot-directory=$MNT $TARGET_DEV
+    grub2-install --boot-directory=$MNT $TARGET_WHOLE
 
     echo "--> Unmounting new boot partition..."
     umount $MNT && rm -fr $MNT || exit 1
