@@ -61,7 +61,7 @@ if external; then
     TMP_DIR=`mktemp -d /tmp/antievilmaid-XXXXXXX`
 
     echo "About to format device: $TARGET_PART..."
-    echo "ALL DATA WILL BE ERASED on this partition!"
+    echo "ALL DATA WILL BE LOST on this partition!"
     echo -n "Type uppercase 'yes' in order to proceed... "
 
     read PROMPT
