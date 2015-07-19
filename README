@@ -1,9 +1,9 @@
 Intro
 ======
 
-Anti Evil Maid is an implementation of a TPM-based static and dynamic (Intel
-TXT) trusted boot for dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a
-primary goal to prevent Evil Maid attacks.
+Anti Evil Maid is an implementation of a TPM-based dynamic (Intel TXT) trusted
+boot for dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a primary goal
+to prevent Evil Maid attacks.
 
 For more information and discussion about potential attacks see:
 
@@ -199,5 +199,3 @@ Attacks prevented and not-prevented
 ====================================
 
 For a discussion of potential attacks against Anti Evil Maid, see the article referenced at the beginning.
-
-
