@@ -25,15 +25,15 @@ if [ $ID != 0 ] ; then
 fi
 
 TARGET_PART=$1
-CURRENT_BOOT_PART=${2-/boot}
+CURRENT_BOOT_MNT=${2-/boot}
 
 if ! [ -b $TARGET_PART ] ; then
     echo "Target partition device doesn't exist: $TARGET_PART"
     exit 1
 fi
 
-if ! [ -d $CURRENT_BOOT_PART/grub2 ] ; then
-    echo "$CURRENT_BOOT_PART doesn't seem to be a boot directory..."
+if ! [ -d $CURRENT_BOOT_MNT/grub2 ] ; then
+    echo "$CURRENT_BOOT_MNT doesn't seem to be a boot directory..."
     exit 1
 fi
 
@@ -50,7 +50,7 @@ if ! [ "$TARGET_BOOT_PARTNO" -gt 0 ] ; then
 fi
 
 devmm=`mountpoint --devno    "$TARGET_PART"`       || exit 1
-dirmm=`mountpoint --fs-devno "$CURRENT_BOOT_PART"` || { echo "$dirmm"; exit 1; }
+dirmm=`mountpoint --fs-devno "$CURRENT_BOOT_MNT"` || { echo "$dirmm"; exit 1; }
 if [ "$devmm" = "$dirmm" ]; then  # FIXME: fails on btrfs boot partitions
     alias external=false
     TYPE="the internal boot partition"
@@ -88,7 +88,7 @@ if external; then
     mkdir $MNT
     mount $TARGET_PART $MNT || exit 1
 else
-    MNT=$CURRENT_BOOT_PART
+    MNT=$CURRENT_BOOT_MNT
 fi
 
 
@@ -102,7 +102,7 @@ unmount_and_die () {
 
 if external; then
     echo "--> Copying your boot images..."
-    for f in $CURRENT_BOOT_PART/* ; do
+    for f in $CURRENT_BOOT_MNT/* ; do
         [ -d $f ] && continue
         echo "Copying $f"
         cp $f $MNT/ || unmount_and_die
@@ -120,7 +120,7 @@ done
 if external; then
     echo "--> Copying grub themes..."
     mkdir -p $MNT/grub2/themes/
-    for d in $CURRENT_BOOT_PART/grub2/themes/* ; do
+    for d in $CURRENT_BOOT_MNT/grub2/themes/* ; do
         echo "Copying theme "`basename $d`
         cp -r $d $MNT/grub2/themes/
     done
@@ -144,8 +144,8 @@ if external; then
     umount $MNT && rm -fr $MNT || exit 1
 
     echo "--> Switching boot partition to antievilmaid..."
-    umount $CURRENT_BOOT_PART
-    mount $TARGET_PART $CURRENT_BOOT_PART
+    umount $CURRENT_BOOT_MNT
+    mount $TARGET_PART $CURRENT_BOOT_MNT
 fi
 
 echo "--> Disabling vanilla generation of tboot entries polluting the grub configuration"
@@ -153,11 +153,11 @@ chmod -x /etc/grub.d/20_linux_tboot
 chmod -x /etc/grub.d/20_linux_xen_tboot
 
 echo "--> Generating grub configuration..."
-grub2-mkconfig -o $CURRENT_BOOT_PART/grub2/grub.cfg
+grub2-mkconfig -o $CURRENT_BOOT_MNT/grub2/grub.cfg
 
 if external; then
     echo "--> Reswitching boot partition..."
-    umount $CURRENT_BOOT_PART
-    mount $CURRENT_BOOT_PART
+    umount $CURRENT_BOOT_MNT
+    mount $CURRENT_BOOT_MNT
     rm -fr $TMP_DIR || exit 1
 fi
