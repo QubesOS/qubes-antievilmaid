@@ -4,19 +4,18 @@ BOOTPARTSZ=512M
 BOOTLABEL="antievilmaid"
 
 if [ $# != 2 ] ; then
+    echo "   usage: antievilmaid_install <target part device> <current boot dir>"
+    echo " example: antievilmaid_install /dev/sdc1 /boot"
     echo
-    echo "usage: $0 <target part device> <current boot dir>"
-    echo "This will:"
-    echo "0) Format your <target part device>"
-    echo "1) Install GRUB into <target part device> and the GRUB MBR to its parent device"
-    echo "2) Copy your current boot images from <current boot dir> onto the <target part device>"
-    echo "3) Copy some additional files needed for Anti Evil Maid onto <target part device>"
+    echo "An external installation, e.g. to a USB drive's partition that doesn't host"
+    echo "<current boot dir>, will format <target part device>; label it; make it"
+    echo "bootable; copy your kernel, regenerated initrds, and TPM files to the new"
+    echo "filesystem; and install GRUB to the external drive."
     echo
-    echo "e.g. $0 /dev/sdc1 /boot"
-    echo
-    echo "Note: <target device> should typically be a removable device"
-    echo
-    exit 0
+    echo "An internal installation will only label <target part device>; copy your TPM"
+    echo "files to <current boot dir>; and regenerate the initrds and GRUB configuration."
+
+    exit 1
 fi
 
 ID=$(id -ur)

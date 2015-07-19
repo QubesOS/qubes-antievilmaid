@@ -108,8 +108,8 @@ Available flags (multiple flags can be separated by spaces):
     password for the SRK key
  - rd.antievilmaid.png_secret: in case you plan to use a png sealed secret
  - rd.antievilmaid.dontforcestickremoval: in case if you don't want to remove
-    the AEM stick during system startup (it is generally bad idea to use this
-    flag, but can be useful in some unusual setups)
+    the AEM stick during system startup (this should generally only be used
+    for internal installations, i.e. not to a USB stick)
 
 d) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
 
