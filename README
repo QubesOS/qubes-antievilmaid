@@ -115,10 +115,9 @@ d) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_i
 
 Ensure that none of your programs keep open files within /boot, as otherwise it won't be possible to smoothly unmount the /boot.
 
-E.g. assuming your stick's boot partition is /dev/sdc1, and
-your existing boot files (images, grub conf) are available at /boot:
+E.g. assuming your stick's boot partition is /dev/sdc1:
 
-# /usr/lib/antievilmaid/antievilmaid_install /dev/sdc1 /boot
+# /usr/lib/antievilmaid/antievilmaid_install /dev/sdc1
 
 DEPRECATED: ensure that your (previous) /boot partition is not in the
 /etc/fstab. This is especially important if you don't have /boot on your disk

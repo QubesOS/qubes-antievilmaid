@@ -3,17 +3,18 @@
 BOOTPARTSZ=512M
 BOOTLABEL="antievilmaid"
 
-if [ $# != 2 ] ; then
-    echo "   usage: antievilmaid_install <target part device> <current boot dir>"
-    echo " example: antievilmaid_install /dev/sdc1 /boot"
+if [ $# != 1 -a $# != 2 -o "$1" = -h -o "$1" = --help ] ; then
+    echo "   usage: antievilmaid_install <target part device> [<current boot mnt>]"
+    echo "                                                     ^ defaults to /boot"
+    echo " example: antievilmaid_install /dev/sdc1"
     echo
     echo "An external installation, e.g. to a USB drive's partition that doesn't host"
-    echo "<current boot dir>, will format <target part device>; label it; make it"
+    echo "<current boot mnt>, will format <target part device>; label it; make it"
     echo "bootable; copy your kernel, regenerated initrds, and TPM files to the new"
     echo "filesystem; and install GRUB to the external drive."
     echo
     echo "An internal installation will only label <target part device>; copy your TPM"
-    echo "files to <current boot dir>; and regenerate the initrds and GRUB configuration."
+    echo "files to <current boot mnt>; and regenerate the initrds and GRUB configuration."
 
     exit 1
 fi
@@ -25,7 +26,7 @@ if [ $ID != 0 ] ; then
 fi
 
 TARGET_PART=$1
-CURRENT_BOOT_PART=$2
+CURRENT_BOOT_PART=${2-/boot}
 
 if ! [ -b $TARGET_PART ] ; then
     echo "Target partition device doesn't exist: $TARGET_PART"
