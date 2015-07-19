@@ -91,8 +91,8 @@ be reasonably safe to do -- after all the file should not be processed by any
 software in Dom0, and only by the SENTER instruction of the processes, which,
 we hope, correctly verifies the signature before executing it...
 
-b) Find a USB stick, create a boot partition, set bootable flag, don't
-format with any fs. Use fdisk or parted.
+b) Find a USB stick, create a boot partition, don't format with any fs. Use
+fdisk or parted.
 
 NOTE: when using a GPT partition table (rather than msdos), then you should
 create an additional BIOS boot partition, where the rest of the GRUB code will

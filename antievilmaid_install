@@ -16,7 +16,6 @@ if [ $# != 3 ] ; then
     echo
     echo "Note: <target boot part #> is counted from 1, which corresonds to /dev/sdX1, and so on."
     echo "Note: <target device> should typically be a removable device"
-    echo "Note: You should ensure that <target boot part #> has bootable flag turned on (use e.g. fdisk)"
     echo
     exit 0
 fi
@@ -72,6 +71,9 @@ if external; then
 
     echo "--> Formatting as ext4..."
     mkfs.ext4 -q $TARGET_PART
+
+    echo "--> Setting bootable flag..."
+    parted ${TARGET_DEV} set ${TARGET_BOOT_PARTNO} boot on
 fi
 
 echo "--> Labeling as '$BOOTLABEL'..."
