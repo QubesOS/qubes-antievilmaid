@@ -1,13 +1,9 @@
-%{!?version: %define version %(cat version)}
+%define name anti-evil-maid-dracut
+%define subdir %{?qubes_builder:%{name}/}
+%define _builddir %(pwd)/%{subdir}
+%{!?version: %define version %(cat %{subdir}version)}
 
-%if 0%{?qubes_builder}
-%define version %(cat dracut-antievilmaid/version)
-%define _builddir %(pwd)/dracut-antievilmaid
-%else
-%define _builddir %(pwd)
-%endif
-
-Name:		anti-evil-maid-dracut
+Name:		%{name}
 Version:	%{version}
 Release:	1%{?dist}
 Summary:    	Dracut module and conf file to enable Anti Evil Maid support.
