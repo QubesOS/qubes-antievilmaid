@@ -19,7 +19,7 @@ instmods tpm_tis
 install() {
 
 inst_rules "$moddir/69-anti-evil-maid.rules"
-inst_script "$moddir"/anti-evil-maid.sh /sbin/anti-evil-maid
+inst_script "$moddir"/anti-evil-maid /sbin/anti-evil-maid
 
 # TPM software stack
 dracut_install -o \

@@ -1,6 +1,9 @@
-%{!?version: %define version %(cat version)}
+%define name tpm-extra
+%define subdir %{?qubes_builder:%{name}/}
+%define _builddir %(pwd)/%{subdir}
+%{!?version: %define version %(cat %{subdir}version)}
 
-Name:		tpm-extra
+Name:		%{name}
 Version:	%{version}
 Release:	1%{?dist}
 Summary:	Command line tool for TPM PCR Extend operation
@@ -11,8 +14,6 @@ URL:		https://www.qubes-os.org/
 
 BuildRequires:	trousers-devel
 Requires:	trousers
-
-%define _builddir %(pwd)
 
 %description
 Additional tools not included in tpm-tools package. Currently only one:
@@ -33,4 +34,3 @@ install -D tpm_pcr_extend %{buildroot}/usr/bin/tpm_pcr_extend
 
 
 %changelog
-
