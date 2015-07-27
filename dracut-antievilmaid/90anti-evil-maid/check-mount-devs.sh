@@ -1,0 +1,59 @@
+#!/bin/bash
+
+. /lib/dracut-lib.sh
+
+set -e
+shopt -s expand_aliases
+
+function check_device() {
+    sysfs_path="$1"
+
+    if [ -r "$sysfs_path/dm/name" ]; then
+        dm_name="`cat $sysfs_path/dm/name`"
+        dm_target="`dmsetup table "$dm_name" | cut -d ' ' -f 3`"
+        # This also ensures that the dm table have only single entry
+        test "$dm_target" = "crypt"
+        return $?
+    else
+        return 1
+    fi
+}
+
+
+root_name="$(getarg root)"
+if echo $root_name | grep -q = ; then
+    root_matches=`blkid -t $root_name | wc -l`
+    if [ $root_matches -gt 1 ]; then
+        die "AEM: multiple devices matching $root_name found, aborting!"
+    fi
+    root_dev=`blkid -o device -t $root_name`
+else
+    root_dev=$root_name
+fi
+
+root_devid=`ls -lL $root_dev|tr -s ' '|cut -f5,6 -d ' '| tr -d ' '| tr , :`
+
+if ! check_device /sys/dev/block/$root_devid; then
+    if [ -n "`ls -A /sys/dev/block/$root_devid/slaves`" ]; then
+        for slave in /sys/dev/block/$root_devid/slaves/*; do
+            if ! check_device $slave; then
+                die "AEM: (bogus?) root device found not encrypted!"
+            fi
+        done
+    else
+        die "AEM: (bogus?) root device found not encrypted!"
+    fi
+fi
+
+for lv in $(getarg rd.lvm.lv); do
+    if [ -e /dev/$lv ]; then
+        devid=`ls -lL /dev/$lv|tr -s ' '|cut -f5,6 -d ' '| tr -d ' '| tr , :`
+        for slave in /sys/dev/block/$devid/slaves/*; do
+            if ! check_device $slave; then
+                die "AEM: (bogus?) device /dev/$lv found not encrypted!"
+            fi
+        done
+    fi
+done
+
+exit 0

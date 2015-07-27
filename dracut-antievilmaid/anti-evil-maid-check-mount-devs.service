@@ -1,0 +1,15 @@
+[Unit]
+Description=Anti Evil Maid system mount dev check
+DefaultDependencies=no
+ConditionKernelCommandLine=rd.antievilmaid
+Before=initrd-root-fs.target sysroot.mount swap.target
+After=dracut-initqueue.service
+After=cryptsetup.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/sbin/anti-evil-maid-check-mount-devs
+StandardInput=null
+StandardOutput=journal+console
+StandardError=journal+console

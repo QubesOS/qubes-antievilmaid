@@ -31,16 +31,23 @@ cp -r 90anti-evil-maid $RPM_BUILD_ROOT/usr/lib/dracut/modules.d/
 mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/
 cp anti-evil-maid-console.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
 cp anti-evil-maid-plymouth.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
+cp anti-evil-maid-check-mount-devs.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
 
 mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.wants
 cd $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.wants
 ln -s ../anti-evil-maid-console.service .
 ln -s ../anti-evil-maid-plymouth.service .
 
+mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.requires
+cd $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.requires
+ln -s ../anti-evil-maid-check-mount-devs.service .
+
 %files
 /etc/dracut.conf.d/anti-evil-maid.conf
 /usr/lib/dracut/modules.d/90anti-evil-maid
 /usr/lib/systemd/system/anti-evil-maid-console.service
 /usr/lib/systemd/system/anti-evil-maid-plymouth.service
+/usr/lib/systemd/system/anti-evil-maid-check-mount-devs.service
 /usr/lib/systemd/system/initrd.target.wants/anti-evil-maid-console.service
 /usr/lib/systemd/system/initrd.target.wants/anti-evil-maid-plymouth.service
+/usr/lib/systemd/system/initrd.target.requires/anti-evil-maid-check-mount-devs.service
