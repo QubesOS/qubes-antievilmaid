@@ -1,9 +1,9 @@
 Intro
 ======
 
-Anti Evil Maid is an implementation of a TPM-based static and dynamic (Intel
-TXT) trusted boot for dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a
-primary goal to prevent Evil Maid attacks.
+Anti Evil Maid is an implementation of a TPM-based dynamic (Intel TXT) trusted
+boot for dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a primary goal
+to prevent Evil Maid attacks.
 
 For more information and discussion about potential attacks see:
 
@@ -91,8 +91,8 @@ be reasonably safe to do -- after all the file should not be processed by any
 software in Dom0, and only by the SENTER instruction of the processes, which,
 we hope, correctly verifies the signature before executing it...
 
-b) Find a USB stick, create a boot partition, set bootable flag, don't
-format with any fs. Use fdisk or parted.
+b) Find a USB stick, create a boot partition, don't format with any fs. Use
+fdisk or parted.
 
 NOTE: when using a GPT partition table (rather than msdos), then you should
 create an additional BIOS boot partition, where the rest of the GRUB code will
@@ -108,17 +108,16 @@ Available flags (multiple flags can be separated by spaces):
     password for the SRK key
  - rd.antievilmaid.png_secret: in case you plan to use a png sealed secret
  - rd.antievilmaid.dontforcestickremoval: in case if you don't want to remove
-    the AEM stick during system startup (it is generally bad idea to use this
-    flag, but can be useful in some unusual setups)
+    the AEM stick during system startup (this should generally only be used
+    for internal installations, i.e. not to a USB stick)
 
 d) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
 
 Ensure that none of your programs keep open files within /boot, as otherwise it won't be possible to smoothly unmount the /boot.
 
-E.g. assuming your stick is /dev/sdc, boot partition is the 1st one, and
-your existing boot files (images, grub conf) are available at /boot:
+E.g. assuming your stick's boot partition is /dev/sdc1:
 
-# /usr/lib/antievilmaid/antievilmaid_install /dev/sdc 1 /boot
+# /usr/lib/antievilmaid/antievilmaid_install /dev/sdc1
 
 DEPRECATED: ensure that your (previous) /boot partition is not in the
 /etc/fstab. This is especially important if you don't have /boot on your disk
@@ -199,5 +198,3 @@ Attacks prevented and not-prevented
 ====================================
 
 For a discussion of potential attacks against Anti Evil Maid, see the article referenced at the beginning.
-
-
