@@ -163,9 +163,9 @@ if removable || ! png; then
         for m in "${PLYMOUTH_MESSAGES[@]}"; do
             plymouth hide-message --text="$m"
         done
-    else
-        clear
     fi
+
+    clear
 fi
 
 rm -f "$UNSEALED_SECRET"
