@@ -1,11 +1,13 @@
 #!/bin/bash
-#
+set -e -o pipefail
+shopt -s expand_aliases nullglob
+
 # Anti Evil Maid for dracut by Invisible Things Lab
 # Copyright (C) 2010 Joanna Rutkowska <joanna@invisiblethingslab.com>
 #
 # Mount our device, read the sealed secret blobs, initialize TPM
 # and finally try to unseal the secrets and display them to the user
-#
+
 
 MNT=/anti-evil-maid
 UNSEALED_SECRET=/tmp/unsealed-secret
@@ -13,10 +15,6 @@ LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
 PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmaid_secret.png
 
-
-. /lib/dracut-lib.sh
-export PATH="/sbin:/usr/sbin:/bin:/usr/bin:$PATH"
-shopt -s expand_aliases nullglob
 
 PLYMOUTH_MESSAGES=()
 plymouth_message() {
@@ -43,7 +41,7 @@ LABEL=${DEV##*/}
 
 log "Mounting the $LABEL device..."
 mkdir "$MNT"
-mount "$DEV" "$MNT" || exit 1
+mount "$DEV" "$MNT"
 
 if anti-evil-maid-removable "$DEV" "$MNT"; then
     alias removable=true
@@ -65,18 +63,22 @@ tcsd
 
 # Extend PCR with LUKS header(s)
 
-getargs rd.luks.uuid -d rd_LUKS_UUID |
-grep -Eo '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}' |
+for param in $(cat /proc/cmdline); do
+    case "$param" in rd.luks.uuid=*|rd_LUKS_UUID=*)
+        param=${param##*=}
+        echo "${param##luks-}"
+    esac
+done |
 sort -u |
 while read luksid; do
     waitfor -b "/dev/disk/by-uuid/$luksid"
 
     cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \
-               --header-backup-file "$LUKS_HEADER_DUMP" || exit 1
+               --header-backup-file "$LUKS_HEADER_DUMP"
     luks_header_hash=$(sha1sum "$LUKS_HEADER_DUMP" | cut -f 1 -d ' ')
     rm -f "$LUKS_HEADER_DUMP"
     log "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
-    tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash" || exit 1
+    tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash"
 done
 
 
@@ -101,10 +103,11 @@ message "Attempting to unseal the secret from the TPM..."
 # dictionary attacks" when there's more than 1 try within a short time... -_-
 # (TCG 2 fixes that). TODO: just reset this "protection" with tpm_resetdalock
 
-${Z:+:} systemd-ask-password "Enter TPM SRK password" |
-tee "$SRK_PASSWORD_CACHE" |
-tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" &&
-rm "$SRK_PASSWORD_CACHE"
+if ${Z:+:} systemd-ask-password "Enter TPM SRK password" |
+   tee "$SRK_PASSWORD_CACHE" |
+   tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET"; then
+    rm "$SRK_PASSWORD_CACHE"
+fi
 
 log "Unmounting the $LABEL device..."
 umount "$MNT"
