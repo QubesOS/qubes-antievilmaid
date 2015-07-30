@@ -85,14 +85,8 @@ getargs rd.luks.uuid -d rd_LUKS_UUID |
 grep -Eo '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}' |
 sort -u |
 while read luksid; do
-    timeout=100
     while ! [ -b "/dev/disk/by-uuid/$luksid" ]; do
         sleep 0.1
-        timeout=$[ $timeout - 1 ]
-        if [ $timeout -le 0 ]; then
-            message "Timeout while waiting for device $luksid"
-            exit 1
-        fi
     done
 
     cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \
