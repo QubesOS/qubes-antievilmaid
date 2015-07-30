@@ -95,10 +95,11 @@ while read luksid; do
         fi
     done
 
-    cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" --header-backup-file "$LUKS_HEADER_DUMP" || exit 1
+    cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \
+               --header-backup-file "$LUKS_HEADER_DUMP" || exit 1
     luks_header_hash=$(sha1sum "$LUKS_HEADER_DUMP" | cut -f 1 -d ' ')
     rm -f "$LUKS_HEADER_DUMP"
-    info "Extending PCR $LUKS_PCR with value $luks_header_hash for device $luksid..."
+    info "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
     tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash" || exit 1
 done
 
@@ -133,7 +134,7 @@ if [ -f "$SEALED_SECRET" ] ; then
         $UNSEAL_CMD  # has its own prompt when needed ("Enter SRK password:")
     fi
 else
-    message "No data to unseal. Do not forget to generate a ${SEALED_SECRET##*/}"
+    message "No data to unseal. Don't forget to generate a ${SEALED_SECRET##*/}"
 fi
 
 info "Unmounting the $LABEL device..."
