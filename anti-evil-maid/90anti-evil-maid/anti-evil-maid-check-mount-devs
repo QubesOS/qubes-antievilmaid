@@ -31,7 +31,7 @@ else
     root_dev=$root_name
 fi
 
-root_devid=`ls -lL $root_dev|tr -s ' '|cut -f5,6 -d ' '| tr -d ' '| tr , :`
+root_devid=`lsblk -dn -o MAJ:MIN $root_dev`
 
 if ! check_device /sys/dev/block/$root_devid; then
     if [ -n "`ls -A /sys/dev/block/$root_devid/slaves`" ]; then
@@ -47,7 +47,7 @@ fi
 
 for lv in $(getarg rd.lvm.lv); do
     if [ -e /dev/$lv ]; then
-        devid=`ls -lL /dev/$lv|tr -s ' '|cut -f5,6 -d ' '| tr -d ' '| tr , :`
+        devid=`lsblk -dn -o MAJ:MIN /dev/$lv`
         for slave in /sys/dev/block/$devid/slaves/*; do
             if ! check_device $slave; then
                 die "AEM: (bogus?) device /dev/$lv found not encrypted!"
