@@ -110,14 +110,14 @@ Available flags (multiple flags can be separated by spaces):
     the AEM stick during system startup (it is generally bad idea to use this
     flag, but can be useful in some unusual setups)
 
-d) Install Anti Evil Maid on the stick. Use /usr/lib/antievilmaid/antievilmaid_install.
+d) Install Anti Evil Maid on the stick. Use antievilmaid_install.
 
 Ensure that none of your programs keep open files within /boot, as otherwise it won't be possible to smoothly unmount the /boot.
 
 E.g. assuming your stick is /dev/sdc, boot partition is the 1st one, and
 your existing boot files (images, grub conf) are available at /boot:
 
-# /usr/lib/antievilmaid/antievilmaid_install /dev/sdc 1 /boot
+# antievilmaid_install /dev/sdc 1 /boot
 
 DEPRECATED: ensure that your (previous) /boot partition is not in the
 /etc/fstab. This is especially important if you don't have /boot on your disk

@@ -17,14 +17,16 @@ Anti Evil Maid for initramfs-based systems.
 
 %install
 
-mkdir -p $RPM_BUILD_ROOT/usr/lib/antievilmaid/
-cp antievilmaid_install $RPM_BUILD_ROOT/usr/lib/antievilmaid/
-cp README $RPM_BUILD_ROOT/usr/lib/antievilmaid/
+mkdir -p $RPM_BUILD_ROOT/usr/sbin
+cp antievilmaid_install $RPM_BUILD_ROOT/usr/sbin
+
+mkdir -p $RPM_BUILD_ROOT/usr/share/doc/antievilmaid
+cp README $RPM_BUILD_ROOT/usr/share/doc/antievilmaid
 
 mkdir -p $RPM_BUILD_ROOT/etc/grub.d/
 cp 19_linux_xen_tboot $RPM_BUILD_ROOT/etc/grub.d/
 
 %files
-/usr/lib/antievilmaid/antievilmaid_install
-/usr/lib/antievilmaid/README
+/usr/sbin/antievilmaid_install
+/usr/share/doc/antievilmaid/README
 /etc/grub.d/19_linux_xen_tboot
