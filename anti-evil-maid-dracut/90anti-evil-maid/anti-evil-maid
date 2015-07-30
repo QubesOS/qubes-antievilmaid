@@ -7,25 +7,23 @@
 # and finally try to unseal the secrets and display them to the user
 #
 
-DEV=/dev/disk/by-label/antievilmaid
+DEV_PREFIX=/dev/disk/by-label/antievilmaid
 MNT=/antievilmaid
 TPM_DIR=/var/lib/tpm
 TPMS_DIR=${TPM_DIR}s
-SEALED_SECRET_TXT=$TPM_DIR/antievilmaid/secret.txt.sealed
-SEALED_SECRET_PNG=$TPM_DIR/antievilmaid/secret.png.sealed
 UNSEALED_SECRET=/tmp/unsealed-secret
 LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
 PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmaid_secret.png
 
 
-export PATH="/sbin:/usr/sbin:/bin:/usr/bin:$PATH"
 . /lib/dracut-lib.sh
+export PATH="/sbin:/usr/sbin:/bin:/usr/bin:$PATH"
+shopt -s expand_aliases nullglob
 
 
 # work with or without plymouth
 
-shopt -s expand_aliases
 PLYMOUTH_MESSAGES=()
 if plymouth --ping 2>/dev/null; then
     alias plymouth_active=true
@@ -47,12 +45,19 @@ if [ -d "$MNT" ] ; then
     exit 0
 fi
 
-info "Waiting for antievilmaid boot device to become available..."
-while ! [ -b "$DEV" ]; do
-    sleep 0.1
-done
+glob="$DEV_PREFIX*"
+DEV=($glob)  # nullglob is set
+if [ ${#DEV[@]} = 0 ]; then
+    info "Waiting for any Anti Evil Maid device to become available..."
+    while :; do
+        DEV=($glob)
+        ${DEV+break}
+        sleep 0.1
+    done
+fi
+LABEL=${DEV##*/}
 
-info "Mounting the antievilmaid boot device..."
+info "Mounting the $LABEL device..."
 mkdir "$MNT"
 mount "$DEV" "$MNT" || exit 1
 
@@ -91,12 +96,15 @@ done
 
 # unseal the secret and unmount the AEM device
 
-if plymouth_active && [ -e "$SEALED_SECRET_PNG" ]; then
+sealed_secret_txt=$TPM_DIR/$LABEL/secret.txt.sealed
+sealed_secret_png=$TPM_DIR/$LABEL/secret.png.sealed
+
+if plymouth_active && [ -e "$sealed_secret_png" ]; then
     alias png=true
-    SEALED_SECRET=$SEALED_SECRET_PNG
+    SEALED_SECRET=$sealed_secret_png
 else
     alias png=false
-    SEALED_SECRET=$SEALED_SECRET_TXT
+    SEALED_SECRET=$sealed_secret_txt
 fi
 
 if [ -f "$SEALED_SECRET" ] ; then
@@ -123,7 +131,7 @@ else
     message "No data to unseal. Do not forget to generate a ${SEALED_SECRET##*/}"
 fi
 
-info "Unmounting the antievilmaid device..."
+info "Unmounting the $LABEL device..."
 umount "$MNT"
 
 
