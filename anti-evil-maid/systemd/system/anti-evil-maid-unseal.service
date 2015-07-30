@@ -1,0 +1,15 @@
+[Unit]
+Description=Anti Evil Maid unsealing
+DefaultDependencies=no
+Wants=cryptsetup-pre.target
+Before=cryptsetup-pre.target
+After=plymouth-start.service
+ConditionKernelCommandLine=rd.antievilmaid
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/sbin/anti-evil-maid-unseal
+StandardInput=null
+StandardOutput=tty
+StandardError=journal+console

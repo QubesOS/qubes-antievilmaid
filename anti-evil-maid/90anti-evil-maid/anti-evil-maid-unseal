@@ -28,11 +28,6 @@ plymouth_message() {
 
 # mount the AEM device
 
-if [ -d "$MNT" ] ; then
-    log "$MNT already exists, skipping..."
-    exit 0
-fi
-
 glob="/dev/disk/by-label/$LABEL_PREFIX*"
 DEV=($glob)  # nullglob is set
 if [ ${#DEV[@]} = 0 ]; then
@@ -102,17 +97,11 @@ if [ -f "$SEALED_SECRET" ] ; then
 
     message "Attempting to unseal the secret from the TPM..."
 
-    UNSEAL_CMD="tpm_unsealdata $Z -i $SEALED_SECRET -o $UNSEALED_SECRET"
     # we try only once as some TCG 1.2 TPMs start "protecting themselves against
     # dictionary attacks" when there's more than 1 try within a short time... -_-
     # (TCG 2 fixes that):
-    if plymouth_active && [ -z "$Z" ]; then
-        plymouth ask-for-password --command="$UNSEAL_CMD" \
-                                  --prompt="TPM SRK unseal password" \
-                                  --number-of-tries=1
-    else
-        $UNSEAL_CMD  # has its own prompt when needed ("Enter SRK password:")
-    fi
+    ${Z:+:} systemd-ask-password "Enter TPM SRK password" |
+    tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET"
 else
     message "No data to unseal. Don't forget to generate a ${SEALED_SECRET##*/}"
 fi
@@ -131,9 +120,11 @@ if png; then
 
     WHERE="next to the prompt for it"
 else
-    message ""
-    message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
-    message ""
+    {
+        message ""
+        message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
+        message ""
+    } 2>&1  # don't put the secret into the journal
 
     WHERE="above"
 fi
@@ -146,11 +137,12 @@ if removable; then
     waitfor ! -b "$DEV"
 else
     if ! png; then
-        message "Press <ENTER> to continue..."
+        msg="Press <ENTER> to continue..."
         if plymouth_active; then
+            message "$msg"
             plymouth watch-keystroke --keys=$'\n'
         else
-            read ignored
+            systemd-ask-password "$msg" >/dev/null
         fi
     fi
 fi

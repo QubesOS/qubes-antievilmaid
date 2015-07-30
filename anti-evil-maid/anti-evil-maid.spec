@@ -7,7 +7,7 @@ Name:		%{name}
 Version:	%{version}
 Release:	1%{?dist}
 Summary:    	Anti Evil Maid for initramfs-based systems.
-Requires:	dracut parted tboot tpm-tools tpm-extra trousers-changer
+Requires:	dracut parted tboot tpm-tools tpm-extra trousers-changer systemd >= 208-19
 Obsoletes:	anti-evil-maid-dracut
 Vendor:		Invisible Things Lab
 License:	GPL
@@ -42,19 +42,8 @@ cp -r dracut.conf.d $RPM_BUILD_ROOT/etc
 mkdir -p $RPM_BUILD_ROOT/usr/lib/dracut/modules.d
 cp -r 90anti-evil-maid $RPM_BUILD_ROOT/usr/lib/dracut/modules.d/
 
-mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/
-cp anti-evil-maid-console.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
-cp anti-evil-maid-plymouth.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
-cp anti-evil-maid-check-mount-devs.service $RPM_BUILD_ROOT/usr/lib/systemd/system/
-
-mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.wants
-cd $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.wants
-ln -s ../anti-evil-maid-console.service .
-ln -s ../anti-evil-maid-plymouth.service .
-
-mkdir -p $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.requires
-cd $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.requires
-ln -s ../anti-evil-maid-check-mount-devs.service .
+mkdir -p $RPM_BUILD_ROOT/usr/lib
+cp -r systemd $RPM_BUILD_ROOT/usr/lib
 
 %files
 /usr/sbin/antievilmaid_boilerplate
@@ -69,9 +58,7 @@ ln -s ../anti-evil-maid-check-mount-devs.service .
 
 /etc/dracut.conf.d/anti-evil-maid.conf
 /usr/lib/dracut/modules.d/90anti-evil-maid
-/usr/lib/systemd/system/anti-evil-maid-console.service
-/usr/lib/systemd/system/anti-evil-maid-plymouth.service
+/usr/lib/systemd/system/anti-evil-maid-unseal.service
 /usr/lib/systemd/system/anti-evil-maid-check-mount-devs.service
-/usr/lib/systemd/system/initrd.target.wants/anti-evil-maid-console.service
-/usr/lib/systemd/system/initrd.target.wants/anti-evil-maid-plymouth.service
+/usr/lib/systemd/system/initrd.target.wants/anti-evil-maid-unseal.service
 /usr/lib/systemd/system/initrd.target.requires/anti-evil-maid-check-mount-devs.service

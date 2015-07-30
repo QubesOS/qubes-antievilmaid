@@ -14,8 +14,10 @@ installkernel() {
 }
 
 install() {
-    inst_script "$moddir"/anti-evil-maid /sbin/anti-evil-maid
+    inst_script "$moddir"/anti-evil-maid-unseal /sbin/anti-evil-maid-unseal
     inst_script "$moddir"/anti-evil-maid-check-mount-devs /sbin/anti-evil-maid-check-mount-devs
+
+    inst $systemdsystemunitdir/cryptsetup-pre.target
 
     dracut_install \
         /usr/sbin/antievilmaid_boilerplate \
@@ -46,11 +48,9 @@ install() {
         xargs
 
     dracut_install \
-        $systemdsystemunitdir/anti-evil-maid-console.service \
-        $systemdsystemunitdir/anti-evil-maid-plymouth.service \
+        $systemdsystemunitdir/anti-evil-maid-unseal.service \
         $systemdsystemunitdir/anti-evil-maid-check-mount-devs.service \
-        $systemdsystemunitdir/initrd.target.wants/anti-evil-maid-console.service \
-        $systemdsystemunitdir/initrd.target.wants/anti-evil-maid-plymouth.service \
+        $systemdsystemunitdir/initrd.target.wants/anti-evil-maid-unseal.service \
         $systemdsystemunitdir/initrd.target.requires/anti-evil-maid-check-mount-devs.service
 
     # all this crap below is needed for tcsd to start properly...
