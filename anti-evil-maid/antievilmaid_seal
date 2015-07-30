@@ -3,6 +3,7 @@
 alias plymouth_message="plymouth message --text"
 . antievilmaid_boilerplate
 
+trap "rm -f $SRK_PASSWORD_CACHE" EXIT
 IDS=$(ls "${TPMS_DIR}")
 LABELS=$(ls "${AEM_DIR}")
 
@@ -25,7 +26,8 @@ for label in $LABELS; do
 
         if [ ! -e "$input" ]; then
             message "Absent $input"
-        elif tpm_sealdata $Z $SEAL -i "$input" -o "$output"; then
+        elif cat "$SRK_PASSWORD_CACHE" 2>/dev/null |  # ignored in a tty
+             tpm_sealdata $Z $SEAL -i "$input" -o "$output"; then
             sealed=$(($sealed + 1))
             message "Sealed $input using $SEAL"
         else

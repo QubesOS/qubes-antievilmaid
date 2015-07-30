@@ -65,13 +65,7 @@ NOTE: if your tpm has already been owned in the past, you can reset it by runnin
 
 4) Setup Anti Evil Maid
 
-a) Anti Evil Maid packages:
-
-You should have installed the following packages to perform the setup:
-- anti-evil-maid-dracut
-- anti-evil-maid
-
-b) SINIT module
+a) SINIT module
 
 You should download the SINIT module required for your system.
 
@@ -108,40 +102,15 @@ your existing boot files (images, grub conf) are available at /boot:
 
 # antievilmaid_install /dev/sdc 1 /boot
 
-DEPRECATED: ensure that your (previous) /boot partition is not in the
-/etc/fstab. This is especially important if you don't have /boot on your disk
-(so you installed /boot on some removable disk right from the beginning, which
-is a good idea, BTW). In case you forgot to remove /boot entry from /etc/fstab,
-then your system boot will fail because antievilmaid requires you to remove the
-booting stick before proceeding with further boot, as a special security
-precaution, see:
-
-https://github.com/QubesOS/qubes-antievilmaid/commit/5e8e879bfbe394a696b07479ae731422f553e28e
-
-NOTE: it might still beneficial to remove one's original (stored on local
-harddisk) /boot partition from the fstab. This way whenever one upgrades the
+NOTE: it might be beneficial to remove one's original (stored on local
+harddisk) /boot partition from /etc/fstab. This way whenever one upgrades the
 system (dom0 in case of Qubes OS), and the update process tries to modify files
 in the /boot, an error will occur, reminding the user that the AEM stick should
 be inserted and mounted as /boot for the update. Otherwise the user should
 manually resync the local /boot content (e.g. new kernel and xen images) with
 the AEM /boot.
 
-e) Reboot the system from the stick, choose one of the entries called Qubes OS AEM boot...
-
-f) If a chunk of your installed RAM seems to be missing after the reboot (which can be
-checked by running "xl info" in dom0), add the following line to /etc/default/grub --
-
-export GRUB_CMDLINE_TBOOT="min_ram=0x2000000"
-
--- and execute the previous two steps again. A discussion of this problem can be found at
-http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611 and by searching
-for "min_ram" in the qubes mailing lists.
-
-5) Seal your secret text or image
-
-a) Start the tcsd daemon again (see 2.b).
-
-b) Create a secret text:
+e) Create a secret text:
 
 # cat >/var/lib/antievilmaid/antievilmaid/secret.txt <<END
 My secret text
@@ -152,32 +121,51 @@ Or, if you prefer, a secret PNG image:
 
 # cp my-secret-image.png /var/lib/antievilmaid/antievilmaid/secret.png
 
-Finally, do the sealing:
+5) Reboot the system from the stick, choose one of the entries called
+"AEM Qubes"...
 
-# antievilmaid_seal
+a) Enter your SRK password if prompted in case you have set one in step
+3. You won't see your secret afterwards, because it hasn't been sealed
+yet. Enter your disk decryption passphrase anyway, right now you still
+trust your system.
 
-Note:
-The PCRs used to seal to can be changed in /etc/antievilmaid.conf -- though
-the defaults should work just fine.
+As the system continues booting, AEM will automatically seal your
+secret(s). You should see a line, or multiple lines, like this one:
 
-c) Reboot your system.
+Sealed /var/lib/antievilmaid/antievilmaid/secret.txt using
+ --pcr 13 --pcr 17 --pcr 18 --pcr 19
 
-Now, every time you boot your system (from your Anti Evil Maid stick)
+Debug output can be read using:
+
+journalctl -u anti-evil-maid-unseal -u anti-evil-maid-seal
+
+Note: The PCRs used to seal to can be changed in /etc/antievilmaid.conf
+-- though the defaults should work just fine. If you decide to change
+them and you want to reseal immediately, run antievilmaid_seal manually
+once.
+
+b) If a chunk of your installed RAM seems to be missing after the reboot
+(which can be checked by running "xl info" in dom0), add the following
+line to /etc/default/grub --
+
+export GRUB_CMDLINE_TBOOT="min_ram=0x2000000"
+
+-- rerun antievilmaid_install, and go to step 5.a again. A discussion of
+this problem can be found at
+http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611
+and by searching for "min_ram" in the qubes mailing lists.
+
+c) Now, every time you boot your system (from your Anti Evil Maid stick)
 you should see your secret text/image displayed *before* you enter your
 LUKS disk encryption passphrase.
 
-System and kernel upgrades
-===========================
-
-1) Kernel upgrade
+Xen/kernel/BIOS/firmware upgrades
+==================================
 
 When performing a xen or kernel upgrade you should ensure that your Anti Evil Maid stick is mounted at /boot. This way the new kernel post install script should automatically add kernel and initramfs to your stick and update grub2/grub.cfg correctly.
 
-After xen or kernel upgrade you would need to boot the new kernel and reseal secrets to the new PCR values (PCR17, 18 or 19 would now be different obviously) as it is explained in point 5 above.
+After Xen, kernel, BIOS, or firmware upgrades, you will need to reboot and enter your disk decryption passphrase even though you can't see your secret. It will be resealed again automatically later in the boot process (see step 5.a).
 
-2) BIOS/firmware upgrade
-
-If you updated your BIOS or Option ROM firmware, you would need to reseal secrets to new PCR values (PCRs 0-4 would change). Again, this requires that you boot from the stick after the upgrade and reseal the secret like it was explained in point 5 above.
 
 Attacks prevented and not-prevented
 ====================================

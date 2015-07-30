@@ -37,6 +37,7 @@ install() {
         tail \
         tcsd \
         tcsd_changer_identify \
+        tee \
         tpm_getpubek \
         tpm_id \
         tpm_pcr_extend \

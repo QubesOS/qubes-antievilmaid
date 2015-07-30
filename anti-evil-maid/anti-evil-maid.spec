@@ -51,6 +51,9 @@ cp -r systemd $RPM_BUILD_ROOT/usr/lib
 /usr/sbin/antievilmaid_removable
 /usr/sbin/antievilmaid_seal
 /usr/share/doc/antievilmaid/README
+/usr/lib/systemd/system/anti-evil-maid-seal.service
+/usr/lib/systemd/system/tcsd.service.d/antievilmaid_seal.conf
+/usr/lib/systemd/system/sysinit.target.wants/anti-evil-maid-seal.service
 /etc/antievilmaid.conf
 /etc/grub.d/19_linux_xen_tboot
 %dir /mnt/antievilmaid

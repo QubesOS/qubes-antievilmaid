@@ -1,0 +1,17 @@
+[Unit]
+Description=Anti Evil Maid sealing
+DefaultDependencies=false
+Requires=systemd-remount-fs.service tcsd.service
+After=systemd-remount-fs.service tcsd.service plymouth-start.service
+Before=sysinit.target
+ConditionKernelCommandLine=rd.antievilmaid
+ConditionPathExists=/run/antievilmaid_seal
+
+[Service]
+ExecStart=/usr/sbin/antievilmaid_seal
+Type=oneshot
+StandardOutput=journal+console
+StandardError=inherit
+
+[Install]
+WantedBy=sysinit.target
