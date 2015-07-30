@@ -23,9 +23,8 @@ inst_script "$moddir"/anti-evil-maid /sbin/anti-evil-maid
 inst_script "$moddir"/anti-evil-maid-check-mount-devs /sbin/anti-evil-maid-check-mount-devs
 
 # TPM software stack
-dracut_install -o \
+dracut_install \
 tpm_unsealdata \
-tpm_version \
 tpm_pcr_extend \
 sha1sum \
 cut \
@@ -35,10 +34,9 @@ tcsd \
 file \
 clear \
 /usr/share/misc/magic \
-grep \
-basename
+grep
 
-dracut_install -o \
+dracut_install \
 $systemdsystemunitdir/anti-evil-maid-console.service \
 $systemdsystemunitdir/anti-evil-maid-plymouth.service \
 $systemdsystemunitdir/anti-evil-maid-check-mount-devs.service \
@@ -47,7 +45,7 @@ $systemdsystemunitdir/initrd.target.wants/anti-evil-maid-console.service \
 $systemdsystemunitdir/initrd.target.wants/anti-evil-maid-plymouth.service
 
 # all this crap below is needed for tcsd to start properly...
-dracut_install -o ip
+dracut_install ip
 inst_simple "$moddir"/hosts /etc/hosts
 inst_simple "$moddir"/passwd /etc/passwd
 inst_simple "$moddir"/shadow /etc/shadow
