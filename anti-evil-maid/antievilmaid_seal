@@ -104,25 +104,23 @@ for label in $LABELS; do
             cp -r "$TPMS_DIR/$id/system.data" "$TPMS_DIR/$id/$label" \
                   "$mnt_tpms_dir/$id"
         done
-
-
-        # unmount device
-
-        if [ -z "$cur_mnt" ]; then
-            umount "$mnt"
-        fi
     fi
 
 
-    # wait for device removal
+    # unmount device
 
-    if [ -z "$cur_mnt" ] &&
-       ! haveparam rd.antievilmaid.dontforcestickremoval; then
-        plymouth pause-progress
-        message "Remove the $label device to continue..."
-        while [ -b "$dev" ]; do
-            sleep 0.1
-        done
-        plymouth unpause-progress
+    if [ -z "$cur_mnt" ]; then
+        if antievilmaid_removable "$dev" "$mnt"; then
+            umount "$mnt"
+
+            plymouth pause-progress
+            message "Remove the $label device to continue..."
+            while [ -b "$dev" ]; do
+                sleep 0.1
+            done
+            plymouth unpause-progress
+        else
+            umount "$mnt"
+        fi
     fi
 done

@@ -38,7 +38,7 @@ else
 fi
 
 
-# mount the AEM device and setup TPM
+# mount the AEM device
 
 if [ -d "$MNT" ] ; then
     info "$MNT already exists, skipping..."
@@ -60,6 +60,15 @@ LABEL=${DEV##*/}
 info "Mounting the $LABEL device..."
 mkdir "$MNT"
 mount "$DEV" "$MNT" || exit 1
+
+if antievilmaid_removable "$DEV" "$MNT"; then
+    alias removable=true
+else
+    alias removable=false
+fi
+
+
+# setup TPM
 
 info "Initializing TPM..."
 modprobe tpm_tis
@@ -157,7 +166,12 @@ message "Never type in your disk password unless the secret $WHERE is correct!"
 # pause
 
 plymouth pause-progress
-if getarg rd.antievilmaid.dontforcestickremoval; then
+if removable; then
+    message "Remove your Anti Evil Maid stick to continue..."
+    while [ -b "$DEV" ]; do
+        sleep 0.1
+    done
+else
     if ! png; then
         message "Press <ENTER> to continue..."
         if plymouth_active; then
@@ -166,18 +180,13 @@ if getarg rd.antievilmaid.dontforcestickremoval; then
             read ignored
         fi
     fi
-else
-    message "Remove your Anti Evil Maid stick to continue..."
-    while [ -b "$DEV" ]; do
-        sleep 0.1
-    done
 fi
 plymouth unpause-progress
 
 
 # hide the secret
 
-if ! getarg rd.antievilmaid.dontforcestickremoval || ! png; then
+if removable || ! png; then
     if plymouth_active; then
         for m in "${PLYMOUTH_MESSAGES[@]}"; do
             plymouth hide-message --text="$m"

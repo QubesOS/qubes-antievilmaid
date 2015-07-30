@@ -18,6 +18,7 @@ install() {
     inst_script "$moddir"/anti-evil-maid-check-mount-devs /sbin/anti-evil-maid-check-mount-devs
 
     dracut_install \
+        antievilmaid_removable \
         clear \
         cut \
         file \
@@ -25,10 +26,12 @@ install() {
         grep \
         install \
         killall \
+        lsblk \
         printf \
         sha1sum \
         sha256sum \
         sort \
+        tail \
         tcsd \
         tcsd_changer_identify \
         tpm_getpubek \

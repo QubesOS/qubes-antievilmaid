@@ -106,9 +106,6 @@ export GRUB_CMDLINE_AEM_FLAGS="flags"
 Available flags (multiple flags can be separated by spaces):
  - rd.antievilmaid.asksrkpass: in case you decided to use a non-default
     password for the SRK key
- - rd.antievilmaid.dontforcestickremoval: in case if you don't want to remove
-    the AEM stick during system startup (it is generally bad idea to use this
-    flag, but can be useful in some unusual setups)
 
 d) Install Anti Evil Maid on the stick. Use antievilmaid_install.
 
