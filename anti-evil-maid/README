@@ -106,7 +106,6 @@ export GRUB_CMDLINE_AEM_FLAGS="flags"
 Available flags (multiple flags can be separated by spaces):
  - rd.antievilmaid.asksrkpass: in case you decided to use a non-default
     password for the SRK key
- - rd.antievilmaid.png_secret: in case you plan to use a png sealed secret
  - rd.antievilmaid.dontforcestickremoval: in case if you don't want to remove
     the AEM stick during system startup (it is generally bad idea to use this
     flag, but can be useful in some unusual setups)
@@ -157,7 +156,7 @@ a) Mount the stick again:
 
 b) Start the tcsd daemon again (see 2.b). Then seal your secret passphrase to the TPM to select PCR registers, e.g.:
 
-# tpm_sealdata -z -o /var/lib/tpm/antievilmaid/sealed_secret.blob --pcr 13 --pcr 17 --pcr 18 --pcr 19
+# tpm_sealdata -z -o /var/lib/tpm/antievilmaid/secret.txt.sealed --pcr 13 --pcr 17 --pcr 18 --pcr 19
 My secret passphrase<ENTER>
 <CTRL+d> (twice if needed)
 rm -rf /mnt/antievilmaid/antievilmaid/tpms
@@ -165,7 +164,7 @@ cp -r /var/lib/tpms /mnt/antievilmaid/antievilmaid
 
 Notes:
 Leave out the '-z' argument again if you used an SRK password in step 3.
-Add '< my-secret-image.png' at the end of the tpm_sealdata command above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passphrase prompt.
+If you want to use a png file as a secret, then use '-o /var/lib/tpm/antievilmaid/secret.png.sealed' instead in the tpm_sealdata command above, and add '< my-secret-image.png' at the end of it. The png file will be displayed as an icon next to the passphrase prompt.
 
 TCG spec defines the following PCRs that you might want to seal to:
 

@@ -11,7 +11,8 @@ DEV=/dev/disk/by-label/antievilmaid
 MNT=/antievilmaid
 TPM_DIR=/var/lib/tpm
 TPMS_DIR=${TPM_DIR}s
-SEALED_SECRET=$TPM_DIR/antievilmaid/sealed_secret.blob
+SEALED_SECRET_TXT=$TPM_DIR/antievilmaid/secret.txt.sealed
+SEALED_SECRET_PNG=$TPM_DIR/antievilmaid/secret.png.sealed
 UNSEALED_SECRET=/tmp/unsealed-secret
 LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
@@ -87,7 +88,16 @@ while read luksid; do
     tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash" || exit 1
 done
 
+
 # unseal the secret and unmount the AEM device
+
+if plymouth_active && [ -e "$SEALED_SECRET_PNG" ]; then
+    alias png=true
+    SEALED_SECRET=$SEALED_SECRET_PNG
+else
+    alias png=false
+    SEALED_SECRET=$SEALED_SECRET_TXT
+fi
 
 if [ -f "$SEALED_SECRET" ] ; then
     TPM_ARGS="-o $UNSEALED_SECRET"
@@ -119,7 +129,7 @@ umount "$MNT"
 
 # display the secret in the next (.png) or the current dialog (.txt)
 
-if getarg rd.antievilmaid.png_secret; then
+if png; then
     # Verify if the unsealed PNG secret seems valid and replace the lock icon
     if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
         cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
@@ -140,7 +150,7 @@ message "Never type in your disk password unless the secret $WHERE is correct!"
 
 plymouth pause-progress
 if getarg rd.antievilmaid.dontforcestickremoval; then
-    if ! getarg rd.antievilmaid.png_secret; then
+    if ! png; then
         message "Press <ENTER> to continue..."
         if plymouth_active; then
             plymouth watch-keystroke --keys=$'\n'
@@ -159,7 +169,7 @@ plymouth unpause-progress
 
 # hide the secret
 
-if ! getarg rd.antievilmaid.dontforcestickremoval || ! getarg rd.antievilmaid.png_secret; then
+if ! getarg rd.antievilmaid.dontforcestickremoval || ! png; then
     if plymouth_active; then
         for m in "${PLYMOUTH_MESSAGES[@]}"; do
             plymouth hide-message --text="$m"
