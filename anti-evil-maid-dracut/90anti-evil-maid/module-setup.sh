@@ -17,19 +17,26 @@ install() {
     inst_script "$moddir"/anti-evil-maid /sbin/anti-evil-maid
     inst_script "$moddir"/anti-evil-maid-check-mount-devs /sbin/anti-evil-maid-check-mount-devs
 
-    # TPM software stack
     dracut_install \
         clear \
         cut \
         file \
         /usr/share/misc/magic \
         grep \
+        install \
+        killall \
+        printf \
         sha1sum \
+        sha256sum \
         sort \
         tcsd \
+        tcsd_changer_identify \
+        tpm_getpubek \
+        tpm_id \
         tpm_pcr_extend \
         tpm_unsealdata \
-        wc
+        wc \
+        xargs
 
     dracut_install \
         $systemdsystemunitdir/anti-evil-maid-console.service \
@@ -44,4 +51,5 @@ install() {
     inst_simple "$moddir"/hosts /etc/hosts
     inst_simple "$moddir"/passwd /etc/passwd
     inst_simple "$moddir"/shadow /etc/shadow
+    inst_simple "$moddir"/shadow /etc/group
 }

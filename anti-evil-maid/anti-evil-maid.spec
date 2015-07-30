@@ -7,7 +7,7 @@ Name:		%{name}
 Version:	%{version}
 Release:	1%{?dist}
 Summary:    	Anti Evil Maid for initramfs-based systems.
-Requires:	anti-evil-maid-dracut parted tboot trousers tpm-tools
+Requires:	anti-evil-maid-dracut parted tboot trousers-changer tpm-tools
 Vendor:		Invisible Things Lab
 License:	GPL
 URL:		http://www.qubes-os.org

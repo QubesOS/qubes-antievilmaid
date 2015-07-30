@@ -157,13 +157,15 @@ a) Mount the stick again:
 
 b) Start the tcsd daemon again (see 2.b). Then seal your secret passphrase to the TPM to select PCR registers, e.g.:
 
-# tpm_sealdata -z -o /mnt/antievilmaid/antievilmaid/sealed_secret.blob --pcr 13 --pcr 17 --pcr 18 --pcr 19
+# tpm_sealdata -z -o /var/lib/tpm/antievilmaid/sealed_secret.blob --pcr 13 --pcr 17 --pcr 18 --pcr 19
 My secret passphrase<ENTER>
 <CTRL+d> (twice if needed)
+rm -rf /mnt/antievilmaid/antievilmaid/tpms
+cp -r /var/lib/tpms /mnt/antievilmaid/antievilmaid
 
 Notes:
 Leave out the '-z' argument again if you used an SRK password in step 3.
-Add '< my-secret-image.png' at the end of the command above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passphrase prompt.
+Add '< my-secret-image.png' at the end of the tpm_sealdata command above if you want to use a png file as a secret (i.e. if you passed "rd.antievilmaid.png_secret" to kernel). The png file will be displayed as an icon next to the passphrase prompt.
 
 TCG spec defines the following PCRs that you might want to seal to:
 

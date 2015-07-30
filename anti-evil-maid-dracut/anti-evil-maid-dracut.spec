@@ -7,7 +7,7 @@ Name:		%{name}
 Version:	%{version}
 Release:	1%{?dist}
 Summary:    	Dracut module and conf file to enable Anti Evil Maid support.
-Requires:	dracut trousers tpm-tools tpm-extra
+Requires:	dracut trousers-changer tpm-tools tpm-extra
 
 Vendor:		Invisible Things Lab
 License:	GPL

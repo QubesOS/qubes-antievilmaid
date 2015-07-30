@@ -10,8 +10,8 @@
 DEV=/dev/disk/by-label/antievilmaid
 MNT=/antievilmaid
 TPM_DIR=/var/lib/tpm
-SYSTEM_PS=$MNT/antievilmaid/system.data
-SEALED_SECRET=$MNT/antievilmaid/sealed_secret.blob
+TPMS_DIR=${TPM_DIR}s
+SEALED_SECRET=$TPM_DIR/antievilmaid/sealed_secret.blob
 UNSEALED_SECRET=/tmp/unsealed-secret
 LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
@@ -58,8 +58,9 @@ mount "$DEV" "$MNT" || exit 1
 info "Initializing TPM..."
 modprobe tpm_tis
 ip link set dev lo up
-mkdir -p "$TPM_DIR"
-cp "$SYSTEM_PS" "$TPM_DIR" || exit 1
+mkdir -p "${TPMS_DIR%/*}"
+cp -r "$MNT/antievilmaid/${TPMS_DIR##*/}" "${TPMS_DIR}"
+tcsd_changer_identify
 tcsd
 
 
