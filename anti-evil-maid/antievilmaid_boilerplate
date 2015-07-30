@@ -1,0 +1,41 @@
+LABEL_PREFIX=antievilmaid
+AEM_DIR=/var/lib/antievilmaid
+TPM_DIR=/var/lib/tpm
+TPMS_DIR=${TPM_DIR}s
+
+
+# work with or without plymouth
+
+if command plymouth --ping 2>/dev/null; then
+    alias plymouth_active=true
+    alias message=plymouth_message
+else
+    alias plymouth=:
+    alias plymouth_active=false
+    alias message=log
+fi
+
+
+log() {
+    echo "${0##*/}: $1" >&2
+}
+
+waitfor() {
+    case $# in
+        2) file=$2; what=connected ;;
+        3) file=$3; what=removed ;;
+        *) return 1 ;;
+    esac
+
+    if [ "$@" ]; then
+        return
+    fi
+
+    message "Waiting for $file to be $what..."
+    plymouth pause-progress
+    until [ "$@" ]; do
+        sleep 0.1
+    done
+    plymouth unpause-progress
+    message "$file $what"
+}

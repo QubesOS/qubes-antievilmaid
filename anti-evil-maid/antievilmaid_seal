@@ -1,27 +1,10 @@
 #!/bin/sh -e
 
-AEM_DIR=/var/lib/antievilmaid
-TPM_DIR=/var/lib/tpm
-TPMS_DIR=${TPM_DIR}s
+alias plymouth_message="plymouth message --text"
+. antievilmaid_boilerplate
+
 IDS=$(ls "${TPMS_DIR}")
 LABELS=$(ls "${AEM_DIR}")
-
-
-log() {
-    echo "${0##*/}: $1" >&2
-}
-
-
-# work with or without plymouth
-
-if plymouth --ping 2>/dev/null; then
-    alias plymouth_active=true
-    alias message="plymouth message --text"
-else
-    alias plymouth=:
-    alias plymouth_active=false
-    alias message=log
-fi
 
 
 # get tpm_sealdata arguments
@@ -67,12 +50,7 @@ for label in $LABELS; do
     if [ $sealed -gt 0 ]; then
         # mount device
 
-        plymouth pause-progress
-        message "Waiting for device $label to become available..."
-        while [ ! -b "$dev" ]; do
-            sleep 0.1
-        done
-        plymouth unpause-progress
+        waitfor -b "$dev"
 
         if [ -z "$cur_mnt" ]; then
             mkdir -p "$mnt"
@@ -102,13 +80,7 @@ for label in $LABELS; do
     if [ -z "$cur_mnt" ]; then
         if antievilmaid_removable "$dev" "$mnt"; then
             umount "$mnt"
-
-            plymouth pause-progress
-            message "Remove the $label device to continue..."
-            while [ -b "$dev" ]; do
-                sleep 0.1
-            done
-            plymouth unpause-progress
+            waitfor ! -b "$dev"
         else
             umount "$mnt"
         fi

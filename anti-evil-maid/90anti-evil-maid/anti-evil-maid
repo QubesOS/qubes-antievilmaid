@@ -7,10 +7,7 @@
 # and finally try to unseal the secrets and display them to the user
 #
 
-DEV_PREFIX=/dev/disk/by-label/antievilmaid
 MNT=/antievilmaid
-TPM_DIR=/var/lib/tpm
-TPMS_DIR=${TPM_DIR}s
 UNSEALED_SECRET=/tmp/unsealed-secret
 LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
@@ -21,34 +18,25 @@ PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmai
 export PATH="/sbin:/usr/sbin:/bin:/usr/bin:$PATH"
 shopt -s expand_aliases nullglob
 
-
-# work with or without plymouth
-
 PLYMOUTH_MESSAGES=()
-if plymouth --ping 2>/dev/null; then
-    alias plymouth_active=true
-    function message() {
+plymouth_message() {
         plymouth message --text="$*"
         PLYMOUTH_MESSAGES+=("$*")
-    }
-else
-    alias plymouth=:
-    alias plymouth_active=false
-    alias message=echo
-fi
+}
+. antievilmaid_boilerplate
 
 
 # mount the AEM device
 
 if [ -d "$MNT" ] ; then
-    info "$MNT already exists, skipping..."
+    log "$MNT already exists, skipping..."
     exit 0
 fi
 
-glob="$DEV_PREFIX*"
+glob="/dev/disk/by-label/$LABEL_PREFIX*"
 DEV=($glob)  # nullglob is set
 if [ ${#DEV[@]} = 0 ]; then
-    info "Waiting for any Anti Evil Maid device to become available..."
+    message "Waiting for any Anti Evil Maid device to become available..."
     while :; do
         DEV=($glob)
         ${DEV+break}
@@ -57,7 +45,7 @@ if [ ${#DEV[@]} = 0 ]; then
 fi
 LABEL=${DEV##*/}
 
-info "Mounting the $LABEL device..."
+log "Mounting the $LABEL device..."
 mkdir "$MNT"
 mount "$DEV" "$MNT" || exit 1
 
@@ -70,7 +58,7 @@ fi
 
 # setup TPM
 
-info "Initializing TPM..."
+log "Initializing TPM..."
 modprobe tpm_tis
 ip link set dev lo up
 mkdir -p "${TPMS_DIR%/*}"
@@ -85,15 +73,13 @@ getargs rd.luks.uuid -d rd_LUKS_UUID |
 grep -Eo '[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}' |
 sort -u |
 while read luksid; do
-    while ! [ -b "/dev/disk/by-uuid/$luksid" ]; do
-        sleep 0.1
-    done
+    waitfor -b "/dev/disk/by-uuid/$luksid"
 
     cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \
                --header-backup-file "$LUKS_HEADER_DUMP" || exit 1
     luks_header_hash=$(sha1sum "$LUKS_HEADER_DUMP" | cut -f 1 -d ' ')
     rm -f "$LUKS_HEADER_DUMP"
-    info "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
+    log "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
     tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash" || exit 1
 done
 
@@ -131,7 +117,7 @@ else
     message "No data to unseal. Don't forget to generate a ${SEALED_SECRET##*/}"
 fi
 
-info "Unmounting the $LABEL device..."
+log "Unmounting the $LABEL device..."
 umount "$MNT"
 
 
@@ -156,12 +142,8 @@ message "Never type in your disk password unless the secret $WHERE is correct!"
 
 # pause
 
-plymouth pause-progress
 if removable; then
-    message "Remove your Anti Evil Maid stick to continue..."
-    while [ -b "$DEV" ]; do
-        sleep 0.1
-    done
+    waitfor ! -b "$DEV"
 else
     if ! png; then
         message "Press <ENTER> to continue..."
@@ -172,7 +154,6 @@ else
         fi
     fi
 fi
-plymouth unpause-progress
 
 
 # hide the secret

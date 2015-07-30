@@ -18,6 +18,7 @@ install() {
     inst_script "$moddir"/anti-evil-maid-check-mount-devs /sbin/anti-evil-maid-check-mount-devs
 
     dracut_install \
+        /usr/sbin/antievilmaid_boilerplate \
         antievilmaid_removable \
         clear \
         cut \

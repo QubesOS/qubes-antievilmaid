@@ -19,6 +19,7 @@ Anti Evil Maid for initramfs-based systems.
 %install
 
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
+cp antievilmaid_boilerplate $RPM_BUILD_ROOT/usr/sbin
 cp antievilmaid_install $RPM_BUILD_ROOT/usr/sbin
 cp antievilmaid_removable $RPM_BUILD_ROOT/usr/sbin
 cp antievilmaid_seal $RPM_BUILD_ROOT/usr/sbin
@@ -56,6 +57,7 @@ cd $RPM_BUILD_ROOT/usr/lib/systemd/system/initrd.target.requires
 ln -s ../anti-evil-maid-check-mount-devs.service .
 
 %files
+/usr/sbin/antievilmaid_boilerplate
 /usr/sbin/antievilmaid_install
 /usr/sbin/antievilmaid_removable
 /usr/sbin/antievilmaid_seal
