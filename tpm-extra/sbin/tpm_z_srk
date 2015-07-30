@@ -1,0 +1,20 @@
+#!/bin/sh
+
+log() {
+    echo "${0##*/}: $1" >&2
+}
+
+
+log "detecting whether SRK is password protected"
+
+if tpm_sealdata -z </dev/null >/dev/null; then
+    log "no, SRK isn't password protected"
+
+    echo -z
+else
+    log "yes, SRK is password protected"
+
+    # Reset that stupid dictionary attack lock.
+    # Here, -z is an empty owner (not SRK) password:
+    tpm_resetdalock -z
+fi

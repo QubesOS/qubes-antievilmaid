@@ -60,7 +60,7 @@ the TPM SRK key used for sealing process:
 
 # tpm_takeownership -y -z
 
-NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership, and also you SHOULD pass an additional argument to kernel (see point 4.c below).
+NOTE: some users might want to use a non-default password for the SRK key (see the discussion in the article referenced above) -- in that case you SHOULD NOT pass the '-z' argument to tpm_takeownership.
 NOTE: if your tpm has already been owned in the past, you can reset it by running tpm_clear -z, rebooting and resetting TPM in the BIOS (eg: TPM Authentication Reset).
 
 4) Setup Anti Evil Maid
@@ -99,15 +99,7 @@ create an additional BIOS boot partition, where the rest of the GRUB code will
 be kept -- please see this page for more info:
 http://www.gnu.org/software/grub/manual/html_node/BIOS-installation.html
 
-c) Set optional AEM additional flags: edit /etc/default/grub and add there (including the "export" word):
-
-export GRUB_CMDLINE_AEM_FLAGS="flags"
-
-Available flags (multiple flags can be separated by spaces):
- - rd.antievilmaid.asksrkpass: in case you decided to use a non-default
-    password for the SRK key
-
-d) Install Anti Evil Maid on the stick. Use antievilmaid_install.
+c) Install Anti Evil Maid on the stick. Use antievilmaid_install.
 
 Ensure that none of your programs keep open files within /boot, as otherwise it won't be possible to smoothly unmount the /boot.
 

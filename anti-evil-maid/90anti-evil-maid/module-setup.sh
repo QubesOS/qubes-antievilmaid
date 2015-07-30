@@ -37,7 +37,10 @@ install() {
         tpm_getpubek \
         tpm_id \
         tpm_pcr_extend \
+        tpm_resetdalock \
+        tpm_sealdata \
         tpm_unsealdata \
+        tpm_z_srk \
         wc \
         xargs
 

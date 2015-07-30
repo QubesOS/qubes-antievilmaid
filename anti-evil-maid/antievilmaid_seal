@@ -7,11 +7,6 @@ IDS=$(ls "${TPMS_DIR}")
 LABELS=$(ls "${AEM_DIR}")
 
 
-haveparam() {
-    case " $(cat /proc/cmdline) " in *" $1 "*) return 0; esac
-    return 1
-}
-
 log() {
     echo "${0##*/}: $1" >&2
 }
@@ -32,12 +27,7 @@ fi
 # get tpm_sealdata arguments
 
 . /etc/antievilmaid.conf
-
-if haveparam rd.antievilmaid.asksrkpass; then
-    Z=
-else
-    Z=-z
-fi
+Z=$(tpm_z_srk)
 
 
 for label in $LABELS; do

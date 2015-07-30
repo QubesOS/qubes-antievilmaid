@@ -117,19 +117,15 @@ else
 fi
 
 if [ -f "$SEALED_SECRET" ] ; then
-    TPM_ARGS="-o $UNSEALED_SECRET"
-    if ! getarg rd.antievilmaid.asksrkpass; then
-        info "Using default TPM SRK unseal password"
-        TPM_ARGS="$TPM_ARGS -z"
-    fi
+    Z=$(tpm_z_srk)
 
     message "Attempting to unseal the secret from the TPM..."
 
-    UNSEAL_CMD="tpm_unsealdata $TPM_ARGS -i $SEALED_SECRET"
+    UNSEAL_CMD="tpm_unsealdata $Z -i $SEALED_SECRET -o $UNSEALED_SECRET"
     # we try only once as some TCG 1.2 TPMs start "protecting themselves against
     # dictionary attacks" when there's more than 1 try within a short time... -_-
     # (TCG 2 fixes that):
-    if plymouth_active && getarg rd.antievilmaid.asksrkpass; then
+    if plymouth_active && [ -z "$Z" ]; then
         plymouth ask-for-password --command="$UNSEAL_CMD" \
                                   --prompt="TPM SRK unseal password" \
                                   --number-of-tries=1

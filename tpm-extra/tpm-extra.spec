@@ -16,21 +16,15 @@ BuildRequires:	trousers-devel
 Requires:	trousers
 
 %description
-Additional tools not included in tpm-tools package. Currently only one:
-tpm_pcr_extend.
-
-%prep
-
+Additional tools not included in tpm-tools package.
 
 %build
-gcc tpm_pcr_extend.c -Wall -Wextra -Werror -O2 -ltspi -o tpm_pcr_extend
+gcc tpm_pcr_extend.c -Wall -Wextra -Werror -O2 -ltspi -o sbin/tpm_pcr_extend
 
 %install
-install -D tpm_pcr_extend %{buildroot}/usr/bin/tpm_pcr_extend
-
+mkdir $RPM_BUILD_ROOT/usr
+cp -r sbin $RPM_BUILD_ROOT/usr
 
 %files
-/usr/bin/tpm_pcr_extend
-
-
-%changelog
+/usr/sbin/tpm_pcr_extend
+/usr/sbin/tpm_z_srk
