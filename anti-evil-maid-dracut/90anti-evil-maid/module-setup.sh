@@ -14,7 +14,6 @@ installkernel() {
 }
 
 install() {
-    inst_rules "$moddir/69-anti-evil-maid.rules"
     inst_script "$moddir"/anti-evil-maid /sbin/anti-evil-maid
     inst_script "$moddir"/anti-evil-maid-check-mount-devs /sbin/anti-evil-maid-check-mount-devs
 

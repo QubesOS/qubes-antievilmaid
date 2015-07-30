@@ -7,7 +7,7 @@
 # and finally try to unseal the secrets and display them to the user
 #
 
-DEV=/dev/antievilmaid
+DEV=/dev/disk/by-label/antievilmaid
 MNT=/antievilmaid
 TPM_DIR=/var/lib/tpm
 SYSTEM_PS=$MNT/antievilmaid/system.data
