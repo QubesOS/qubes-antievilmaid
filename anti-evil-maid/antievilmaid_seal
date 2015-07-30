@@ -1,0 +1,128 @@
+#!/bin/sh -e
+
+AEM_DIR=/var/lib/antievilmaid
+TPM_DIR=/var/lib/tpm
+TPMS_DIR=${TPM_DIR}s
+IDS=$(ls "${TPMS_DIR}")
+LABELS=$(ls "${AEM_DIR}")
+
+
+haveparam() {
+    case " $(cat /proc/cmdline) " in *" $1 "*) return 0; esac
+    return 1
+}
+
+log() {
+    echo "${0##*/}: $1" >&2
+}
+
+
+# work with or without plymouth
+
+if plymouth --ping 2>/dev/null; then
+    alias plymouth_active=true
+    alias message="plymouth message --text"
+else
+    alias plymouth=:
+    alias plymouth_active=false
+    alias message=log
+fi
+
+
+# get tpm_sealdata arguments
+
+. /etc/antievilmaid.conf
+
+if haveparam rd.antievilmaid.asksrkpass; then
+    Z=
+else
+    Z=-z
+fi
+
+
+for label in $LABELS; do
+    # seal and save secret(s) to root partition
+
+    mkdir -p "$TPM_DIR/$label"
+
+    sealed=0
+    for ext in txt png; do
+         input=$AEM_DIR/$label/secret.$ext
+        output=$TPM_DIR/$label/secret.$ext.sealed
+
+        if [ ! -e "$input" ]; then
+            message "Absent $input"
+        elif tpm_sealdata $Z $SEAL -i "$input" -o "$output"; then
+            sealed=$(($sealed + 1))
+            message "Sealed $input using $SEAL"
+        else
+            message "Failed $input"
+        fi
+    done
+
+
+    # already mounted?
+
+    dev=/dev/disk/by-label/$label
+    mnt=/mnt/antievilmaid/$label
+
+    if cur_mnt=$(lsblk -dn -o MOUNTPOINT "$dev" 2>/dev/null) &&
+       [ -n "$cur_mnt" ]; then
+        mnt=$cur_mnt
+    else
+        cur_mnt=
+    fi
+
+
+    if [ $sealed -gt 0 ]; then
+        # mount device
+
+        plymouth pause-progress
+        message "Waiting for device $label to become available..."
+        while [ ! -b "$dev" ]; do
+            sleep 0.1
+        done
+        plymouth unpause-progress
+
+        if [ -z "$cur_mnt" ]; then
+            mkdir -p "$mnt"
+            mount "$dev" "$mnt"
+        fi
+
+
+        # copy secret(s) to device
+
+        log "Syncing to $mnt..."
+
+        mnt_tpms_dir=$mnt/anti-evil-maid/${TPMS_DIR##*/}
+        rm -rf "$mnt_tpms_dir"
+
+        for id in $IDS; do
+            [ -d "$TPMS_DIR/$id/$label" ] || continue
+
+            mkdir -p "$mnt_tpms_dir/$id"
+            cp -r "$TPMS_DIR/$id/system.data" "$TPMS_DIR/$id/$label" \
+                  "$mnt_tpms_dir/$id"
+        done
+
+
+        # unmount device
+
+        if [ -z "$cur_mnt" ]; then
+            umount "$mnt"
+        fi
+    fi
+
+
+    # wait for device removal
+
+    if [ -z "$cur_mnt" ] &&
+       ! haveparam rd.antievilmaid.dontforcestickremoval; then
+        plymouth pause-progress
+        message "Remove the $label device to continue..."
+        while [ -b "$dev" ]; do
+            sleep 0.1
+        done
+        plymouth unpause-progress
+    fi
+done

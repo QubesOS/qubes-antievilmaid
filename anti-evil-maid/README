@@ -148,40 +148,34 @@ export GRUB_CMDLINE_TBOOT="min_ram=0x2000000"
 http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611 and by searching
 for "min_ram" in the qubes mailing lists.
 
-5) Seal secret passphrase
+5) Seal your secret text or image
 
-a) Mount the stick again:
+a) Start the tcsd daemon again (see 2.b).
 
-# mount LABEL=antievilmaid /mnt/antievilmaid
+b) Create a secret text:
 
-b) Start the tcsd daemon again (see 2.b). Then seal your secret passphrase to the TPM to select PCR registers, e.g.:
+# cat >/var/lib/antievilmaid/antievilmaid/secret.txt <<END
+My secret text
+has two lines
+END
 
-# tpm_sealdata -z -o /var/lib/tpm/antievilmaid/secret.txt.sealed --pcr 13 --pcr 17 --pcr 18 --pcr 19
-My secret passphrase<ENTER>
-<CTRL+d> (twice if needed)
-rm -rf /mnt/antievilmaid/antievilmaid/tpms
-cp -r /var/lib/tpms /mnt/antievilmaid/antievilmaid
+Or, if you prefer, a secret PNG image:
 
-Notes:
-Leave out the '-z' argument again if you used an SRK password in step 3.
-If you want to use a png file as a secret, then use '-o /var/lib/tpm/antievilmaid/secret.png.sealed' instead in the tpm_sealdata command above, and add '< my-secret-image.png' at the end of it. The png file will be displayed as an icon next to the passphrase prompt.
+# cp my-secret-image.png /var/lib/antievilmaid/antievilmaid/secret.png
 
-TCG spec defines the following PCRs that you might want to seal to:
+Finally, do the sealing:
 
-PCR 0-3: BIOS, Option ROMs, Platform Config
-PCR 4  : MBR (Grub stage1)
-PCR 5-7: OEM-specific, probably safe to skip
-PCR 8,9: Trusted GRUB1 stage2
-PCR 12 : Trusted GRUB1 args (xen, kernel args)
-PCR 13 : LUKS header(s)
-PCR 14 : The actual files loaded by Trusted GRUB1 (xen, kernel, initrd)
-PCR 17-19: TBoot Dynamic Root of Trust Measurement (DRTM)
+# antievilmaid_seal
 
-c) Unmount the stick, reboot your system.
+Note:
+The PCRs used to seal to can be changed in /etc/antievilmaid.conf -- though
+the defaults should work just fine.
+
+c) Reboot your system.
 
 Now, every time you boot your system (from your Anti Evil Maid stick)
-you should see your secret passphrase displayed *before* the LUKS
-disk encryption passphrase prompt.
+you should see your secret text/image displayed *before* you enter your
+LUKS disk encryption passphrase.
 
 System and kernel upgrades
 ===========================
