@@ -62,18 +62,7 @@ for label in $LABELS; do
 
         # copy secret(s) to device
 
-        log "Syncing to $mnt..."
-
-        mnt_tpms_dir=$mnt/anti-evil-maid/${TPMS_DIR##*/}
-        rm -rf "$mnt_tpms_dir"
-
-        for id in $IDS; do
-            [ -d "$TPMS_DIR/$id/$label" ] || continue
-
-            mkdir -p "$mnt_tpms_dir/$id"
-            cp -r "$TPMS_DIR/$id/system.data" "$TPMS_DIR/$id/$label" \
-                  "$mnt_tpms_dir/$id"
-        done
+        synctpms "$label" "$mnt"
     fi
 
 

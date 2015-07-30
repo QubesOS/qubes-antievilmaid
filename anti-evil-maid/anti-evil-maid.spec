@@ -55,3 +55,23 @@ cp -r systemd $RPM_BUILD_ROOT/usr/lib
 /usr/lib/systemd/system/anti-evil-maid-check-mount-devs.service
 /usr/lib/systemd/system/initrd.target.wants/anti-evil-maid-unseal.service
 /usr/lib/systemd/system/initrd.target.requires/anti-evil-maid-check-mount-devs.service
+
+%define refresh \
+dracut --regenerate-all --force \
+grub2-mkconfig -o /boot/grub2/grub.cfg \
+systemctl daemon-reload
+
+%post
+%refresh
+systemctl start tcsd
+
+%postun
+if [ "$1" = 0 ]; then
+    %refresh
+    chmod -f +x /etc/grub.d/20_linux_tboot     || true
+    chmod -f +x /etc/grub.d/20_linux_xen_tboot || true
+fi
+
+%triggerin -- tboot:
+chmod -x /etc/grub.d/20_linux_tboot
+chmod -x /etc/grub.d/20_linux_xen_tboot

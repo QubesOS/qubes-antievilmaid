@@ -40,3 +40,22 @@ waitfor() {
     plymouth unpause-progress
     message "$file $what"
 }
+
+synctpms() {
+    label=${1:?}
+    mnt=${2:?}
+
+    message "Syncing to $mnt"
+
+    mnt_tpms_dir=$mnt/anti-evil-maid/${TPMS_DIR##*/}
+    rm -rf "$mnt_tpms_dir"
+
+    ids=$(ls "$TPMS_DIR")
+    for id in $ids; do
+        [ -d "$TPMS_DIR/$id/$label" ] || continue
+
+        mkdir -p "$mnt_tpms_dir/$id"
+        cp -r "$TPMS_DIR/$id/system.data" "$TPMS_DIR/$id/$label" \
+              "$mnt_tpms_dir/$id"
+    done
+}

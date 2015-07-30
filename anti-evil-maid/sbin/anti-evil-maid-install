@@ -1,168 +1,110 @@
-#!/bin/sh
+#!/bin/sh -e
 
-BOOTPARTSZ=512M
-BOOTLABEL="anti-evil-maid"
-
-if [ $# != 3 ] ; then
-    echo
-    echo "usage: $0 <target device> <target boot part #> <current boot dir>"
-    echo "This will:"
-    echo "0) Format your <target boot part>"
-    echo "1) Install TrustedGRUB into <target device>'s MBR and <target boot partition>"
-    echo "2) Copy your current boot images from <current boot dir> onto the <target boot partition>"
-    echo "3) Copy some additional files needed for Anti Evil Maid onto <target boot partition>"
-    echo
-    echo "e.g. $0 /dev/sdc 1 /boot"
-    echo
-    echo "Note: <target boot part #> is counted from 1, which corresonds to /dev/sdX1, and so on."
-    echo "Note: <target device> should typically be a removable device"
-    echo "Note: You should ensure that <target boot part #> has bootable flag turned on (use e.g. fdisk)"
-    echo
-    exit 0
-fi
-
-ID=$(id -ur)
-if [ $ID != 0 ] ; then
-    echo "This script should be run as root."
-    exit 1
-fi
-
-TARGET_DEV=$1
-TARGET_BOOT_PARTNO=$2
-CURRENT_BOOT_PART=$3
-
-if ! [ -b $TARGET_DEV ] ; then
-    echo Wrong target device: $TARGET_DEV
-    exit 1
-fi
-
-if ! [ -d $CURRENT_BOOT_PART/grub2 ] ; then
-    echo "$CURRENT_BOOT_PART doesn't seem to be a boot directory..."
-    exit 1
-fi
-
-TARGET_PART=${TARGET_DEV}${TARGET_BOOT_PARTNO}
-if ! [ -b $TARGET_PART ] ; then
-    echo "Boot partition doesn't exist: $TARGET_PART!"
-    exit 1
-fi
-
-devmm=`mountpoint --devno    "$TARGET_PART"`       || exit 1
-dirmm=`mountpoint --fs-devno "$CURRENT_BOOT_PART"` || exit 1
-if [ "$devmm" = "$dirmm" ]; then  # FIXME: fails on btrfs boot partitions
-    alias external=false
-    TYPE="the internal boot partition"
-else
-    alias external=true
-    TYPE="an external device"
-fi
-echo "--> Looks like you're installing to $TYPE"
-
-if external; then
-    TMP_DIR=`mktemp -d /tmp/anti-evil-maid-XXXXXXX`
-
-    echo "About to format device: $TARGET_PART..."
-    echo "ALL DATA WILL BE ERASED on this partition!"
-    echo -n "Type uppercase 'yes' in order to proceed... "
-
-    read PROMPT
-    if [ $PROMPT != "YES" ] ; then
-        exit 1
-    fi
-
-    echo "--> Formatting as ext4..."
-    mkfs.ext4 -q $TARGET_PART
-fi
-
-echo "--> Labeling as '$BOOTLABEL'..."
-e2label $TARGET_PART $BOOTLABEL || exit 1  # FIXME: fails on btrfs boot partitions
-
-if external; then
-    echo "--> Mounting new boot partition..."
-    MNT=$TMP_DIR/mnt
-    mkdir $MNT
-    mount $TARGET_PART $MNT || exit 1
-else
-    MNT=$CURRENT_BOOT_PART
-fi
+. anti-evil-maid-boilerplate
+LABEL_SUFFIX_CHARS=0-9a-zA-Z.-
 
 
-unmount_and_die () {
-    if external; then
-        umount $MNT && rm -fr $MNT || exit 1
-        rm -fr $TMP_DIR
-    fi
+usage() {
+    cat <<END
+
+Usage:
+  anti-evil-maid-install [-R ext4|btrfs] [-s <suffix>] <device>
+
+
+Arguments:
+  -s: <device> gets labeled "$LABEL_PREFIX<suffix>". <suffix> can be empty,
+      which is the default, or be composed of these characters: $LABEL_SUFFIX_CHARS
+      Each of your Anti Evil Maid devices must have a unique suffix.
+
+  -R: Replace <device>'s data with a new ext4 or btrfs filesystem!
+
+
+Examples:
+  Install on the internal boot partition (assuming that it is /dev/sda1),
+  and label the current filesystem "anti-evil-maid":
+    anti-evil-maid-install /dev/sda1
+
+  Install on SD card, replacing its data with a new btrfs filesystem,
+  and label the new filesystem "anti-evil-maid.bak":
+    anti-evil-maid-install -R btrfs -s .bak /dev/mmcblk0
+
+END
+
     exit 1
 }
 
-if external; then
-    echo "--> Copying your boot images..."
-    for f in $CURRENT_BOOT_PART/* ; do
-        [ -d $f ] && continue
-        echo "Copying $f"
-        cp $f $MNT/ || unmount_and_die
-    done
-fi
 
-echo "--> Rebuilding initramfs modules"
-for initramfs in $MNT/initramfs-*.img ; do
-    initramfs=`basename $initramfs`
-    kernelver=`echo $initramfs | sed 's/initramfs-\(.*\).img/\1/'`
-    echo "Generating initramfs $initramfs for kernel $kernelver"
-    dracut --force $MNT/$initramfs $kernelver
+# parse options
+
+LABEL_SUFFIX=
+REPLACE_WITH=
+while getopts s:R:h opt; do
+    case "$opt" in
+        s) LABEL_SUFFIX=$OPTARG ;;
+        R) REPLACE_WITH=$OPTARG ;;
+        *) usage ;;
+    esac
 done
 
-if external; then
-    echo "--> Copying grub themes..."
-    mkdir -p $MNT/grub2/themes/
-    for d in $CURRENT_BOOT_PART/grub2/themes/* ; do
-        echo "Copying theme "`basename $d`
-        cp -r $d $MNT/grub2/themes/
-    done
+case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*) usage; esac
+LABEL=$LABEL_PREFIX$LABEL_SUFFIX
+
+shift $(($OPTIND - 1))
+case $# in
+    1) DEV=$1 ;;
+    *) usage ;;
+esac
+
+
+if [ "$(id -ur)" != 0 ] ; then
+    log "This command must be run as root!"
+    exit 1
 fi
 
-echo "--> Copying TPM files..."
-mkdir $MNT/anti-evil-maid/
-if ! [ -f /var/lib/tpm/system.data ] ; then
-    echo "No /var/lib/tpm/system.data file found."
-    echo "Seems like you havn't taken ownership of your TPM device..."
-    echo "You can use tpm_takeownership to do this."
-    unmount_and_die
+
+# create new filesystem if requested
+
+case "$REPLACE_WITH" in
+      ext4) mkfs.ext4  -F      "$DEV" ;;
+     btrfs) mkfs.btrfs --force "$DEV" ;;
+        ?*) usage ;;
+esac
+
+
+log "Labeling filesystem $LABEL"
+
+fstype="$(blkid -s TYPE -o value "$DEV")"
+case "$fstype" in
+      ext4) e2label "$DEV" "$LABEL" ;;
+     btrfs) btrfs filesystem label "$DEV" "$LABEL" ;;
+         *) log "unknown filesystem type: $fstype"; exit 1 ;;
+esac
+
+
+log "Checking mount status"
+
+MNT=/mnt/anti-evil-maid/$LABEL
+if CUR_MNT=$(lsblk -dn -o MOUNTPOINT "$DEV" 2>/dev/null) &&
+   [ -n "$CUR_MNT" ]; then
+    MNT=$CUR_MNT
+else
+    CUR_MNT=
+
+    log "Mounting at $MNT"
+    mkdir -p "$MNT"
+    mount "$DEV" "$MNT"
 fi
-rm -rf $MNT/anti-evil-maid/tpms &&
-cp -r /var/lib/tpms $MNT/anti-evil-maid/ ||
-unmount_and_die
 
-if external; then
-    echo "--> Installing GRUB2 on the target device..."
-    grub2-install --boot-directory=$MNT $TARGET_DEV
 
-    echo "--> Unmounting new boot partition..."
-    umount $MNT && rm -fr $MNT || exit 1
+mkdir "$MNT/anti-evil-maid"
+synctpms "$LABEL" "$MNT"
+mkdir -p "$AEM_DIR/$LABEL"
 
-    echo "--> Switching boot partition to anti-evil-maid..."
-    umount $CURRENT_BOOT_PART
-    mount $TARGET_PART $CURRENT_BOOT_PART
+
+if [ -z "$CUR_MNT" ]; then
+    log "Unmounting $MNT"
+    umount "$MNT"
 fi
 
-echo "--> Disabling vanilla generation of tboot entries polluting the grub configuration"
-chmod -x /etc/grub.d/20_linux_tboot
-chmod -x /etc/grub.d/20_linux_xen_tboot
 
-echo "--> Generating grub configuration..."
-grub2-mkconfig -o $CURRENT_BOOT_PART/grub2/grub.cfg
-
-if external; then
-    echo "--> Reswitching boot partition..."
-    umount $CURRENT_BOOT_PART
-    mount $CURRENT_BOOT_PART
-
-    #echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
-    #/usr/lib/anti-evil-maid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
-    #root (hd0,$(($TARGET_BOOT_PARTNO-1)))
-    #setup (hd0)
-    #quit
-    #EOF
-    #
-    rm -fr $TMP_DIR || exit 1
-fi
+log "Done."
