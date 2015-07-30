@@ -18,26 +18,16 @@ Anti Evil Maid for initramfs-based systems.
 
 %install
 
-mkdir -p $RPM_BUILD_ROOT/usr/sbin
-cp anti-evil-maid-boilerplate $RPM_BUILD_ROOT/usr/sbin
-cp anti-evil-maid-install $RPM_BUILD_ROOT/usr/sbin
-cp anti-evil-maid-removable $RPM_BUILD_ROOT/usr/sbin
-cp anti-evil-maid-seal $RPM_BUILD_ROOT/usr/sbin
+mkdir -p $RPM_BUILD_ROOT/usr
+cp -r sbin $RPM_BUILD_ROOT/usr
 
 mkdir -p $RPM_BUILD_ROOT/usr/share/doc/anti-evil-maid
 cp README $RPM_BUILD_ROOT/usr/share/doc/anti-evil-maid
 
-mkdir -p $RPM_BUILD_ROOT/etc
-cp anti-evil-maid.conf $RPM_BUILD_ROOT/etc
-
-mkdir -p $RPM_BUILD_ROOT/etc/grub.d/
-cp 19_linux_xen_tboot $RPM_BUILD_ROOT/etc/grub.d/
+cp -r etc $RPM_BUILD_ROOT
 
 mkdir -p $RPM_BUILD_ROOT/mnt/anti-evil-maid
 mkdir -p $RPM_BUILD_ROOT/var/lib/anti-evil-maid
-
-mkdir -p $RPM_BUILD_ROOT/etc
-cp -r dracut.conf.d $RPM_BUILD_ROOT/etc
 
 mkdir -p $RPM_BUILD_ROOT/usr/lib/dracut/modules.d
 cp -r 90anti-evil-maid $RPM_BUILD_ROOT/usr/lib/dracut/modules.d/
