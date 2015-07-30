@@ -7,7 +7,7 @@
 # and finally try to unseal the secrets and display them to the user
 #
 
-MNT=/antievilmaid
+MNT=/anti-evil-maid
 UNSEALED_SECRET=/tmp/unsealed-secret
 LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
@@ -23,7 +23,7 @@ plymouth_message() {
         plymouth message --text="$*"
         PLYMOUTH_MESSAGES+=("$*")
 }
-. antievilmaid_boilerplate
+. anti-evil-maid-boilerplate
 alias unsealed="[  ! -e $SRK_PASSWORD_CACHE ]"
 
 
@@ -45,7 +45,7 @@ log "Mounting the $LABEL device..."
 mkdir "$MNT"
 mount "$DEV" "$MNT" || exit 1
 
-if antievilmaid_removable "$DEV" "$MNT"; then
+if anti-evil-maid-removable "$DEV" "$MNT"; then
     alias removable=true
 else
     alias removable=false
@@ -58,7 +58,7 @@ log "Initializing TPM..."
 modprobe tpm_tis
 ip link set dev lo up
 mkdir -p "${TPMS_DIR%/*}"
-cp -r "$MNT/antievilmaid/${TPMS_DIR##*/}" "${TPMS_DIR}"
+cp -r "$MNT/anti-evil-maid/${TPMS_DIR##*/}" "${TPMS_DIR}"
 tcsd_changer_identify
 tcsd
 

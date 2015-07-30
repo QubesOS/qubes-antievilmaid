@@ -93,14 +93,14 @@ create an additional BIOS boot partition, where the rest of the GRUB code will
 be kept -- please see this page for more info:
 http://www.gnu.org/software/grub/manual/html_node/BIOS-installation.html
 
-c) Install Anti Evil Maid on the stick. Use antievilmaid_install.
+c) Install Anti Evil Maid on the stick. Use anti-evil-maid-install.
 
 Ensure that none of your programs keep open files within /boot, as otherwise it won't be possible to smoothly unmount the /boot.
 
 E.g. assuming your stick is /dev/sdc, boot partition is the 1st one, and
 your existing boot files (images, grub conf) are available at /boot:
 
-# antievilmaid_install /dev/sdc 1 /boot
+# anti-evil-maid-install /dev/sdc 1 /boot
 
 NOTE: it might be beneficial to remove one's original (stored on local
 harddisk) /boot partition from /etc/fstab. This way whenever one upgrades the
@@ -112,14 +112,14 @@ the AEM /boot.
 
 e) Create a secret text:
 
-# cat >/var/lib/antievilmaid/antievilmaid/secret.txt <<END
+# cat >/var/lib/anti-evil-maid/anti-evil-maid/secret.txt <<END
 My secret text
 has two lines
 END
 
 Or, if you prefer, a secret PNG image:
 
-# cp my-secret-image.png /var/lib/antievilmaid/antievilmaid/secret.png
+# cp my-secret-image.png /var/lib/anti-evil-maid/anti-evil-maid/secret.png
 
 5) Reboot the system from the stick, choose one of the entries called
 "AEM Qubes"...
@@ -132,16 +132,16 @@ trust your system.
 As the system continues booting, AEM will automatically seal your
 secret(s). You should see a line, or multiple lines, like this one:
 
-Sealed /var/lib/antievilmaid/antievilmaid/secret.txt using
+Sealed /var/lib/anti-evil-maid/anti-evil-maid/secret.txt using
  --pcr 13 --pcr 17 --pcr 18 --pcr 19
 
 Debug output can be read using:
 
-journalctl -u anti-evil-maid-unseal -u anti-evil-maid-seal
+$ journalctl -u anti-evil-maid-unseal -u anti-evil-maid-seal
 
-Note: The PCRs used to seal to can be changed in /etc/antievilmaid.conf
+Note: The PCRs used to seal to can be changed in /etc/anti-evil-maid.conf
 -- though the defaults should work just fine. If you decide to change
-them and you want to reseal immediately, run antievilmaid_seal manually
+them and you want to reseal immediately, run anti-evil-maid-seal manually
 once.
 
 b) If a chunk of your installed RAM seems to be missing after the reboot
@@ -150,7 +150,7 @@ line to /etc/default/grub --
 
 export GRUB_CMDLINE_TBOOT="min_ram=0x2000000"
 
--- rerun antievilmaid_install, and go to step 5.a again. A discussion of
+-- rerun anti-evil-maid-install, and go to step 5.a again. A discussion of
 this problem can be found at
 http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611
 and by searching for "min_ram" in the qubes mailing lists.

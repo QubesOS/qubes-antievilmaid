@@ -20,8 +20,8 @@ install() {
     inst $systemdsystemunitdir/cryptsetup-pre.target
 
     dracut_install \
-        /usr/sbin/antievilmaid_boilerplate \
-        antievilmaid_removable \
+        /usr/sbin/anti-evil-maid-boilerplate \
+        anti-evil-maid-removable \
         clear \
         cut \
         file \

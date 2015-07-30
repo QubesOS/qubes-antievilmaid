@@ -1,8 +1,8 @@
-LABEL_PREFIX=antievilmaid
-AEM_DIR=/var/lib/antievilmaid
+LABEL_PREFIX=anti-evil-maid
+AEM_DIR=/var/lib/anti-evil-maid
 TPM_DIR=/var/lib/tpm
 TPMS_DIR=${TPM_DIR}s
-SRK_PASSWORD_CACHE=/run/antievilmaid_seal
+SRK_PASSWORD_CACHE=/run/anti-evil-maid-seal
 
 
 # work with or without plymouth

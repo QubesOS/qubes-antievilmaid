@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 alias plymouth_message="plymouth message --text"
-. antievilmaid_boilerplate
+. anti-evil-maid-boilerplate
 
 trap "rm -f $SRK_PASSWORD_CACHE" EXIT
 IDS=$(ls "${TPMS_DIR}")
@@ -10,7 +10,7 @@ LABELS=$(ls "${AEM_DIR}")
 
 # get tpm_sealdata arguments
 
-. /etc/antievilmaid.conf
+. /etc/anti-evil-maid.conf
 Z=$(tpm_z_srk)
 
 
@@ -39,7 +39,7 @@ for label in $LABELS; do
     # already mounted?
 
     dev=/dev/disk/by-label/$label
-    mnt=/mnt/antievilmaid/$label
+    mnt=/mnt/anti-evil-maid/$label
 
     if cur_mnt=$(lsblk -dn -o MOUNTPOINT "$dev" 2>/dev/null) &&
        [ -n "$cur_mnt" ]; then
@@ -80,7 +80,7 @@ for label in $LABELS; do
     # unmount device
 
     if [ -z "$cur_mnt" ]; then
-        if antievilmaid_removable "$dev" "$mnt"; then
+        if anti-evil-maid-removable "$dev" "$mnt"; then
             umount "$mnt"
             waitfor ! -b "$dev"
         else

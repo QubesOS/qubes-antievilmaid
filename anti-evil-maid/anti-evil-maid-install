@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BOOTPARTSZ=512M
-BOOTLABEL="antievilmaid"
+BOOTLABEL="anti-evil-maid"
 
 if [ $# != 3 ] ; then
     echo
@@ -59,7 +59,7 @@ fi
 echo "--> Looks like you're installing to $TYPE"
 
 if external; then
-    TMP_DIR=`mktemp -d /tmp/antievilmaid-XXXXXXX`
+    TMP_DIR=`mktemp -d /tmp/anti-evil-maid-XXXXXXX`
 
     echo "About to format device: $TARGET_PART..."
     echo "ALL DATA WILL BE ERASED on this partition!"
@@ -122,15 +122,15 @@ if external; then
 fi
 
 echo "--> Copying TPM files..."
-mkdir $MNT/antievilmaid/
+mkdir $MNT/anti-evil-maid/
 if ! [ -f /var/lib/tpm/system.data ] ; then
     echo "No /var/lib/tpm/system.data file found."
     echo "Seems like you havn't taken ownership of your TPM device..."
     echo "You can use tpm_takeownership to do this."
     unmount_and_die
 fi
-rm -rf $MNT/antievilmaid/tpms &&
-cp -r /var/lib/tpms $MNT/antievilmaid/ ||
+rm -rf $MNT/anti-evil-maid/tpms &&
+cp -r /var/lib/tpms $MNT/anti-evil-maid/ ||
 unmount_and_die
 
 if external; then
@@ -140,7 +140,7 @@ if external; then
     echo "--> Unmounting new boot partition..."
     umount $MNT && rm -fr $MNT || exit 1
 
-    echo "--> Switching boot partition to antievilmaid..."
+    echo "--> Switching boot partition to anti-evil-maid..."
     umount $CURRENT_BOOT_PART
     mount $TARGET_PART $CURRENT_BOOT_PART
 fi
@@ -158,7 +158,7 @@ if external; then
     mount $CURRENT_BOOT_PART
 
     #echo "(hd0) $TARGET_DEV" > $TMP_DIR/devices.map
-    #/usr/lib/antievilmaid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
+    #/usr/lib/anti-evil-maid/trustedgrub/grub --device-map=$TMP_DIR/devices.map --batch <<EOF
     #root (hd0,$(($TARGET_BOOT_PARTNO-1)))
     #setup (hd0)
     #quit

@@ -5,10 +5,10 @@ Requires=systemd-remount-fs.service tcsd.service
 After=systemd-remount-fs.service tcsd.service plymouth-start.service
 Before=sysinit.target
 ConditionKernelCommandLine=rd.antievilmaid
-ConditionPathExists=/run/antievilmaid_seal
+ConditionPathExists=/run/anti-evil-maid-seal
 
 [Service]
-ExecStart=/usr/sbin/antievilmaid_seal
+ExecStart=/usr/sbin/anti-evil-maid-seal
 Type=oneshot
 StandardOutput=journal+console
 StandardError=inherit
