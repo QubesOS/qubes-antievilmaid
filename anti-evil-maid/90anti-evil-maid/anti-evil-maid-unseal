@@ -115,10 +115,10 @@ message "Attempting to unseal the secret from the TPM..."
 # dictionary attacks" when there's more than 1 try within a short time... -_-
 # (TCG 2 fixes that). TODO: just reset this "protection" with tpm_resetdalock
 
-if ${Z:+:} systemd-ask-password "Enter TPM SRK password" |
-   tee "$SRK_PASSWORD_CACHE" |
+${Z:+:} systemd-ask-password "Enter TPM SRK password" > "$SRK_PASSWORD_CACHE"
+if cat "$SRK_PASSWORD_CACHE" |
    tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET"; then
-    rm "$SRK_PASSWORD_CACHE"
+    rm -f "$SRK_PASSWORD_CACHE"
 fi
 
 log "Unmounting the $LABEL device..."
