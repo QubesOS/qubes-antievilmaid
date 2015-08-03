@@ -41,7 +41,7 @@ LABEL=${DEV##*/}
 
 log "Mounting the $LABEL device..."
 mkdir "$MNT"
-mount "$DEV" "$MNT"
+mount -t ext4 -o ro "$DEV" "$MNT"
 
 if anti-evil-maid-removable "$DEV" "$MNT"; then
     alias removable=true

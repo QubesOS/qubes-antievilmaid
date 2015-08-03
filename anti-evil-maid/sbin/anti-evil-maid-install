@@ -8,7 +8,7 @@ usage() {
     cat <<END
 
 Usage:
-  anti-evil-maid-install [-R ext4|btrfs] [-s <suffix>] <device>
+  anti-evil-maid-install [-s <suffix>] [-R] <device>
 
 
 Arguments:
@@ -16,17 +16,17 @@ Arguments:
       which is the default, or be composed of these characters: $LABEL_SUFFIX_CHARS
       Each of your Anti Evil Maid devices must have a unique suffix.
 
-  -R: Replace <device>'s data with a new ext4 or btrfs filesystem!
+  -R: Replace <device>'s data with a new ext4 filesystem!
 
 
 Examples:
   Install on the internal boot partition (assuming that it is /dev/sda1),
-  and label the current filesystem "anti-evil-maid":
+  and label its current filesystem "anti-evil-maid":
     anti-evil-maid-install /dev/sda1
 
-  Install on SD card, replacing its data with a new btrfs filesystem,
-  and label the new filesystem "anti-evil-maid.bak":
-    anti-evil-maid-install -R btrfs -s .bak /dev/mmcblk0
+  Install on a SD card, replacing its data with a new ext4 filesystem,
+  and label that new filesystem "anti-evil-maid.bak":
+    anti-evil-maid-install -R -s .bak /dev/mmcblk0
 
 END
 
@@ -37,11 +37,11 @@ END
 # parse options
 
 LABEL_SUFFIX=
-REPLACE_WITH=
-while getopts s:R:h opt; do
+alias replace=false
+while getopts s:Rh opt; do
     case "$opt" in
         s) LABEL_SUFFIX=$OPTARG ;;
-        R) REPLACE_WITH=$OPTARG ;;
+        R) alias replace=true ;;
         *) usage ;;
     esac
 done
@@ -62,23 +62,19 @@ if [ "$(id -ur)" != 0 ] ; then
 fi
 
 
-# create new filesystem if requested
+if replace; then
+    log "Creating new ext4 filesystem labeled $LABEL"
+    mkfs.ext4 -F -L "$LABEL" "$DEV"
+else
+    fstype=$(blkid -s TYPE -o value "$DEV")
+    if [ "$fstype" != ext4 ]; then
+        log "unknown filesystem type: $fstype"
+        exit 1
+    fi
 
-case "$REPLACE_WITH" in
-      ext4) mkfs.ext4  -F      "$DEV" ;;
-     btrfs) mkfs.btrfs --force "$DEV" ;;
-        ?*) usage ;;
-esac
-
-
-log "Labeling filesystem $LABEL"
-
-fstype="$(blkid -s TYPE -o value "$DEV")"
-case "$fstype" in
-      ext4) e2label "$DEV" "$LABEL" ;;
-     btrfs) btrfs filesystem label "$DEV" "$LABEL" ;;
-         *) log "unknown filesystem type: $fstype"; exit 1 ;;
-esac
+    log "Labeling filesystem $LABEL"
+    e2label "$DEV" "$LABEL"
+fi
 
 
 log "Checking mount status"
