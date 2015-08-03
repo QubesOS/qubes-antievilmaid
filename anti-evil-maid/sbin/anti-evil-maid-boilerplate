@@ -60,3 +60,9 @@ synctpms() {
         fi
     done
 }
+
+devtomnt() {
+    lsblk -dnr -o MOUNTPOINT "$1" 2>/dev/null |
+    sed 's/%/\\x25/g' |
+    xargs -0 printf
+}
