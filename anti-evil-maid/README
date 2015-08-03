@@ -89,6 +89,13 @@ Or, if you prefer, a secret PNG image:
 
 # cp my-secret-image.png /var/lib/anti-evil-maid/anti-evil-maid/secret.png
 
+Note: You are saving these not-yet-sealed secrets to your root
+filesystem without further encryption (besides that provided by LUKS).
+If an attacker somehow gains access to your decrypted filesystem data,
+e.g. by compelling you to reveal the LUKS passphrase, they can of
+course see these secrets. So they are probably not the right place to
+store your most intimate confessions. ;)
+
 5) Reboot the system, choose one of the entries called "AEM Qubes".
 
 a) Enter your SRK password if prompted in case you have set one in step
