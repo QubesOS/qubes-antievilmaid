@@ -94,7 +94,7 @@ else
 fi
 
 
-mkdir "$MNT/anti-evil-maid"
+mkdir -p "$MNT/anti-evil-maid"
 synctpms "$LABEL" "$MNT"
 mkdir -p "$AEM_DIR/$LABEL"
 
