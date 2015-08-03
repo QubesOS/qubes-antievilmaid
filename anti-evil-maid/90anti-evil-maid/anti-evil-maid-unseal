@@ -25,7 +25,7 @@ plymouth_message() {
 alias unsealed="[  ! -e $SRK_PASSWORD_CACHE ]"
 
 
-# mount the AEM device
+# find AEM device
 
 glob="/dev/disk/by-label/$LABEL_PREFIX*"
 DEV=($glob)  # nullglob is set
@@ -37,6 +37,18 @@ if [ ${#DEV[@]} = 0 ]; then
         sleep 0.1
     done
 fi
+
+udevadm trigger
+udevadm settle
+n=$(lsblk -n -o PARTLABEL,LABEL | grep -E '(^| )anti-evil-maid' | wc -l)
+if [ "$n" != 1 ]; then
+    message "Error: found $n Anti Evil Maid devices!"
+    exit 1
+fi
+
+
+# mount AEM device
+
 LABEL=${DEV##*/}
 
 log "Mounting the $LABEL device..."
