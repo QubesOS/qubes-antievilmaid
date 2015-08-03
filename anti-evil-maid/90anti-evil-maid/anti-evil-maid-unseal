@@ -40,7 +40,7 @@ fi
 
 udevadm trigger
 udevadm settle
-n=$(lsblk -n -o PARTLABEL,LABEL | grep -E '(^| )anti-evil-maid' | wc -l)
+n=$(lsblk -nr -o PARTLABEL,LABEL | grep -E '(^| )anti-evil-maid' | wc -l)
 if [ "$n" != 1 ]; then
     message "Error: found $n Anti Evil Maid devices!"
     exit 1
