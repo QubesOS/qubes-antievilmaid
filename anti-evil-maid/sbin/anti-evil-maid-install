@@ -13,7 +13,9 @@ Usage:
 
 Arguments:
   -s: <device> gets labeled "$LABEL_PREFIX<suffix>". <suffix> can be empty,
-      which is the default, or be composed of these characters: $LABEL_SUFFIX_CHARS
+      which is the default, or up to two characters long, composed of the
+      following alphabet: $LABEL_SUFFIX_CHARS
+
       Each of your Anti Evil Maid devices must have a unique suffix.
 
   -R: Replace <device>'s data with a new ext4 filesystem!
@@ -25,8 +27,8 @@ Examples:
     anti-evil-maid-install /dev/sda1
 
   Install on a SD card, replacing its data with a new ext4 filesystem,
-  and label that new filesystem "anti-evil-maid.bak":
-    anti-evil-maid-install -R -s .bak /dev/mmcblk0
+  and label that new filesystem "anti-evil-maid2":
+    anti-evil-maid-install -R -s 2 /dev/mmcblk0
 
 END
 
@@ -46,7 +48,7 @@ while getopts s:Rh opt; do
     esac
 done
 
-case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*) usage; esac
+case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*|???*) usage; esac
 LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 
 shift $(($OPTIND - 1))
