@@ -82,7 +82,7 @@ fi
 log "Checking mount status"
 
 MNT=/mnt/anti-evil-maid/$LABEL
-if CUR_MNT=$(lsblk -dn -o MOUNTPOINT "$DEV" 2>/dev/null) &&
+if CUR_MNT=$(lsblk -dnr -o MOUNTPOINT "$DEV" 2>/dev/null) &&
    [ -n "$CUR_MNT" ]; then
     MNT=$CUR_MNT
 else

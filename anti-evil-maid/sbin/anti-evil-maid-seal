@@ -41,7 +41,7 @@ for label in $LABELS; do
     dev=/dev/disk/by-label/$label
     mnt=/mnt/anti-evil-maid/$label
 
-    if cur_mnt=$(lsblk -dn -o MOUNTPOINT "$dev" 2>/dev/null) &&
+    if cur_mnt=$(lsblk -dnr -o MOUNTPOINT "$dev" 2>/dev/null) &&
        [ -n "$cur_mnt" ]; then
         mnt=$cur_mnt
     else

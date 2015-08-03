@@ -12,7 +12,7 @@ firstluksuuid() {
 }
 
 topdev() {
-    lsblk -sn -o "$1" "$2" | tail -n 1
+    lsblk -snr -o "$1" "$2" | tail -n 1
 }
 
 if [ $# != 1 -a $# != 2 ] ; then
