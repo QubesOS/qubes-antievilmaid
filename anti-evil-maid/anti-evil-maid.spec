@@ -43,7 +43,7 @@ cp -r systemd $RPM_BUILD_ROOT/usr/lib
 /usr/share/doc/anti-evil-maid/README
 /usr/lib/systemd/system/anti-evil-maid-seal.service
 /usr/lib/systemd/system/tcsd.service.d/anti-evil-maid-seal.conf
-/usr/lib/systemd/system/sysinit.target.wants/anti-evil-maid-seal.service
+/usr/lib/systemd/system/basic.target.wants/anti-evil-maid-seal.service
 /etc/anti-evil-maid.conf
 /etc/grub.d/19_linux_xen_tboot
 %dir /mnt/anti-evil-maid
