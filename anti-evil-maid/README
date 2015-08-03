@@ -19,7 +19,9 @@ The instructions below assume Qubes OS.
 
 2) Install and Verify TPM support under your OS/Dom0.
 
-a) Install anti-evil-maid packages (in Dom0 on Qubes). It will install all the required dependencies and tools.
+a) Install anti-evil-maid packages (in Dom0 on Qubes). It will install all the
+required dependencies and tools. It is important to have desired AEM device
+plugged in at this stage, otherwise initrd will not have drivers for it.
 
 # qubes-dom0-update anti-evil-maid
 
