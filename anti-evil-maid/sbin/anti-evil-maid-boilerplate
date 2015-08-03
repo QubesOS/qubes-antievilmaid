@@ -52,10 +52,11 @@ synctpms() {
 
     ids=$(ls "$TPMS_DIR")
     for id in $ids; do
-        [ -d "$TPMS_DIR/$id/$label" ] || continue
-
         mkdir -p "$mnt_tpms_dir/$id"
-        cp -r "$TPMS_DIR/$id/system.data" "$TPMS_DIR/$id/$label" \
-              "$mnt_tpms_dir/$id"
+        cp "$TPMS_DIR/$id/system.data" "$mnt_tpms_dir/$id"
+
+        if [ -d "$TPMS_DIR/$id/$label" ]; then
+            cp -r  "$TPMS_DIR/$id/$label" "$mnt_tpms_dir/$id"
+        fi
     done
 }
