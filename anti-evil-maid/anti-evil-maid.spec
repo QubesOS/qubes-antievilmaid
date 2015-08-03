@@ -72,6 +72,6 @@ if [ "$1" = 0 ]; then
     chmod -f +x /etc/grub.d/20_linux_xen_tboot || true
 fi
 
-%triggerin -- tboot:
+%triggerin -- tboot
 chmod -x /etc/grub.d/20_linux_tboot
 chmod -x /etc/grub.d/20_linux_xen_tboot
