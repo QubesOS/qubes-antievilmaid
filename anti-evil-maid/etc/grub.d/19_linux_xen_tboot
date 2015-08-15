@@ -209,6 +209,8 @@ case "$machine" in
     *) GENKERNEL_ARCH="$machine" ;;
 esac
 
+echo "if [ -d /aem/ ]; then"
+
 # Extra indentation to add to menu entries in a submenu. We're not in a submenu
 # yet, so it's empty. In a submenu it will be equal to '\t' (one tab).
 submenu_indentation=""
@@ -296,3 +298,5 @@ if [ x"$is_first_entry" != xtrue ]; then
 fi
 
 echo "$title_correction_code"
+
+echo fi
