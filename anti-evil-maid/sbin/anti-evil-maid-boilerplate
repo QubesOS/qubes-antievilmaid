@@ -23,8 +23,8 @@ log() {
 
 waitfor() {
     case $# in
-        2) file=$2; what=connected ;;
-        3) file=$3; what=removed ;;
+        2) _file=$2; _what=connected ;;
+        3) _file=$3; _what=removed ;;
         *) return 1 ;;
     esac
 
@@ -32,31 +32,31 @@ waitfor() {
         return
     fi
 
-    message "Waiting for $file to be $what..."
+    message "Waiting for $_file to be $_what..."
     plymouth pause-progress
     until [ "$@" ]; do
         sleep 0.1
     done
     plymouth unpause-progress
-    message "$file $what"
+    message "$_file $_what"
 }
 
 synctpms() {
-    label=${1:?}
-    mnt=${2:?}
+    _label=${1:?}
+    _mnt=${2:?}
 
-    message "Syncing to $mnt"
+    message "Syncing to $_mnt"
 
-    mnt_tpms_dir=$mnt/anti-evil-maid/${TPMS_DIR##*/}
-    rm -rf "$mnt_tpms_dir"
+    _mnt_tpms_dir=$_mnt/anti-evil-maid/${TPMS_DIR##*/}
+    rm -rf "$_mnt_tpms_dir"
 
-    ids=$(ls "$TPMS_DIR")
-    for id in $ids; do
-        mkdir -p "$mnt_tpms_dir/$id"
-        cp "$TPMS_DIR/$id/system.data" "$mnt_tpms_dir/$id"
+    _ids=$(ls "$TPMS_DIR")
+    for _id in $_ids; do
+        mkdir -p "$_mnt_tpms_dir/$_id"
+        cp "$TPMS_DIR/$_id/system.data" "$_mnt_tpms_dir/$_id"
 
-        if [ -d "$TPMS_DIR/$id/$label" ]; then
-            cp -r  "$TPMS_DIR/$id/$label" "$mnt_tpms_dir/$id"
+        if [ -d "$TPMS_DIR/$_id/$_label" ]; then
+            cp -r  "$TPMS_DIR/$_id/$_label" "$_mnt_tpms_dir/$_id"
         fi
     done
 }
