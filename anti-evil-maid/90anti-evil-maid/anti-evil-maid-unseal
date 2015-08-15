@@ -75,12 +75,7 @@ tcsd
 
 # Extend PCR with LUKS header(s)
 
-for param in $(cat /proc/cmdline); do
-    case "$param" in rd.luks.uuid=*|rd_LUKS_UUID=*)
-        param=${param##*=}
-        echo "${param##luks-}"
-    esac
-done |
+getluksuuids |
 sort -u |
 while read luksid; do
     waitfor -b "/dev/disk/by-uuid/$luksid"

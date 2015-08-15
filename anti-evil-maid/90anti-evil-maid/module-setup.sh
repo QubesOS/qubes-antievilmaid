@@ -27,6 +27,7 @@ install() {
         file \
         /usr/share/misc/magic \
         grep \
+        head \
         install \
         killall \
         lsblk \

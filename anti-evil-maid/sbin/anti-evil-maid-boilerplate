@@ -17,6 +17,17 @@ else
 fi
 
 
+getluksuuids() {
+    _CMDLINE=${_CMDLINE-$(cat /proc/cmdline)}
+
+    for _param in $_CMDLINE; do
+       case "$_param" in rd.luks.uuid=*|rd_LUKS_UUID=*)
+           _param=${_param#*=}
+           echo  "${_param#luks-}"
+       esac
+    done
+}
+
 log() {
     echo "${0##*/}: $1" >&2
 }
