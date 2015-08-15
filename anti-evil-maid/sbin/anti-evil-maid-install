@@ -149,7 +149,7 @@ fi
 
 # sync
 
-mkdir -p "$PART_MNT/anti-evil-maid"
+mkdir -p "$PART_MNT/aem"
 synctpms "$LABEL" "$PART_MNT"
 mkdir -p "$AEM_DIR/$LABEL"
 
