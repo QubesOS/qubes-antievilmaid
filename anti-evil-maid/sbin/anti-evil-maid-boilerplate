@@ -77,3 +77,24 @@ devtomnt() {
     sed 's/%/\\x25/g' |
     xargs -0 printf
 }
+
+topdev() {
+    lsblk -snrp -o KNAME "$1" | tail -n 1
+}
+
+external() {
+    _first_luks_part=/dev/disk/by-uuid/$(getluksuuids | head -n 1)
+    _first_luks_whole=$(topdev "$_first_luks_part")
+    _aem_whole=$(topdev "$1")
+
+    [ "$_aem_whole" != "$_first_luks_whole" ]
+}
+
+removable() {
+    _removable=$(${2+cat $2/anti-evil-maid/removable} 2>/dev/null)
+    if [ "$_removable" != 0 -a "$_removable" != 1 ]; then
+        _removable=$(lsblk -dnr RM "$1")
+    fi
+
+    [ "$_removable" = 1 ]
+}

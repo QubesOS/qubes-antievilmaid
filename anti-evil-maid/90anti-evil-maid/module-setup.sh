@@ -21,7 +21,6 @@ install() {
 
     dracut_install \
         /usr/sbin/anti-evil-maid-boilerplate \
-        anti-evil-maid-removable \
         clear \
         cut \
         file \

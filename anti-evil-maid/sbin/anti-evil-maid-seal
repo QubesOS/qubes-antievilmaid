@@ -69,7 +69,7 @@ for label in $LABELS; do
     # unmount device
 
     if [ -z "$cur_mnt" ]; then
-        if anti-evil-maid-removable "$dev" "$mnt"; then
+        if external "$dev" && removable "$dev" "$mnt"; then
             umount "$mnt"
             waitfor ! -b "$dev"
         else

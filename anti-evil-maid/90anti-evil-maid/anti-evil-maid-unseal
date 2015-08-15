@@ -55,10 +55,10 @@ log "Mounting the $LABEL device..."
 mkdir "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
 
-if anti-evil-maid-removable "$DEV" "$MNT"; then
-    alias removable=true
+if external "$DEV" && removable "$DEV" "$MNT"; then
+    alias remove=true
 else
-    alias removable=false
+    alias remove=false
 fi
 
 
@@ -144,7 +144,7 @@ if unsealed; then
 
     # pause
 
-    if removable; then
+    if remove; then
         waitfor ! -b "$DEV"
     else
         if ! png; then
@@ -165,7 +165,7 @@ fi
 # into thinking that they've already seen the secret. (See AEM introductory blog
 # post FAQ, "Why are there no negative indicators")
 
-if removable || ! png; then
+if remove || ! png; then
     if plymouth_active; then
         for m in "${PLYMOUTH_MESSAGES[@]}"; do
             plymouth hide-message --text="$m"

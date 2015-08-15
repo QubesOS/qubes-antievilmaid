@@ -38,7 +38,6 @@ cp -r systemd $RPM_BUILD_ROOT/usr/lib
 %files
 /usr/sbin/anti-evil-maid-boilerplate
 /usr/sbin/anti-evil-maid-install
-/usr/sbin/anti-evil-maid-removable
 /usr/sbin/anti-evil-maid-seal
 /usr/share/doc/anti-evil-maid/README
 /usr/lib/systemd/system/anti-evil-maid-seal.service
