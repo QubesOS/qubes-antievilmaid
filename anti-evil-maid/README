@@ -81,14 +81,14 @@ is /dev/sda1):
 
 c) Create a secret text:
 
-# cat >/var/lib/anti-evil-maid/anti-evil-maid/secret.txt <<END
+# cat >/var/lib/anti-evil-maid/aem/secret.txt <<END
 My secret text
 has two lines
 END
 
 Or, if you prefer, a secret PNG image:
 
-# cp my-secret-image.png /var/lib/anti-evil-maid/anti-evil-maid/secret.png
+# cp my-secret-image.png /var/lib/anti-evil-maid/aem/secret.png
 
 Note: You are saving these not-yet-sealed secrets to your root
 filesystem without further encryption (besides that provided by LUKS).
@@ -107,7 +107,7 @@ trust your system.
 As the system continues booting, AEM will automatically seal your
 secret(s). You should see a line, or multiple lines, like this one:
 
-Sealed /var/lib/anti-evil-maid/anti-evil-maid/secret.txt using
+Sealed /var/lib/anti-evil-maid/aem/secret.txt using
  --pcr 13 --pcr 17 --pcr 18 --pcr 19
 
 Debug output can be read using:

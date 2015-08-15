@@ -20,7 +20,7 @@ Usage:
 Arguments:
   -s: <device> gets labeled "$LABEL_PREFIX<suffix>"
 
-      <suffix> can be composed of 0-2 characters from the alphabet $LABEL_SUFFIX_CHARS
+      <suffix> can be composed of 0-13 characters from the alphabet $LABEL_SUFFIX_CHARS
       It defaults to <device>'s current suffix, if any, or the empty string
       otherwise. Each of your AEM installations must have a unique suffix.
 
@@ -29,14 +29,14 @@ Arguments:
 
 Examples:
   Install on the system's boot partition (assuming that it is /dev/sda1), and
-  label its current filesystem "anti-evil-maid":
+  label its current filesystem "$LABEL_PREFIX":
 
     anti-evil-maid-install /dev/sda1
 
   Install on a SD card's first partition, replacing its data with a new ext4
-  filesystem labeled "anti-evil-maid2", and make it bootable:
+  filesystem labeled "$LABEL_PREFIX.sd", and make it bootable:
 
-    anti-evil-maid-install -s 2 /dev/mmcblk0p1
+    anti-evil-maid-install -s .sd /dev/mmcblk0p1
 
 END
 
@@ -55,7 +55,7 @@ while getopts s:Fh opt; do
     esac
 done
 
-case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*|???*) usage; esac
+case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*|??????????????*) usage; esac
 LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 
 shift $(($OPTIND - 1))

@@ -1,4 +1,4 @@
-LABEL_PREFIX=anti-evil-maid
+LABEL_PREFIX=aem
 AEM_DIR=/var/lib/anti-evil-maid
 TPM_DIR=/var/lib/tpm
 TPMS_DIR=${TPM_DIR}s
