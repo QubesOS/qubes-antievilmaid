@@ -2,78 +2,69 @@
 
 alias plymouth_message="plymouth message --text"
 . anti-evil-maid-boilerplate
-
-trap "rm -f $SRK_PASSWORD_CACHE" EXIT
-IDS=$(ls "${TPMS_DIR}")
-LABELS=$(ls "${AEM_DIR}")
+trap 'rm -rf "$CACHE_DIR"' EXIT
 
 
-# get tpm_sealdata arguments
+# define sealing and device variables
 
 . /etc/anti-evil-maid.conf
 Z=$(tpm_z_srk)
 
-
-for label in $LABELS; do
-    # seal and save secret(s) to root partition
-
-    mkdir -p "$TPM_DIR/$label"
-
-    sealed=0
-    for ext in txt png; do
-         input=$AEM_DIR/$label/secret.$ext
-        output=$TPM_DIR/$label/secret.$ext.sealed
-
-        if [ ! -e "$input" ]; then
-            message "Absent $input"
-        elif cat "$SRK_PASSWORD_CACHE" 2>/dev/null |  # ignored in a tty
-             tpm_sealdata $Z $SEAL -i "$input" -o "$output"; then
-            sealed=$(($sealed + 1))
-            message "Sealed $input using $SEAL"
-        else
-            message "Failed $input"
-        fi
-    done
+LABEL=$LABEL_PREFIX${1-$(cat "$SUFFIX_CACHE")}
+DEV=/dev/disk/by-label/$LABEL
 
 
-    # already mounted?
+# seal and save secret(s) to root partition
 
-    dev=/dev/disk/by-label/$label
-    mnt=/mnt/anti-evil-maid/$label
+mkdir -p "$TPM_DIR/$LABEL"
 
-    if cur_mnt=$(devtomnt "$dev") &&
-       [ -n "$cur_mnt" ]; then
-        mnt=$cur_mnt
+SEALED=0
+for ext in txt png; do
+     input=$AEM_DIR/$LABEL/secret.$ext
+    output=$TPM_DIR/$LABEL/secret.$ext.sealed
+
+    if [ ! -e "$input" ]; then
+        message "Absent $input"
+    elif cat "$SRK_PASSWORD_CACHE" 2>/dev/null |  # ignored in a tty
+         tpm_sealdata $Z $SEAL -i "$input" -o "$output"; then
+        SEALED=$(($SEALED + 1))
+        message "Sealed $input using $SEAL"
     else
-        cur_mnt=
-    fi
-
-
-    if [ $sealed -gt 0 ]; then
-        # mount device
-
-        waitfor -b "$dev"
-
-        if [ -z "$cur_mnt" ]; then
-            mkdir -p "$mnt"
-            mount "$dev" "$mnt"
-        fi
-
-
-        # copy secret(s) to device
-
-        synctpms "$label" "$mnt"
-    fi
-
-
-    # unmount device
-
-    if [ -z "$cur_mnt" ]; then
-        if external "$dev" && removable "$dev" "$mnt"; then
-            umount "$mnt"
-            waitfor ! -b "$dev"
-        else
-            umount "$mnt"
-        fi
+        message "Failed $input"
     fi
 done
+
+if [ "$SEALED" = 0 ]; then
+    exit 1
+fi
+
+
+# mount device
+
+waitfor -b "$DEV"
+
+if CUR_MNT=$(devtomnt "$DEV") && [ -n "$CUR_MNT" ]; then
+    MNT=$CUR_MNT
+else
+    CUR_MNT=
+    MNT=/mnt/anti-evil-maid/$LABEL
+    mkdir -p "$MNT"
+    mount "$DEV" "$MNT"
+fi
+
+
+# copy secret(s) to device
+
+synctpms "$LABEL" "$MNT"
+
+
+# unmount device
+
+if [ -z "$CUR_MNT" ]; then
+    if external "$DEV" && removable "$DEV" "$MNT"; then
+        umount "$MNT"
+        waitfor ! -b "$DEV"
+    else
+        umount "$MNT"
+    fi
+fi

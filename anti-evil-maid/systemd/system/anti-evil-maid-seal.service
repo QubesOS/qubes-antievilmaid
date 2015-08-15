@@ -5,7 +5,7 @@ Requires=local-fs.target tcsd.service
 After=local-fs.target tcsd.service plymouth-start.service
 Before=basic.target
 ConditionKernelCommandLine=rd.antievilmaid
-ConditionPathExists=/run/anti-evil-maid-seal
+ConditionPathIsDirectory=/run/anti-evil-maid
 
 [Service]
 ExecStart=/usr/sbin/anti-evil-maid-seal

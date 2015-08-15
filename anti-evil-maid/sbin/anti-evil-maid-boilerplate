@@ -2,7 +2,9 @@ LABEL_PREFIX=anti-evil-maid
 AEM_DIR=/var/lib/anti-evil-maid
 TPM_DIR=/var/lib/tpm
 TPMS_DIR=${TPM_DIR}s
-SRK_PASSWORD_CACHE=/run/anti-evil-maid-seal
+CACHE_DIR=/run/anti-evil-maid
+SRK_PASSWORD_CACHE=$CACHE_DIR/srk-password
+SUFFIX_CACHE=$CACHE_DIR/suffix
 
 
 # work with or without plymouth

@@ -22,36 +22,25 @@ plymouth_message() {
         PLYMOUTH_MESSAGES+=("$*")
 }
 . anti-evil-maid-boilerplate
-alias unsealed="[  ! -e $SRK_PASSWORD_CACHE ]"
 
 
 # find AEM device
 
-glob="/dev/disk/by-label/$LABEL_PREFIX*"
-DEV=($glob)  # nullglob is set
-if [ ${#DEV[@]} = 0 ]; then
-    message "Waiting for any Anti Evil Maid device to become available..."
-    while :; do
-        DEV=($glob)
-        ${DEV+break}
-        sleep 0.1
-    done
-fi
-
 udevadm trigger
 udevadm settle
-n=$(lsblk -nr -o PARTLABEL,LABEL | grep -E '(^| )anti-evil-maid' | wc -l)
+n=$(lsblk -nr -o PARTLABEL,LABEL | grep -cE "(^| )$LABEL_PREFIX") || true
 if [ "$n" != 1 ]; then
-    message "Error: found $n Anti Evil Maid devices!"
+    message "Error: found ${n:-?} Anti Evil Maid devices!"
     exit 1
 fi
+
+DEV=(/dev/disk/by-label/$LABEL_PREFIX*)
+LABEL=${DEV##*/}
 
 
 # mount AEM device
 
-LABEL=${DEV##*/}
-
-log "Mounting the $LABEL device..."
+log "Mounting the ${LABEL:?} device..."
 mkdir "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
 
@@ -102,6 +91,9 @@ else
     SEALED_SECRET=$sealed_secret_txt
 fi
 
+mkdir "$CACHE_DIR"
+echo "${LABEL##$LABEL_PREFIX}" >"$SUFFIX_CACHE"
+
 Z=$(tpm_z_srk)
 
 message "Attempting to unseal the secret from the TPM..."
@@ -113,31 +105,28 @@ message "Attempting to unseal the secret from the TPM..."
 ${Z:+:} systemd-ask-password "Enter TPM SRK password" > "$SRK_PASSWORD_CACHE"
 if cat "$SRK_PASSWORD_CACHE" |
    tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET"; then
-    rm -f "$SRK_PASSWORD_CACHE"
+    rm -rf "$CACHE_DIR"
 fi
 
 log "Unmounting the $LABEL device..."
 umount "$MNT"
 
 
-# display the secret in the next (.png) or the current dialog (.txt)
-
-if unsealed; then
+if [ ! -d "$CACHE_DIR" ]; then  # unseal succeeded
     if png; then
-        # Verify if the unsealed PNG secret seems valid and replace the lock icon
+        # display secret in next dialog
+        WHERE="next to the prompt for it"
         if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
             cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
         fi
-
-        WHERE="next to the prompt for it"
     else
+        # display secret in current dialog
+        WHERE="above"
         {
             message ""
             message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
             message ""
         } 2>&1  # don't put the secret into the journal
-
-        WHERE="above"
     fi
     message "Never type in your disk password unless the secret $WHERE is correct!"
 
