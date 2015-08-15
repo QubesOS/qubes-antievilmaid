@@ -93,10 +93,11 @@ external() {
 }
 
 removable() {
-    _removable=$(${2+cat $2/aem/removable} 2>/dev/null)
-    if [ "$_removable" != 0 -a "$_removable" != 1 ]; then
-        _removable=$(lsblk -dnr RM "$1")
-    fi
+    _rm=$(lsblk -dnr -o RM,LABEL "$1")
+    case "$_rm" in
+        *.rm=[01]) _rm=${_rm##*=} ;;
+                *) _rm=${_rm%% *} ;;
+    esac
 
-    [ "$_removable" = 1 ]
+    [ "$_rm" = 1 ]
 }

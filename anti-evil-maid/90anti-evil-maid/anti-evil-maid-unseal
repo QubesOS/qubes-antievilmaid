@@ -44,7 +44,7 @@ log "Mounting the ${LABEL:?} device..."
 mkdir "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
 
-if external "$DEV" && removable "$DEV" "$MNT"; then
+if external "$DEV" && removable "$DEV"; then
     alias remove=true
 else
     alias remove=false

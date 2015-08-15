@@ -24,6 +24,10 @@ Arguments:
       It defaults to <device>'s current suffix, if any, or the empty string
       otherwise. Each of your AEM installations must have a unique suffix.
 
+      This suffix has no particular meaning, except that you can let it end in
+      .rm=1 or .rm=0 to hint that <device> is removable or fixed, respectively,
+      no matter what the Linux kernel detects.
+
   -F: passed on to mkfs.ext4 (don't ask for confirmation, etc.)
 
 

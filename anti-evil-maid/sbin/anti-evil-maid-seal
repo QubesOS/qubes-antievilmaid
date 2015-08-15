@@ -61,10 +61,8 @@ synctpms "$LABEL" "$MNT"
 # unmount device
 
 if [ -z "$CUR_MNT" ]; then
-    if external "$DEV" && removable "$DEV" "$MNT"; then
-        umount "$MNT"
+    umount "$MNT"
+    if external "$DEV" && removable "$DEV"; then
         waitfor ! -b "$DEV"
-    else
-        umount "$MNT"
     fi
 fi
