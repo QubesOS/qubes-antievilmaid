@@ -21,7 +21,7 @@ plymouth_message() {
         plymouth message --text="$*"
         PLYMOUTH_MESSAGES+=("$*")
 }
-. anti-evil-maid-boilerplate
+. anti-evil-maid-lib
 
 
 # find AEM device

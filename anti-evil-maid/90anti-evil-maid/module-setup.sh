@@ -20,7 +20,7 @@ install() {
     inst $systemdsystemunitdir/cryptsetup-pre.target
 
     dracut_install \
-        /usr/sbin/anti-evil-maid-boilerplate \
+        /usr/sbin/anti-evil-maid-lib \
         clear \
         cut \
         file \

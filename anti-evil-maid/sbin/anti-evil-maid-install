@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-. anti-evil-maid-boilerplate
+. anti-evil-maid-lib
 LABEL_SUFFIX_CHARS=0-9a-zA-Z=.-
 BOOT_DIR=/boot
 GRUB_DIR=$BOOT_DIR/grub2

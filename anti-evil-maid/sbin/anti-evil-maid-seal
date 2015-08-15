@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 alias plymouth_message="plymouth message --text"
-. anti-evil-maid-boilerplate
+. anti-evil-maid-lib
 trap 'rm -rf "$CACHE_DIR"' EXIT
 
 
