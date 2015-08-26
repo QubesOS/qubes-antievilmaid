@@ -110,7 +110,7 @@ else
         fi
 
         log "Wrong SRK password, resetting dictionary attack lock..."
-        tpm_resetdalock -z  # here, -z is an empty owner (not SRK) password
+        tpm_resetdalock -z || true  # -z is an empty owner (not SRK) password
     done
 fi
 
