@@ -37,7 +37,7 @@ Examples:
 
     anti-evil-maid-install /dev/sda1
 
-  Install on a SD card's first partition, replacing its data with a new ext4
+  Install on an SD card's first partition, replacing its data with a new ext4
   filesystem labeled "$LABEL_PREFIX.sd", and make it bootable:
 
     anti-evil-maid-install -s .sd /dev/mmcblk0p1
