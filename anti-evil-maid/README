@@ -79,6 +79,15 @@ is /dev/sda1):
 
 # anti-evil-maid-install /dev/sda1
 
+Or better, create an external AEM boot device (in this case an SD card):
+
+# anti-evil-maid-install /dev/mmcblk0p1
+
+If you've chosen the latter option, you should then remove the internal
+boot partition from dom0's /etc/fstab, never mount it again in dom0, and
+never boot from it again, because an attacker might modify it to exploit
+GRUB or dom0 filesystem drivers.
+
 c) Create a secret text:
 
 # cat >/var/lib/anti-evil-maid/aem/secret.txt <<END
