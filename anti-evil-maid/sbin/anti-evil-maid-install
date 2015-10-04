@@ -73,6 +73,10 @@ if [ "$(id -ur)" != 0 ]; then
     exit 1
 fi
 
+if ! grep -q rd.luks.uuid /proc/cmdline; then
+    log "Anti Evil Maid requires encrypted disk!"
+    exit 1
+fi
 
 # examine device
 
