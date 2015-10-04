@@ -85,11 +85,14 @@ topdev() {
 }
 
 external() {
-    _first_luks_part=/dev/disk/by-uuid/$(getluksuuids | head -n 1)
-    _first_luks_whole=$(topdev "$_first_luks_part")
     _aem_whole=$(topdev "$1")
-
-    [ "$_aem_whole" != "$_first_luks_whole" ]
+    for _luks_uuid in $(getluksuuids); do
+        _luks_whole=$(topdev "/dev/disk/by-uuid/$_luks_uuid")
+        if [ "$_aem_whole" = "$_first_luks_whole" ]; then
+            return 1
+        fi
+    done
+    return 0
 }
 
 removable() {
