@@ -95,6 +95,13 @@ if ! [ "$PART_NUM" -gt 0 ]; then
     exit 1
 fi
 
+# If the /boot is already on the target (external) device, don't override it.
+
+BOOT_MAJMIN=$(mountpoint -d "$BOOT_DIR")
+TARGET_MAJMIN=$(lsblk -dnr -o MAJ:MIN "$PART_DEV")
+if [ "$BOOT_MAJMIN" = "$TARGET_MAJMIN" ]; then
+    alias replace=false
+fi
 
 # This check (instead of a more obvious 'mountpoint $BOOT_DIR') should work
 # even in unusual setups without any internal boot partition at all:
