@@ -57,7 +57,7 @@ log "Initializing TPM..."
 modprobe tpm_tis
 ip link set dev lo up
 mkdir -p "${TPMS_DIR%/*}"
-cp -r "$MNT/aem/${TPMS_DIR##*/}" "${TPMS_DIR}"
+cp -Tr "$MNT/aem/${TPMS_DIR##*/}" "${TPMS_DIR}"
 tcsd_changer_identify
 tcsd
 
