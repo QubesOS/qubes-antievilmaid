@@ -18,8 +18,8 @@ PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmai
 
 PLYMOUTH_MESSAGES=()
 plymouth_message() {
-        plymouth message --text="$*"
-        PLYMOUTH_MESSAGES+=("$*")
+    plymouth message --text="$*"
+    PLYMOUTH_MESSAGES+=("$*")
 }
 . anti-evil-maid-lib
 
