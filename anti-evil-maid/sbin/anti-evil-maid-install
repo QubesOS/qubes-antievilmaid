@@ -98,8 +98,8 @@ fi
 # If the /boot is already on the target (external) device, don't override it.
 
 BOOT_MAJMIN=$(mountpoint -d "$BOOT_DIR") || BOOT_MAJMIN=
-TARGET_MAJMIN=$(lsblk -dnr -o MAJ:MIN "$PART_DEV")
-if [ "$BOOT_MAJMIN" = "$TARGET_MAJMIN" ]; then
+PART_DEV_MAJMIN=$(lsblk -dnr -o MAJ:MIN "$PART_DEV")
+if [ "$BOOT_MAJMIN" = "$PART_DEV_MAJMIN" ]; then
     alias replace=false
 fi
 
