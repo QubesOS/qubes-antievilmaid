@@ -88,7 +88,7 @@ external() {
     _aem_whole=$(topdev "$1")
     for _luks_uuid in $(getluksuuids); do
         _luks_whole=$(topdev "/dev/disk/by-uuid/$_luks_uuid")
-        if [ "$_aem_whole" = "$_first_luks_whole" ]; then
+        if [ "$_aem_whole" = "$_luks_whole" ]; then
             return 1
         fi
     done
