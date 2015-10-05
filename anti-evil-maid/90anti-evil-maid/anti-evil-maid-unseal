@@ -41,7 +41,7 @@ LABEL=${DEV##*/}
 # mount AEM device
 
 log "Mounting the ${LABEL:?} device..."
-mkdir "$MNT"
+mkdir -p "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
 
 if external "$DEV" && removable "$DEV"; then
@@ -91,7 +91,7 @@ else
     SEALED_SECRET=$sealed_secret_txt
 fi
 
-mkdir "$CACHE_DIR"
+mkdir -p "$CACHE_DIR"
 echo "${LABEL##$LABEL_PREFIX}" >"$SUFFIX_CACHE"
 
 Z=$(tpm_z_srk)
