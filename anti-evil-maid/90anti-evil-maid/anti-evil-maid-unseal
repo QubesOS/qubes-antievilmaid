@@ -26,15 +26,37 @@ plymouth_message() {
 
 # find AEM device
 
-udevadm trigger
-udevadm settle
-n=$(lsblk -nr -o PARTLABEL,LABEL | grep -cE "(^| )$LABEL_PREFIX") || true
-if [ "$n" != 1 ]; then
-    message "Error: found ${n:-?} Anti Evil Maid devices!"
-    exit 1
-fi
+GLOB=/dev/disk/by-label/$LABEL_PREFIX*
+MSG="Waiting for $GLOB to be connected..."
 
-DEV=(/dev/disk/by-label/$LABEL_PREFIX*)
+plymouth pause-progress
+while :; do
+    n=$(lsblk -nr -o PARTLABEL,LABEL | grep -cE "(^| )$LABEL_PREFIX") || true
+    case "$n" in
+        0)
+            if [ -n "$MSG" ]; then
+                message "$MSG"
+                MSG=
+            fi
+            sleep 0.1
+        ;;
+
+        1)
+            DEV=($GLOB)
+            if [ -z "$MSG" ]; then
+                message "$DEV connected"
+            fi
+            break
+        ;;
+
+        *)
+            message "Error: found ${n:-?} $GLOB devices!"
+            exit 1
+        ;;
+    esac
+done
+plymouth unpause-progress
+
 LABEL=${DEV##*/}
 
 
