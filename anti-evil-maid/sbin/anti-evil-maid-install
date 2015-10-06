@@ -78,6 +78,7 @@ if [ -z "$(getluksuuids)" ]; then
     exit 1
 fi
 
+
 # examine device
 
 BOOT_MAJMIN=$(mountpoint -d "$BOOT_DIR") || BOOT_MAJMIN=
