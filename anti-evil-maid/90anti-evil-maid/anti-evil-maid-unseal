@@ -26,6 +26,9 @@ plymouth_message() {
 
 # find AEM device
 
+udevadm trigger
+udevadm settle
+
 GLOB=/dev/disk/by-label/$LABEL_PREFIX*
 MSG="Waiting for $GLOB to be connected..."
 
