@@ -1,0 +1,44 @@
+#!/bin/sh -e
+
+TPM_DIR=/var/lib/tpm
+TPM_MIGRATE_DIR=$TPM_DIR.migrating
+
+log() {
+    echo "${0##*/}: $1" >&2
+}
+
+
+if [ -h "$TPM_DIR" ]; then
+    log "already migrated"
+    exit 0
+fi
+
+if [ ! -d "$TPM_DIR" ]; then
+    log "missing $TPM_DIR/"
+    exit 1
+fi
+
+if [ -e "$TPM_MIGRATE_DIR" ]; then
+    log "stale $TPM_MIGRATE_DIR"
+    exit 1
+fi
+
+if systemctl --quiet is-active tcsd; then
+    alias was_running=true
+else
+    alias was_running=false
+fi
+
+systemctl --quiet --runtime mask tcsd
+systemctl stop tcsd
+
+mv "$TPM_DIR" "$TPM_MIGRATE_DIR"
+tcsd_changer_identify
+find "$TPM_MIGRATE_DIR" -mindepth 1 -maxdepth 1 -exec mv {} "$TPM_DIR"/ \;
+rmdir "$TPM_MIGRATE_DIR"
+
+systemctl --quiet --runtime unmask tcsd
+systemctl daemon-reload  # pick up the tcsd.service.d snippet
+if was_running; then
+    systemctl start tcsd
+fi

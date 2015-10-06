@@ -1,0 +1,106 @@
+LABEL_PREFIX=aem
+AEM_DIR=/var/lib/anti-evil-maid
+TPM_DIR=/var/lib/tpm
+TPMS_DIR=${TPM_DIR}s
+CACHE_DIR=/run/anti-evil-maid
+SRK_PASSWORD_CACHE=$CACHE_DIR/srk-password
+SUFFIX_CACHE=$CACHE_DIR/suffix
+
+
+# work with or without plymouth
+
+if command plymouth --ping 2>/dev/null; then
+    alias plymouth_active=true
+    alias message=plymouth_message
+else
+    alias plymouth=:
+    alias plymouth_active=false
+    alias message=log
+fi
+
+
+getluksuuids() {
+    _CMDLINE=${_CMDLINE-$(cat /proc/cmdline)}
+
+    for _param in $_CMDLINE; do
+       case "$_param" in rd.luks.uuid=*|rd_LUKS_UUID=*)
+           _param=${_param#*=}
+           echo  "${_param#luks-}"
+       esac
+    done
+}
+
+log() {
+    echo "${0##*/}: $1" >&2
+}
+
+waitfor() {
+    case $# in
+        2) _file=$2; _what=connected ;;
+        3) _file=$3; _what=removed ;;
+        *) return 1 ;;
+    esac
+
+    if [ "$@" ]; then
+        return
+    fi
+
+    message "Waiting for $_file to be $_what..."
+    plymouth pause-progress
+    until [ "$@" ]; do
+        sleep 0.1
+    done
+    plymouth unpause-progress
+    message "$_file $_what"
+}
+
+synctpms() {
+    _label=${1:?}
+    _mnt=${2:?}
+
+    message "Syncing to $_mnt"
+
+    _mnt_tpms_dir=$_mnt/aem/${TPMS_DIR##*/}
+    rm -rf "$_mnt_tpms_dir"
+
+    _ids=$(ls "$TPMS_DIR")
+    for _id in $_ids; do
+        mkdir -p "$_mnt_tpms_dir/$_id"
+        cp "$TPMS_DIR/$_id/system.data" "$_mnt_tpms_dir/$_id"
+
+        if [ -d "$TPMS_DIR/$_id/$_label" ]; then
+            cp -r  "$TPMS_DIR/$_id/$_label" "$_mnt_tpms_dir/$_id"
+        fi
+    done
+}
+
+devtomnt() {
+    lsblk -dnr -o MOUNTPOINT "$1" 2>/dev/null |
+    sed 's/%/\\x25/g' |
+    xargs -0 printf
+}
+
+topdev() {
+    lsblk -snrp -o KNAME "$1" | tail -n 1
+}
+
+external() {
+    _aem_whole=$(topdev "$1")
+    for _luks_uuid in $(getluksuuids); do
+        _luks_whole=$(topdev "/dev/disk/by-uuid/$_luks_uuid")
+        if [ "$_aem_whole" = "$_luks_whole" ]; then
+            return 1
+        fi
+    done
+    return 0
+}
+
+removable() {
+    _rm=$(lsblk -dnr -o RM,LABEL "$1")
+    case "$_rm" in
+        *.rm=[01]) _rm=${_rm##*=} ;;
+                *) _rm=${_rm%% *} ;;
+    esac
+
+    [ "$_rm" = 1 ]
+}

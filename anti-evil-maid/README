@@ -1,0 +1,153 @@
+Intro
+======
+
+Anti Evil Maid is an implementation of a TPM-based dynamic (Intel TXT) trusted
+boot for dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a primary goal
+to prevent Evil Maid attacks.
+
+For more information and discussion about potential attacks see:
+
+http://theinvisiblethings.blogspot.com/2011/09/anti-evil-maid.html
+
+
+Installation
+=============
+
+The instructions below assume Qubes OS.
+
+1) Enable TPM in BIOS.
+
+2) Install and Verify TPM support under your OS/Dom0.
+
+a) Install anti-evil-maid packages (in Dom0 on Qubes). It will install all the
+required dependencies and tools.
+
+# qubes-dom0-update anti-evil-maid
+
+b) Verify kernel support for TPM:
+
+# find /sys/devices -name pcrs -exec cat {} +
+
+If you see something like this:
+
+PCR-00: 67 DC B4 8C AB 8D C7 9B 28 84 D9 15 69 DE 82 F2 F0 E1 2A D8
+PCR-01: 11 75 9A 19 E5 BD E8 4E DA 1C 01 EC 53 87 FD 50 18 E1 94 1E
+PCR-02: 4B 43 98 82 65 04 E9 F4 14 78 26 F9 ED EA 92 91 6D FD AF D5
+PCR-03: B2 A8 3B 0E BF 2F 83 74 29 9A 5B 2B DF C3 1E A9 55 AD 72 36
+PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73
+(...)
+
+... then your TPM is supported by your kernel.
+
+3) Take ownership of your TPM. This, among other things, would generate
+the TPM SRK key used for sealing process:
+
+# tpm_takeownership -y -z
+
+You may want to use non-default password for the SRK key (see the discussion in the article referenced above), certainly if you want to save the sealed secrets to your internal boot partition. In that case you SHOULD NOT pass the '-z' argument to tpm_takeownership.
+
+If your tpm has already been owned in the past, you can reset it by running tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS (e.g.: TPM Authentication Reset).
+
+4) Setup Anti Evil Maid
+
+a) SINIT module
+
+You should download the SINIT module required for your system.
+
+Intel documented the required SINIT module depending on your CPU platform in:
+http://software.intel.com/en-us/articles/intel-trusted-execution-technology
+
+You can then download the module and unzip it. All the modules can be downloaded from:
+https://secure-software.intel.com/en-us/protected-download/267276/183305
+
+Finally, you should retrieve the BIN file inside /boot in dom0. Eg: run from dom0
+$ qvm-run --pass-io vm_name_containing_bin_file 'cat /home/user/path_to_sinit/name_of_sinit_file.BIN' > /boot/name_of_sinit_file.BIN
+
+NOTE: The SINIT files are digitally signed by Intel. While there is no easy
+way to verify their integrity after downloading (and after copying to Dom0),
+still, the operation of placing such a file into Dom0's /boot filesystem should
+be reasonably safe to do -- after all the file should not be processed by any
+software in Dom0, and only by the SENTER instruction of the processes, which,
+we hope, correctly verifies the signature before executing it...
+
+b) Create an Anti Evil Maid device:
+
+# anti-evil-maid-install -h
+
+For example, to install on the internal boot partition (assuming that it
+is /dev/sda1):
+
+# anti-evil-maid-install /dev/sda1
+
+Or better, create an external AEM boot device (in this case an SD card):
+
+# anti-evil-maid-install /dev/mmcblk0p1
+
+If you've chosen the latter option, you should then remove the internal
+boot partition from dom0's /etc/fstab, never mount it again in dom0, and
+never boot from it again, because an attacker might modify it to exploit
+GRUB or dom0 filesystem drivers.
+
+c) Create a secret text:
+
+# cat >/var/lib/anti-evil-maid/aem/secret.txt <<END
+My secret text
+has two lines
+END
+
+Or, if you prefer, a secret PNG image:
+
+# cp my-secret-image.png /var/lib/anti-evil-maid/aem/secret.png
+
+Note: You are saving these not-yet-sealed secrets to your root
+filesystem without further encryption (besides that provided by LUKS).
+If an attacker somehow gains access to your decrypted filesystem data,
+e.g. by compelling you to reveal the LUKS passphrase, they can of
+course see these secrets. So they are probably not the right place to
+store your most intimate confessions. ;)
+
+5) Reboot the system, choose one of the entries called "AEM Qubes".
+
+a) Enter your SRK password if prompted in case you have set one in step
+3. You won't see your secret afterwards, because it hasn't been sealed
+yet. Enter your disk decryption passphrase anyway, right now you still
+trust your system.
+
+As the system continues booting, AEM will automatically seal your
+secret(s). You should see a line, or multiple lines, like this one:
+
+Sealed /var/lib/anti-evil-maid/aem/secret.txt using
+ --pcr 13 --pcr 17 --pcr 18 --pcr 19
+
+Debug output can be read using:
+
+$ journalctl -u anti-evil-maid-unseal -u anti-evil-maid-seal
+
+Note: The PCRs used to seal to can be changed in /etc/anti-evil-maid.conf
+-- though the defaults should work just fine. If you decide to change
+them and you want to reseal immediately, run anti-evil-maid-seal manually
+once.
+
+b) If a chunk of your installed RAM seems to be missing after the reboot
+(which can be checked by running "xl info" in dom0), do the following:
+
+# echo 'export GRUB_CMDLINE_TBOOT=min_ram=0x2000000' >>/etc/default/grub
+# grub2-mkconfig -o /boot/grub2/grub.cfg
+
+Then go to step 5.a again. A discussion of this problem can be found at
+http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611
+and by searching for "min_ram" in the qubes mailing lists.
+
+c) Now, every time you boot your system (from your Anti Evil Maid stick)
+you should see your secret text/image displayed *before* you enter your
+LUKS disk encryption passphrase.
+
+Xen/kernel/BIOS/firmware upgrades
+==================================
+
+After Xen, kernel, BIOS, or firmware upgrades, you will need to reboot
+and enter your disk decryption passphrase even though you can't see your
+secret. It will be resealed again automatically later in the boot process
+(see step 5.a).
+
+For a discussion of potential attacks against Anti Evil Maid, see the article referenced at the beginning.

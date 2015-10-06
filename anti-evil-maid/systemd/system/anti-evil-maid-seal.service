@@ -1,0 +1,17 @@
+[Unit]
+Description=Anti Evil Maid sealing
+DefaultDependencies=false
+Requires=local-fs.target tcsd.service
+After=local-fs.target tcsd.service plymouth-start.service
+Before=basic.target
+ConditionKernelCommandLine=rd.antievilmaid
+ConditionPathIsDirectory=/run/anti-evil-maid
+
+[Service]
+ExecStart=/usr/sbin/anti-evil-maid-seal
+Type=oneshot
+StandardOutput=journal+console
+StandardError=inherit
+
+[Install]
+WantedBy=basic.target

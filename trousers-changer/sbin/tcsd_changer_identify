@@ -1,0 +1,27 @@
+#!/bin/sh -e
+
+TPM_DIR=/var/lib/tpm
+
+log() {
+    echo "${0##*/}: $1" >&2
+}
+
+tpm_setup() {
+    rm -f "$TPM_DIR"  # symlink
+    install -d -m 700 -o tss -g tss "${TPM_DIR}s/$1"
+    ln -s "${TPM_DIR##*/}s/$1" "$TPM_DIR"
+}
+
+
+log "identifying TPM"
+
+tpm_id=unknown
+tpm_setup "$tpm_id"
+tcsd
+trap "killall -w tcsd" EXIT
+if tpm_id_try="$(tpm_id -z)"; then
+    tpm_id=$tpm_id_try
+    tpm_setup "$tpm_id"
+fi
+
+log "TPM identity: $tpm_id"

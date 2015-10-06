@@ -10,6 +10,5 @@ After=cryptsetup.target
 Type=oneshot
 RemainAfterExit=no
 ExecStart=/sbin/anti-evil-maid-check-mount-devs
-StandardInput=null
 StandardOutput=journal+console
 StandardError=journal+console

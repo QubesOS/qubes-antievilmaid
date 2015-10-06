@@ -110,29 +110,34 @@ linux_entry ()
       echo "menuentry '$(echo "$title" | grub_quote)' ${CLASS} \$menuentry_id_option 'xen-gnulinux-simple-$boot_device_id' {" | sed "s/^/$submenu_indentation/"
   fi
   if [ x$type != xrecovery ] ; then
-      save_default_entry | sed -e "s/^/\t/" | sed "s/^/$submenu_indentation/"
+      save_default_entry | grub_add_tab | sed "s/^/$submenu_indentation/"
   fi
 
   if [ -z "${prepare_boot_cache}" ]; then
-    prepare_boot_cache="$(prepare_grub_to_access_device ${GRUB_DEVICE_BOOT} | sed -e "s/^/\t/")"
+    prepare_boot_cache="$(prepare_grub_to_access_device ${GRUB_DEVICE_BOOT} | grub_add_tab)"
   fi
   printf '%s\n' "${prepare_boot_cache}" | sed "s/^/$submenu_indentation/"
   tmessage="$(gettext_printf "Loading tboot ...")"
   xmessage="$(gettext_printf "Loading Xen %s ..." ${xen_version})"
   lmessage="$(gettext_printf "Loading Linux %s ..." ${version})"
   sed "s/^/$submenu_indentation/" << EOF
-	echo	'$tmessage'
+	echo	'$(echo "$tmessage" | grub_quote)'
 	multiboot	/tboot.gz placeholder logging=memory,serial ${GRUB_CMDLINE_TBOOT}
-	echo	'$xmessage'
-	module	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args}
-	echo	'$lmessage'
-	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} rd.antievilmaid ${GRUB_CMDLINE_AEM_FLAGS}
+	echo	'$(echo "$xmessage" | grub_quote)'
+        if [ "\$grub_platform" = "pc" -o "\$grub_platform" = "" ]; then
+            xen_rm_opts=
+        else
+            xen_rm_opts="no-real-mode edd=off"
+        fi
+	module	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args} \${xen_rm_opts}
+	echo	'$(echo "$lmessage" | grub_quote)'
+	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} rd.antievilmaid
 EOF
   if test -n "${initrd}" ; then
     # TRANSLATORS: ramdisk isn't identifier. Should be translated.
     message="$(gettext_printf "Loading initial ramdisk ...")"
     sed "s/^/$submenu_indentation/" << EOF
-	echo	'$message'
+	echo	'$(echo "$message" | grub_quote)'
 	module	${rel_dirname}/${initrd}
 EOF
   fi
@@ -194,6 +199,8 @@ boot_device_id=
 
 title_correction_code=
 
+machine=`uname -m`
+
 case "$machine" in
     i?86) GENKERNEL_ARCH="x86" ;;
     mips|mips64) GENKERNEL_ARCH="mips" ;;
@@ -201,6 +208,8 @@ case "$machine" in
     arm*) GENKERNEL_ARCH="arm" ;;
     *) GENKERNEL_ARCH="$machine" ;;
 esac
+
+echo "if [ -d /aem/ ]; then"
 
 # Extra indentation to add to menu entries in a submenu. We're not in a submenu
 # yet, so it's empty. In a submenu it will be equal to '\t' (one tab).
@@ -256,7 +265,7 @@ while [ "x${xen_list}" != "x" ] ; do
 	    linux_entry "${OS}" "${version}" "${xen_version}" simple \
 		"${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}" "${GRUB_CMDLINE_XEN} ${GRUB_CMDLINE_XEN_DEFAULT}"
 
-	    submenu_indentation="\t\t"
+	    submenu_indentation="$grub_tab$grub_tab"
     
 	    if [ -z "$boot_device_id" ]; then
 		boot_device_id="$(grub_get_device_id "${GRUB_DEVICE}")"
@@ -289,3 +298,5 @@ if [ x"$is_first_entry" != xtrue ]; then
 fi
 
 echo "$title_correction_code"
+
+echo fi

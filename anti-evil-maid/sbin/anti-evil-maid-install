@@ -1,0 +1,210 @@
+#!/bin/sh -e
+
+. anti-evil-maid-lib
+LABEL_SUFFIX_CHARS=0-9a-zA-Z=.-
+BOOT_DIR=/boot
+GRUB_DIR=$BOOT_DIR/grub2
+GRUB_CFG=$GRUB_DIR/grub.cfg
+
+
+usage() {
+    cat <<END
+
+Usage:
+  anti-evil-maid-install [-s <suffix>] [-F] <device>
+
+  Installs Anti Evil Maid to your system's boot partition, or to a different
+  storage device (e.g. an SD card or a USB stick).
+
+
+Arguments:
+  -s: <device> gets labeled "$LABEL_PREFIX<suffix>"
+
+      <suffix> can be composed of 0-13 characters from the alphabet $LABEL_SUFFIX_CHARS
+      It defaults to <device>'s current suffix, if any, or the empty string
+      otherwise. Each of your AEM installations must have a unique suffix.
+
+      This suffix has no particular meaning, except that you can let it end in
+      .rm=1 or .rm=0 to hint that <device> is removable or fixed, respectively,
+      no matter what the Linux kernel detects.
+
+  -F: passed on to mkfs.ext4 (don't ask for confirmation, etc.)
+
+
+Examples:
+  Install on the system's boot partition (assuming that it is /dev/sda1), and
+  label its current filesystem "$LABEL_PREFIX":
+
+    anti-evil-maid-install /dev/sda1
+
+  Install on an SD card's first partition, replacing its data with a new ext4
+  filesystem labeled "$LABEL_PREFIX.sd", and make it bootable:
+
+    anti-evil-maid-install -s .sd /dev/mmcblk0p1
+
+END
+
+    exit 1
+}
+
+
+# check invocation
+
+unset LABEL_SUFFIX F
+while getopts s:Fh opt; do
+    case "$opt" in
+        s) LABEL_SUFFIX=$OPTARG ;;
+        F) F=-F ;;
+        *) usage ;;
+    esac
+done
+
+case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*|??????????????*) usage; esac
+LABEL=$LABEL_PREFIX$LABEL_SUFFIX
+
+shift $(($OPTIND - 1))
+case $# in
+    1) PART_DEV=$1 ;;
+    *) usage ;;
+esac
+
+if [ "$(id -ur)" != 0 ]; then
+    log "This command must be run as root!"
+    exit 1
+fi
+
+if [ -z "$(getluksuuids)" ]; then
+    log "Anti Evil Maid requires encrypted disk!"
+    exit 1
+fi
+
+# examine device
+
+BOOT_MAJMIN=$(mountpoint -d "$BOOT_DIR") || BOOT_MAJMIN=
+PART_DEV_MAJMIN=$(lsblk -dnr -o MAJ:MIN "$PART_DEV")
+
+if external "$PART_DEV" && [ "$BOOT_MAJMIN" != "$PART_DEV_MAJMIN" ]; then
+    alias replace=true
+else
+    alias replace=false
+fi
+
+WHOLE_DEV=$(lsblk -dnp -o PKNAME "$PART_DEV")
+if ! [ -b "$WHOLE_DEV" -a "$WHOLE_DEV" != "$PART_DEV" ]; then
+    log "Couldn't find parent device: $WHOLE_DEV"
+    exit 1
+fi
+
+PART_DEV_REAL=$(readlink -f "$PART_DEV")
+PART_NUM=${PART_DEV_REAL##*[!0-9]}
+if ! [ "$PART_NUM" -gt 0 ]; then
+    log "Couldn't extract partition number: $PART_NUM"
+    exit 1
+fi
+
+
+# This check (instead of a more obvious 'mountpoint $BOOT_DIR') should work
+# even in unusual setups without any internal boot partition at all:
+
+if [ ! -e "$GRUB_CFG" ]; then
+    log "Couldn't find boot files at $BOOT_DIR"
+    exit 1
+fi
+
+
+# keep old label unless overridden explicitly
+
+OLD_LABEL=$(lsblk -dnr -o LABEL "$PART_DEV") ||
+OLD_LABEL=
+
+case "$OLD_LABEL" in "$LABEL_PREFIX"*)
+    if [ -z "${LABEL_SUFFIX+set}" ]; then
+        LABEL=$OLD_LABEL
+    fi
+esac
+
+
+# create and/or label fs
+
+if replace; then
+    log "Creating new ext4 filesystem labeled $LABEL"
+    mkfs.ext4 $F -L "$LABEL" "$PART_DEV"
+else
+    log "Labeling filesystem $LABEL"
+    e2label "$PART_DEV" "$LABEL"
+fi
+
+
+# move secrets if label changed
+
+if [   -n "$OLD_LABEL" -a \
+       -e "$AEM_DIR/$OLD_LABEL" -a \
+     ! -e "$AEM_DIR/$LABEL" ]; then
+    mv -v "$AEM_DIR/$OLD_LABEL" "$AEM_DIR/$LABEL"
+fi
+
+
+# mount
+
+if CUR_MNT=$(devtomnt "$PART_DEV") && [ -n "$CUR_MNT" ]; then
+    PART_MNT=$CUR_MNT
+else
+    CUR_MNT=
+    PART_MNT=/mnt/anti-evil-maid/$LABEL
+
+    log "Mounting at $PART_MNT"
+    mkdir -p "$PART_MNT"
+    mount "$PART_DEV" "$PART_MNT"
+fi
+
+
+# sync
+
+mkdir -p "$PART_MNT/aem"
+synctpms "$LABEL" "$PART_MNT"
+mkdir -p "$AEM_DIR/$LABEL"
+
+
+# make device bootable
+
+if replace; then
+    log "Setting bootable flag"
+    parted -s "$WHOLE_DEV" set "$PART_NUM" boot on
+
+    log "Copying boot files"
+    find "$BOOT_DIR" -maxdepth 1 -type f ! -name 'initramfs-*.img' \
+         -exec cp {} "$PART_MNT" \;
+
+    # TODO: If dracut is configured for no-hostonly mode (so we don't have to
+    # worry about picking up loaded kernel modules), just copy each initramfs
+    # instead of regenerating it
+    for img in "$BOOT_DIR"/initramfs-*.img; do
+        ver=${img%.img}
+        ver=${ver##*initramfs-}
+        log "Generating initramfs for kernel $ver"
+        dracut --force "$PART_MNT/${img##*/}" "$ver"
+    done
+
+    log "Copying GRUB themes"
+    dst=$PART_MNT/${GRUB_DIR#$BOOT_DIR/}
+    mkdir "$dst"
+    cp -r "$GRUB_DIR/themes" "$dst"
+
+    log "Installing GRUB"
+    grub2-install --boot-directory="$PART_MNT" "$WHOLE_DEV"
+
+    log "Bind mounting $PART_MNT at $BOOT_DIR"
+    mount --bind "$PART_MNT" "$BOOT_DIR"
+
+    log "Generating GRUB configuration"
+    grub2-mkconfig -o "$GRUB_CFG"
+
+    log "Unmounting bind mounted $BOOT_DIR"
+    umount "$BOOT_DIR"
+fi
+
+
+if [ -z "$CUR_MNT" ]; then
+    log "Unmounting $PART_MNT"
+    umount "$PART_MNT"
+fi

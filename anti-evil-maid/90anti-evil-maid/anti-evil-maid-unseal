@@ -1,0 +1,201 @@
+#!/bin/bash
+set -e -o pipefail
+shopt -s expand_aliases nullglob
+
+# Anti Evil Maid for dracut by Invisible Things Lab
+# Copyright (C) 2010 Joanna Rutkowska <joanna@invisiblethingslab.com>
+#
+# Mount our device, read the sealed secret blobs, initialize TPM
+# and finally try to unseal the secrets and display them to the user
+
+
+MNT=/anti-evil-maid
+UNSEALED_SECRET=/tmp/unsealed-secret
+LUKS_HEADER_DUMP=/tmp/luks-header-dump
+LUKS_PCR=13
+PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmaid_secret.png
+
+
+PLYMOUTH_MESSAGES=()
+plymouth_message() {
+    plymouth message --text="$*"
+    PLYMOUTH_MESSAGES+=("$*")
+}
+. anti-evil-maid-lib
+
+
+# find AEM device
+
+GLOB=/dev/disk/by-label/$LABEL_PREFIX*
+MSG="Waiting for $GLOB to be connected..."
+
+plymouth pause-progress
+while :; do
+    n=$(lsblk -nr -o PARTLABEL,LABEL | grep -cE "(^| )$LABEL_PREFIX") || true
+    case "$n" in
+        0)
+            if [ -n "$MSG" ]; then
+                message "$MSG"
+                MSG=
+            fi
+            sleep 0.1
+        ;;
+
+        1)
+            DEV=($GLOB)
+            if [ -z "$MSG" ]; then
+                message "$DEV connected"
+            fi
+            break
+        ;;
+
+        *)
+            message "Error: found ${n:-?} $GLOB devices!"
+            exit 1
+        ;;
+    esac
+done
+plymouth unpause-progress
+
+LABEL=${DEV##*/}
+
+
+# mount AEM device
+
+log "Mounting the ${LABEL:?} device..."
+mkdir -p "$MNT"
+mount -t ext4 -o ro "$DEV" "$MNT"
+
+if external "$DEV" && removable "$DEV"; then
+    alias remove=true
+else
+    alias remove=false
+fi
+
+
+# setup TPM
+
+log "Initializing TPM..."
+modprobe tpm_tis
+ip link set dev lo up
+mkdir -p "${TPMS_DIR%/*}"
+cp -Tr "$MNT/aem/${TPMS_DIR##*/}" "${TPMS_DIR}"
+tcsd_changer_identify
+tcsd
+
+
+# Extend PCR with LUKS header(s)
+
+getluksuuids |
+sort -u |
+while read luksid; do
+    waitfor -b "/dev/disk/by-uuid/$luksid"
+
+    cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \
+               --header-backup-file "$LUKS_HEADER_DUMP"
+    luks_header_hash=$(sha1sum "$LUKS_HEADER_DUMP" | cut -f 1 -d ' ')
+    rm -f "$LUKS_HEADER_DUMP"
+    log "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
+    tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash"
+done
+
+
+# unseal the secret and unmount the AEM device
+
+sealed_secret_txt=$TPM_DIR/$LABEL/secret.txt.sealed
+sealed_secret_png=$TPM_DIR/$LABEL/secret.png.sealed
+
+if plymouth_active && [ -e "$sealed_secret_png" ]; then
+    alias png=true
+    SEALED_SECRET=$sealed_secret_png
+else
+    alias png=false
+    SEALED_SECRET=$sealed_secret_txt
+fi
+
+mkdir -p "$CACHE_DIR"
+echo "${LABEL##$LABEL_PREFIX}" >"$SUFFIX_CACHE"
+
+Z=$(tpm_z_srk)
+
+if [ -n "$Z" ]; then
+    >"$SRK_PASSWORD_CACHE"
+else
+    for try in 1 2 3; do
+        log "Prompting for SRK password..."
+
+        if systemd-ask-password "TPM SRK password to unseal the secret" |
+           tee "$SRK_PASSWORD_CACHE" |
+           tpm_sealdata -i /dev/null -o /dev/null; then
+             log "Correct SRK password"
+             break
+        fi
+
+        log "Wrong SRK password, resetting dictionary attack lock..."
+        tpm_resetdalock -z || true  # -z is an empty owner (not SRK) password
+    done
+fi
+
+log "Unsealing the secret..."
+if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
+   <"$SRK_PASSWORD_CACHE"; then
+    rm -rf "$CACHE_DIR"
+fi
+
+log "Unmounting the $LABEL device..."
+umount "$MNT"
+
+
+if [ ! -d "$CACHE_DIR" ]; then  # unseal succeeded
+    if png; then
+        # display secret in next dialog
+        WHERE="next to the prompt for it"
+        if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
+            cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
+        fi
+    else
+        # display secret in current dialog
+        WHERE="above"
+        {
+            message ""
+            message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
+            message ""
+        } 2>&1  # don't put the secret into the journal
+    fi
+    message "Never type in your disk password unless the secret $WHERE is correct!"
+
+
+    # pause
+
+    if remove; then
+        waitfor ! -b "$DEV"
+    else
+        if ! png; then
+            msg="Press <ENTER> to continue..."
+            if plymouth_active; then
+                message "$msg"
+                plymouth watch-keystroke --keys=$'\n'
+            else
+                systemd-ask-password "$msg" >/dev/null
+            fi
+        fi
+    fi
+fi
+
+
+# Clear all messages to hide the secret. Do it even if the unsealing has failed,
+# because that's how an attacker would likely behave to trick absentminded users
+# into thinking that they've already seen the secret. (See AEM introductory blog
+# post FAQ, "Why are there no negative indicators")
+
+if remove || ! png; then
+    if plymouth_active; then
+        for m in "${PLYMOUTH_MESSAGES[@]}"; do
+            plymouth hide-message --text="$m"
+        done
+    fi
+
+    clear
+fi
+
+rm -f "$UNSEALED_SECRET"
