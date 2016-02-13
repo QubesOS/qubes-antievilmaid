@@ -61,7 +61,9 @@ You can then download the module and unzip it. All the modules can be downloaded
 https://secure-software.intel.com/en-us/protected-download/267276/183305
 
 Finally, you should retrieve the BIN file inside /boot in dom0. Eg: run from dom0
-$ qvm-run --pass-io vm_name_containing_bin_file 'cat /home/user/path_to_sinit/name_of_sinit_file.BIN' > /boot/name_of_sinit_file.BIN
+
+$ sudo -s
+# qvm-run --pass-io vm_name_containing_bin_file 'cat /home/user/path_to_sinit/name_of_sinit_file.BIN' > /boot/name_of_sinit_file.BIN
 
 NOTE: The SINIT files are digitally signed by Intel. While there is no easy
 way to verify their integrity after downloading (and after copying to Dom0),
