@@ -7,7 +7,8 @@ to prevent Evil Maid attacks.
 
 For more information and discussion about potential attacks see:
 
-http://theinvisiblethings.blogspot.com/2011/09/anti-evil-maid.html
+http://blog.invisiblethings.org/2011/09/07/anti-evil-maid.html
+(Note that this article is somewhat outdated, e.g. AEM uses Intel TXT now.)
 
 
 Installation
