@@ -91,7 +91,7 @@ boot partition from dom0's /etc/fstab, never mount it again in dom0, and
 never boot from it again, because an attacker might modify it to exploit
 GRUB or dom0 filesystem drivers.
 
-c) Create a secret text:
+c) Create a secret text (note: it cannot be larger than 255 bytes):
 
 # cat >/var/lib/anti-evil-maid/aem/secret.txt <<END
 My secret text
