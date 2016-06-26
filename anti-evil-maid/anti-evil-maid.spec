@@ -65,7 +65,6 @@ systemctl daemon-reload
 %post
 chmod -x %tboot_grub
 %refresh
-systemctl start tcsd
 
 %postun
 if [ "$1" = 0 ]; then
