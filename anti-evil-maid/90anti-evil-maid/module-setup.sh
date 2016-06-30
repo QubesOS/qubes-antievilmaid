@@ -57,7 +57,19 @@ install() {
     # all this crap below is needed for tcsd to start properly...
     dracut_install ip
     inst_simple "$moddir"/hosts /etc/hosts
-    inst_simple "$moddir"/passwd /etc/passwd
-    inst_simple "$moddir"/shadow /etc/shadow
-    inst_simple "$moddir"/shadow /etc/group
+
+    touch "$initdir/etc/"{passwd,shadow,group}
+    chmod 0644 "$initdir/etc/"{passwd,group}
+    chmod 0640 "$initdir/etc/shadow"
+    for name in root tss; do
+        for file in /etc/{passwd,group}; do
+            if ! grep -q "^$name:" "$initdir/$file"; then
+                grep "^$name:" "$file" >> "$initdir/$file"
+            fi
+        done
+
+        if ! grep -q "^$name:" "$initdir/etc/shadow"; then
+            echo "$name:*:::::::" >> "$initdir/etc/shadow"
+        fi
+    done
 }
