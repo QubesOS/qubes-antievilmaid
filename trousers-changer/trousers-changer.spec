@@ -8,6 +8,7 @@ Version:	%{version}
 Release:	1%{?dist}
 Summary:    	tcsd wrapper for portable installations
 Requires:	trousers tpm-tools systemd
+Requires(post):	systemd
 Vendor:		Invisible Things Lab
 License:	GPL
 URL:		http://www.qubes-os.org

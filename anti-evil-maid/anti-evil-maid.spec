@@ -7,7 +7,8 @@ Name:		%{name}
 Version:	%{version}
 Release:	1%{?dist}
 Summary:    	Anti Evil Maid for initramfs-based systems.
-Requires:	dracut parted tboot tpm-tools tpm-extra trousers-changer systemd >= 208-19
+Requires:	dracut grub2-tools parted tboot tpm-tools tpm-extra trousers-changer systemd >= 208-19
+Requires(post):	dracut grub2-tools tboot systemd
 Obsoletes:	anti-evil-maid-dracut
 Vendor:		Invisible Things Lab
 License:	GPL
