@@ -43,7 +43,7 @@ PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73
 3) Take ownership of your TPM. This, among other things, would generate
 the TPM SRK key used for sealing process:
 
-# systemctl start tcsd
+# systemctl restart tcsd
 # tpm_takeownership -y -z
 
 You may want to use non-default password for the SRK key (see the discussion in the article referenced above), certainly if you want to save the sealed secrets to your internal boot partition. In that case you SHOULD NOT pass the '-z' argument to tpm_takeownership.
