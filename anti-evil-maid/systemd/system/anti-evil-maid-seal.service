@@ -1,8 +1,8 @@
 [Unit]
 Description=Anti Evil Maid sealing
 DefaultDependencies=false
-Requires=local-fs.target tcsd.service
-After=local-fs.target tcsd.service plymouth-start.service
+Requires=local-fs.target
+After=local-fs.target plymouth-start.service
 Before=basic.target
 ConditionKernelCommandLine=rd.antievilmaid
 ConditionPathIsDirectory=/run/anti-evil-maid

@@ -8,6 +8,7 @@ Version:	%{version}
 Release:	1%{?dist}
 Summary:    	tcsd wrapper for portable installations
 Requires:	trousers tpm-tools systemd
+Requires(post):	systemd
 Vendor:		Invisible Things Lab
 License:	GPL
 URL:		http://www.qubes-os.org
@@ -25,12 +26,10 @@ cp -r systemd $RPM_BUILD_ROOT/usr/lib
 /sbin/tpm_id
 /sbin/tcsd_changer_identify
 /sbin/tcsd_changer_migrate
-/usr/lib/systemd/system/tcsd.service.d/tcsd_changer_identify.conf
+/usr/lib/systemd/system/tcsd.service.d/trousers-changer.conf
 
 %post
-if [ "$1" = 1 ]; then
-    tcsd_changer_migrate
-fi
+systemctl daemon-reload
 
 %postun
 if [ "$1" = 0 ]; then
