@@ -92,6 +92,17 @@ boot partition from dom0's /etc/fstab, never mount it again in dom0, and
 never boot from it again, because an attacker might modify it to exploit
 GRUB or dom0 filesystem drivers.
 
+Note: If you choose to use a USB device (e.g., a flash drive) as your AEM device
+and you previously created a USB qube, then you may have to unhide your USB
+controller from dom0:
+
+  1. Open the file `/etc/default/grub` in dom0.
+  2. Find the line that begins with `GRUB_CMDLINE_LINUX`.
+  3. If present, remove `rd.qubes.hide_all_usb` from that line.
+  4. Save and close the file.
+  5. Run the command `grub2-mkconfig -o /boot/grub2/grub.cfg` in dom0.
+  6. Reboot.
+
 c) Create a secret text (note: it cannot be larger than 255 bytes):
 
 # cat >/var/lib/anti-evil-maid/aem/secret.txt <<END
