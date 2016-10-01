@@ -10,6 +10,13 @@ For more information and discussion about potential attacks see:
 http://blog.invisiblethings.org/2011/09/07/anti-evil-maid.html
 (Note that this article is somewhat outdated, e.g. AEM uses Intel TXT now.)
 
+Requirements
+============
+
+* AEM is not compatible with (U)EFI boot. Legacy boot is required.
+
+* If you are using LUKS with LVM, you must encrypt the whole volume group
+  instead of each volume, or else AEM will fail to boot.
 
 Installation
 =============
