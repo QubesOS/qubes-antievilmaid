@@ -53,9 +53,14 @@ the TPM SRK key used for sealing process:
 # systemctl restart tcsd
 # tpm_takeownership -y -z
 
-You may want to use non-default password for the SRK key (see the discussion in the article referenced above), certainly if you want to save the sealed secrets to your internal boot partition. In that case you SHOULD NOT pass the '-z' argument to tpm_takeownership.
+You may want to use non-default password for the SRK key (see the discussion in
+the article referenced above), certainly if you want to save the sealed secrets
+to your internal boot partition. In that case you SHOULD NOT pass the '-z'
+argument to tpm_takeownership.
 
-If your tpm has already been owned in the past, you can reset it by running tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS (e.g.: TPM Authentication Reset).
+If your tpm has already been owned in the past, you can reset it by running
+tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS
+(e.g.: TPM Authentication Reset).
 
 4) Setup Anti Evil Maid
 
@@ -66,10 +71,13 @@ You should download the SINIT module required for your system.
 Intel documented the required SINIT module depending on your CPU platform in:
 http://software.intel.com/en-us/articles/intel-trusted-execution-technology
 
-You can then download the module and unzip it. All the modules can be downloaded from:
-https://secure-software.intel.com/en-us/protected-download/267276/183305
+You can then download the module and unzip it. All the modules can be downloaded
+from:
 
-Finally, you should retrieve the BIN file inside /boot in dom0. Eg: run from dom0
+https://software.intel.com/protected-download/267276/183305
+
+Finally, you should retrieve the BIN file inside /boot in dom0. E.g., run from
+dom0:
 
 $ sudo -s
 # qvm-run --pass-io vm_name_containing_bin_file 'cat /home/user/path_to_sinit/name_of_sinit_file.BIN' > /boot/name_of_sinit_file.BIN
@@ -172,4 +180,5 @@ and enter your disk decryption passphrase even though you can't see your
 secret. It will be resealed again automatically later in the boot process
 (see step 5.a).
 
-For a discussion of potential attacks against Anti Evil Maid, see the article referenced at the beginning.
+For a discussion of potential attacks against Anti Evil Maid, see the article
+referenced at the beginning.
