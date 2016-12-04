@@ -2,8 +2,6 @@ sudo: required
 dist: trusty
 language: generic
 install: git clone https://github.com/QubesOS/qubes-builder ~/qubes-builder
-# debootstrap in trusty is old...
-before_script: sudo ln -s sid /usr/share/debootstrap/scripts/stretch
 script: ~/qubes-builder/scripts/travis-build
 env:
  - DIST_DOM0=fc20 USE_QUBES_REPO_VERSION=3.1
