@@ -6,14 +6,26 @@ set -e
 shopt -s expand_aliases
 
 function check_device() {
+    local sysfs_path recursion_limit dm_name dm_target slave
     sysfs_path="$1"
+    recursion_limit="${2:-10}"
 
     if [ -r "$sysfs_path/dm/name" ]; then
         dm_name="`cat $sysfs_path/dm/name`"
         dm_target="`dmsetup table "$dm_name" | cut -d ' ' -f 3`"
         # This also ensures that the dm table have only single entry
-        test "$dm_target" = "crypt"
-        return $?
+        if [ "$dm_target" = "crypt" ]; then
+            return 0
+        elif [ -n "`ls -A "$sysfs_path"/slaves`" ] && [ "$recursion_limit" -gt 0 ]; then
+            for slave in "$sysfs_path"/slaves/*; do
+                if ! check_device "$slave" "$(( recursion_limit - 1 ))"; then
+                    return 1
+                fi
+            done
+            return 0
+        else
+            return 1
+        fi
     else
         return 1
     fi
@@ -34,25 +46,15 @@ fi
 root_devid=`lsblk -dnr -o MAJ:MIN $root_dev`
 
 if ! check_device /sys/dev/block/$root_devid; then
-    if [ -n "`ls -A /sys/dev/block/$root_devid/slaves`" ]; then
-        for slave in /sys/dev/block/$root_devid/slaves/*; do
-            if ! check_device $slave; then
-                die "AEM: (bogus?) root device found not encrypted!"
-            fi
-        done
-    else
-        die "AEM: (bogus?) root device found not encrypted!"
-    fi
+    die "AEM: (bogus?) root device found not encrypted!"
 fi
 
 for lv in $(getarg rd.lvm.lv); do
     if [ -e /dev/$lv ]; then
         devid=`lsblk -dnr -o MAJ:MIN /dev/$lv`
-        for slave in /sys/dev/block/$devid/slaves/*; do
-            if ! check_device $slave; then
-                die "AEM: (bogus?) device /dev/$lv found not encrypted!"
-            fi
-        done
+        if ! check_device /sys/dev/block/$devid; then
+            die "AEM: (bogus?) device /dev/$lv found not encrypted!"
+        fi
     fi
 done
 
