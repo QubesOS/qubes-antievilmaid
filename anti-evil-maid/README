@@ -23,7 +23,7 @@ Installation
 
 The instructions below assume Qubes OS.
 
-1) Enable TPM in BIOS.
+1) Enable TPM in BIOS. Also enable TXT if there is an option for it.
 
 2) Install and Verify TPM support under your OS/Dom0.
 
@@ -136,7 +136,12 @@ e.g. by compelling you to reveal the LUKS passphrase, they can of
 course see these secrets. So they are probably not the right place to
 store your most intimate confessions. ;)
 
-5) Reboot the system, choose one of the entries called "AEM Qubes".
+5) Reboot the system, choose one of the entries called "AEM Qubes". This will
+attempt to perform a "measured launch" using tboot and the SINIT module you
+downloaded, which records the Xen, kernel, and initrd versions used in PCRs
+17-19 of the TPM for use in sealing and unsealing your secret. If the measured
+launch fails for any reason, tboot will fall back to a normal boot and AEM will
+not function.
 
 a) Enter your SRK password if prompted in case you have set one in step
 3. You won't see your secret afterwards, because it hasn't been sealed
@@ -157,6 +162,11 @@ Note: The PCRs used to seal to can be changed in /etc/anti-evil-maid.conf
 -- though the defaults should work just fine. If you decide to change
 them and you want to reseal immediately, run anti-evil-maid-seal manually
 once.
+
+If you get a message that "tboot wasn't able to perform a measured launch on
+your system for some reason", check the tboot log for details. See the tboot
+readme (/usr/share/doc/tboot/README on an installed system) for information on
+how to view the tboot log.
 
 b) If a chunk of your installed RAM seems to be missing after the reboot
 (which can be checked by running "xl info" in dom0), do the following:
