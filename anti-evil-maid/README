@@ -164,9 +164,10 @@ them and you want to reseal immediately, run anti-evil-maid-seal manually
 once.
 
 If you get a message that "tboot wasn't able to perform a measured launch on
-your system for some reason", check the tboot log for details. See the tboot
-readme (/usr/share/doc/tboot/README on an installed system) for information on
-how to view the tboot log.
+your system for some reason", check the tboot log for details. The easiest way
+to view it is to set "logging=vga vga_delay=10" on the "multiboot /tboot.gz"
+line in grub.cfg and reboot. For more information, see the tboot readme
+(/usr/share/doc/tboot/README on an installed system).
 
 b) If a chunk of your installed RAM seems to be missing after the reboot
 (which can be checked by running "xl info" in dom0), do the following:
