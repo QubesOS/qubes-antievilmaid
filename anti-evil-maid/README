@@ -34,7 +34,7 @@ required dependencies and tools.
 
 b) Verify kernel support for TPM:
 
-# find /sys/devices -name pcrs -exec cat {} +
+# cat /sys/devices/*/*/pcrs
 
 If you see something like this:
 
