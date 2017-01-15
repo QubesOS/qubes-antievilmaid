@@ -24,6 +24,18 @@ LABEL=$LABEL_PREFIX${1-$(cat "$SUFFIX_CACHE")}
 DEV=/dev/disk/by-label/$LABEL
 
 
+# ensure that all standard PCRs configured to be used have been extended
+
+pcrs=$(printf %s "$SEAL" | grep -Eo '\b1[3789]\b') || true
+
+if grep -E "^PCR-(${pcrs//$'\n'/|}):( 00| FF){20}" /sys/devices/*/*/pcrs;
+   [ $? != 1 ]; then
+    message "PCR sanity check failed!"
+    message "See /usr/share/doc/anti-evil-maid/README for details."
+    exit 1
+fi
+
+
 # seal and save secret(s) to root partition
 
 mkdir -p "$TPM_DIR/$LABEL"
