@@ -1,4 +1,6 @@
-#!/bin/sh -e
+#!/bin/bash
+set -e -o pipefail
+shopt -s expand_aliases
 
 # Listing tcsd.service in anti-evil-maid-seal.service's Requires= and After=
 # would cause it to always be started (even when not booting in AEM mode or
@@ -9,13 +11,13 @@
 systemctl start tcsd
 
 alias plymouth_message="plymouth message --text"
-. anti-evil-maid-lib
+source anti-evil-maid-lib
 trap 'rm -rf "$CACHE_DIR"' EXIT
 
 
 # define sealing and device variables
 
-. /etc/anti-evil-maid.conf
+source /etc/anti-evil-maid.conf
 Z=$(tpm_z_srk)
 
 LABEL=$LABEL_PREFIX${1-$(cat "$SUFFIX_CACHE")}
@@ -33,7 +35,7 @@ for ext in txt png; do
 
     if [ ! -e "$input" ]; then
         message "Absent $input"
-    elif cat "$SRK_PASSWORD_CACHE" 2>/dev/null |  # ignored in a tty
+    elif if [ ! -t 0 ]; then cat "$SRK_PASSWORD_CACHE"; fi |
          tpm_sealdata $Z $SEAL -i "$input" -o "$output"; then
         SEALED=$(($SEALED + 1))
         message "Sealed $input using $SEAL"
