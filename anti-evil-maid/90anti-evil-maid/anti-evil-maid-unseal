@@ -105,8 +105,8 @@ done
 
 # unseal the secret and unmount the AEM device
 
-sealed_secret_txt=$TPM_DIR/$LABEL/secret.txt.sealed
-sealed_secret_png=$TPM_DIR/$LABEL/secret.png.sealed
+sealed_secret_txt=$TPM_DIR/$LABEL/secret.txt.sealed2
+sealed_secret_png=$TPM_DIR/$LABEL/secret.png.sealed2
 
 if plymouth_active && [ -e "$sealed_secret_png" ]; then
     alias png=true
