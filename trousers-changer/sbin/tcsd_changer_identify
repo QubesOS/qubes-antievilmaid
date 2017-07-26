@@ -19,7 +19,7 @@ tpm_id=unknown
 tpm_setup "$tpm_id"
 tcsd
 trap "killall -w tcsd" EXIT
-if tpm_id_try="$(tpm_id -z)"; then
+if tpm_id_try="$(tpm_id)"; then
     tpm_id=$tpm_id_try
     tpm_setup "$tpm_id"
 fi

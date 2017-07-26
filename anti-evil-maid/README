@@ -51,12 +51,14 @@ PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73
 the TPM SRK key used for sealing process:
 
 # systemctl restart tcsd
-# tpm_takeownership -y -z
+# tpm_takeownership -z
 
 You may want to use non-default password for the SRK key (see the discussion in
 the article referenced above), certainly if you want to save the sealed secrets
 to your internal boot partition. In that case you SHOULD NOT pass the '-z'
 argument to tpm_takeownership.
+
+Please note that non-default owner password is required!
 
 If your tpm has already been owned in the past, you can reset it by running
 tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS
@@ -93,6 +95,15 @@ b) Create an Anti Evil Maid device:
 
 # anti-evil-maid-install -h
 
+Upon first installation, you will be prompted to allow creating a random
+TPM ID and an NVRAM area for storing anti-replay "freshness" token hashes.
+
+Please note that each AEM device you provision should have a unique
+filesystem label suffix (use the '-s' option). You may safely re-use
+suffixes for destroyed devices.
+
+Installation on read-only media is not yet supported.
+
 For example, to install on the internal boot partition (assuming that it
 is /dev/sda1):
 
@@ -102,10 +113,34 @@ Or better, create an external AEM boot device (in this case an SD card):
 
 # anti-evil-maid-install /dev/mmcblk0p1
 
-If you've chosen the latter option, you should then remove the internal
-boot partition from dom0's /etc/fstab, never mount it again in dom0, and
-never boot from it again, because an attacker might modify it to exploit
-GRUB or dom0 filesystem drivers.
+Alternatively, a multi-factor authentication AEM boot device can be created,
+which provides additional protection against shoulder surfing and video
+surveillance -- with the above setups, if an attacker sees your disk encryption
+password as you're typing it then they can simply steal and decrypt your
+computer. Long story short, if you ever need to boot your AEM-protected computer
+in public or anywhere a camera may be hidden, this is the thing you want to use.
+However, this setup requires an external boot media (eg. USB stick or memory
+card) and owning a suitable two-factor authentication device supporting time-based
+one-time passwords (TOTP), eg. an Android smartphone with the Google Authenticator
+app or a dedicated hardware token (which allows custom TOTP seeds to be used).
+The command to set this all up is:
+
+# anti-evil-maid-install -m /dev/sdb1
+
+This will automatically generate a TOTP seed and display it as a QR code for
+you to enroll on your 2FA device (if it doesn't have a camera, there's also
+text version for manual entry). Once a successful TOTP seed enrollment is
+verified (you need to enter the 6-digit code displayed on your 2FA device),
+a LUKS key file will be randomly generated and encrypted by a password of
+your choice (make sure you're not using this password for anything else).
+This key file will then get added to your encrypted drive's LUKS key slot.
+For more details, see the associated qubes-devel mailing list thread:
+  https://groups.google.com/d/topic/qubes-devel/8cAjSyg1msM/discussion
+
+If you've chosen to install AEM on an external device (ie. not the internal
+drive), you should then remove the internal boot partition from dom0's
+/etc/fstab, never mount it again in dom0, and never boot from it again,
+because an attacker might modify it to exploit GRUB or dom0 filesystem drivers.
 
 Note: If you choose to use a USB device (e.g., a flash drive) as your AEM device
 and you previously created a USB qube, then you may have to unhide your USB
@@ -119,6 +154,10 @@ controller from dom0:
   6. Reboot.
 
 c) Create a secret text (note: it cannot be larger than 255 bytes):
+
+Note: This step is unneccessary if using the multi-factor auth setup, but
+can serve as a fallback option in case you ever find yourself temporarily
+not having access to your 2FA device (eg. smartphone or hardware TOTP token).
 
 # cat >/var/lib/anti-evil-maid/aem/secret.txt <<END
 My secret text
@@ -180,8 +219,8 @@ http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611
 and by searching for "min_ram" in the qubes mailing lists.
 
 c) Now, every time you boot your system (from your Anti Evil Maid stick)
-you should see your secret text/image displayed *before* you enter your
-LUKS disk encryption passphrase.
+you should see your secret text/image or TOTP code displayed *before* you
+enter your LUKS disk encryption or key file passphrase.
 
 Xen/kernel/BIOS/firmware upgrades
 ==================================
@@ -191,5 +230,11 @@ and enter your disk decryption passphrase even though you can't see your
 secret. It will be resealed again automatically later in the boot process
 (see step 5.a).
 
+
+What to do in case of compromise
+================================
+
 For a discussion of potential attacks against Anti Evil Maid, see the article
 referenced at the beginning.
+
+TODO: write up various scenarios and how to recover, best practices

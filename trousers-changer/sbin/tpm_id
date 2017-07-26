@@ -2,60 +2,69 @@
 set -e -o pipefail
 export LC_ALL=C
 
-#   usage: tpm_id [tpm_getpubek-argument...]
-# example: tpm_id -z
-#
-#  stdout: hex(sha256(TPM public Endorsement Key)) + \n
-#  status: 0 on success
 
+TPM_ID_INDEX="0x517562"
+
+
+usage() {
+    cat <<EOF
+Prints a 20-byte hex string TPM ID followed by a newline.
+
+Usage: tpm_id [-c]
+    -c     (re-)create and print TPM ID (requires TPM owner password)
+EOF
+    exit 1
+}
 
 log() {
     echo "${0##*/}: $1" >&2
 }
 
-onlyhex() {
-    tr -dc 0-9a-f
+create() {
+    # destroy existing NVRAM area
+    if tpm_nvinfo -i "$TPM_ID_INDEX" | grep -q "WRITEDEFINE"; then
+        log "Deleting existing TPM ID NVRAM area."
+        tpm_nvrelease -i "$TPM_ID_INDEX" --pwdo
+    fi
+
+    # create a new 20-byte write-once NVRAM area
+    log "Creating new TPM ID NVRAM area."
+    tpm_nvdefine -i "$TPM_ID_INDEX" -s 20 -p "WRITEDEFINE|WRITEALL" --pwdo
+
+    # generate a random TPM ID
+    local tmp
+    tmp=$(mktemp)
+    head -c 20 /dev/random > "$tmp"
+
+    # write the ID into TPM NVRAM
+    tpm_nvwrite -i "$TPM_ID_INDEX" -s 20 -f "$tmp"
+
+    # delete temp file with ID
+    rm -f "$tmp"
+
+    # lock the area to prevent non-owners from changing ID
+    tpm_nvwrite -i "$TPM_ID_INDEX" -s 0
 }
 
-unhex() {
-    onlyhex |
-    sed 's/\(..\)/\\x\1/g' |
-    xargs -0 printf
-}
+getid() {
+    if ! tpm_nvinfo -i "$TPM_ID_INDEX" | grep -q "WRITEDEFINE"; then
+        log "TPM NVRAM area at index $TPM_ID_INDEX is not defined!"
+        log "Hint: did you run 'anti-evil-maid-install' or 'tpm_id -c'?"
+        return 1
+    fi
 
-sha256_hex() {
-    sha256sum |
-    cut -f 1 -d ' '
-}
-
-getpubkey_hex() {
-    log "ignore the first \"Tspi_TPM_GetPubEndorsementKey failed\""
-
-    tpm_getpubek "$@" |
-    grep -E '^	([0-9a-f]{8}( |$))+' |
-    onlyhex
+    tpm_nvread -i "$TPM_ID_INDEX" -f /dev/stderr 2>&1 1>/dev/null \
+        | od -A n -v -t x1 \
+        | tr -d ' \n'
+    echo
 }
 
 
-# The Endorsement Key is 2048 bits for TPM 1.2,
-# and "SHOULD" be 256 or 2048 bits for TPM 2.0:
-#
-# https://www.trustedcomputinggroup.org/files/static_page_files/7CAA5687-1A4B-B294-D04080D058E86C5F/Credential_Profile_EK_V2.0_R14_published.pdf#page=8
-#
-# As long as we have to scrape tpm_getpubek output,
-# let's err on the side of strictness.
+while getopts cd opt; do
+    case "$opt" in
+        c) create ;;
+        *) usage ;;
+    esac
+done
 
-pubkey_hex=$(getpubkey_hex "$@")
-
-case ${#pubkey_hex} in
-    64|512)
-        echo "$pubkey_hex" |
-        unhex |
-        sha256_hex
-    ;;
-
-    *)
-        log "error: got something ${#pubkey_hex} hex chars long"
-        exit 1
-    ;;
-esac
+getid

@@ -11,7 +11,7 @@ usage() {
     cat <<END
 
 Usage:
-  anti-evil-maid-install [-s <suffix>] [-F] <device>
+  anti-evil-maid-install [-s <suffix>] [-F] [-m] <device>
 
   Installs Anti Evil Maid to your system's boot partition, or to a different
   storage device (e.g. an SD card or a USB stick).
@@ -30,6 +30,10 @@ Arguments:
 
   -F: passed on to mkfs.ext4 (don't ask for confirmation, etc.)
 
+  -m: set up a multi-factor auth AEM media (EXPERIMENTAL)
+      Using time-based one time password and a LUKS key file, provides resistance
+      to shoulder surfing and video surveillance based passphrase snooping.
+
 
 Examples:
   Install on the system's boot partition (assuming that it is /dev/sda1), and
@@ -42,6 +46,11 @@ Examples:
 
     anti-evil-maid-install -s .sd /dev/mmcblk0p1
 
+  Install MFA-enabled AEM on USB stick's first partition, overwriting it with
+  a new ext4 filesystem and marking it bootable:
+
+    anti-evil-maid-install -m /dev/sdb1
+
 END
 
     exit 1
@@ -50,11 +59,13 @@ END
 
 # check invocation
 
+alias mfa=false
 unset LABEL_SUFFIX F
-while getopts s:Fh opt; do
+while getopts s:Fhm opt; do
     case "$opt" in
         s) LABEL_SUFFIX=$OPTARG ;;
         F) F=-F ;;
+        m) alias mfa=true; systemctl start tcsd ;;
         *) usage ;;
     esac
 done
@@ -76,6 +87,11 @@ fi
 if [ -z "$(getluksuuids)" ]; then
     log "Anti Evil Maid requires encrypted disk!"
     exit 1
+fi
+
+if ! tpm_id >/dev/null; then
+    log "Creating a TPM ID (you will be prompted for owner pw)."
+    tpm_id -c
 fi
 
 
@@ -100,6 +116,19 @@ PART_DEV_REAL=$(readlink -f "$PART_DEV")
 PART_NUM=${PART_DEV_REAL##*[!0-9]}
 if ! [ "$PART_NUM" -gt 0 ]; then
     log "Couldn't extract partition number: $PART_NUM"
+    exit 1
+fi
+
+
+# MFA-specific checks
+
+if mfa && ! external "$PART_DEV"; then
+    log "MFA-enabled AEM cannot be installed on the same storage device as Qubes OS."
+    exit 1
+elif mfa && ! removable "$PART_DEV" "$LABEL" ; then
+    log "MFA-enabled AEM can only be used with removable media."
+    log "Should the device be, in fact, removable (autodetection failed),"
+    log "add '.rm=1' at the end of disk label suffix using the '-s' option."
     exit 1
 fi
 
@@ -142,6 +171,147 @@ if [   -n "$OLD_LABEL" -a \
        -e "$AEM_DIR/$OLD_LABEL" -a \
      ! -e "$AEM_DIR/$LABEL" ]; then
     mv -v "$AEM_DIR/$OLD_LABEL" "$AEM_DIR/$LABEL"
+fi
+
+
+# MFA: generate a TOTP seed
+
+if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
+    log "Generating new 160-bit TOTP seed"
+    mkdir -p "$AEM_DIR/$LABEL"
+    head -c 20 /dev/random \
+        | base32 -w 0 \
+        | tr -d '=' \
+        > "$AEM_DIR/$LABEL/secret.otp"
+
+    # construct OTP URI
+    otp_label="Qubes%20OS%3A%20Anti%20Evil%20Maid"
+    otp_secret="$(cat "$AEM_DIR/$LABEL/secret.otp")"
+    otp_uri="otpauth://totp/${otp_label}?secret=${otp_secret}"
+
+    # create an ANSI text QR code and show it in the terminal
+    echo "$otp_uri" | qrencode -t ansiutf8
+
+    # show QR code
+    log "Please scan the above QR code with your OTP device."
+
+    # display the text form of secret to user, too
+    human_readable_secret="$(echo "$otp_secret" | sed 's/\(....\)/\1\ /g')"
+    log "Alternatively, you may manually enter the following secret into"
+    log "your OTP device:"
+    log "    $human_readable_secret"
+
+    if timedatectl status | grep -q 'RTC in local TZ: yes'; then
+        log ""
+        log "WARNING: Your computer's RTC (real-time clock) is set to"
+        log "store time in local timezone. This will cause wrong TOTP"
+        log "codes to be generated during AEM boot. Please fix this by"
+        log "running (as root):"
+        log "    timedatectl set-local-rtc 0"
+    fi
+
+    # check whether secret was provisioned correctly
+    log ""
+    log "After you have set up your OTP device, please enter the code"
+    log "displayed on your device and press <ENTER> to continue."
+    log ""
+
+    totp_tries=3
+    for try in $(seq $totp_tries); do
+        read -p "Code: "
+        if ! oathtool --totp -b "$otp_secret" "$REPLY" >/dev/null; then
+            log "Entered TOTP code is invalid!"
+            if [ "$try" -lt $totp_tries ]; then
+                log "Please check clock synchronization."
+                log "If you made a mistake while manually entering the secret,"
+                log "remove the added token, repeat the process and try again."
+                log ""
+            else
+                log "Aborting AEM setup..."
+                exit 1
+            fi
+        else
+            break
+        fi
+    done
+
+    log "TOTP code matches, continuing AEM setup."
+fi
+
+
+# MFA: generate and enroll a LUKS key file if not already present
+
+if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.key" ]; then
+    log "Generating new LUKS key file"
+    rawkey=$(mktemp)
+    head -c 64 /dev/random > "$rawkey"
+
+    log "Encrypting key file"
+    mkdir -p "$AEM_DIR/$LABEL"
+    scrypt enc "$rawkey" "$AEM_DIR/$LABEL/secret.key"
+
+    for dev in $(getluksuuids); do
+        devname=$(readlink -f "/dev/disk/by-uuid/$dev")
+
+        # check if LUKS device has any free key slots
+        # FIXME: possibility of failing due to i18n?
+        if ! cryptsetup luksDump "/dev/disk/by-uuid/$dev" \
+                | grep -q DISABLED; then
+            log "FATAL: Device $devname (UUID $dev) has no free key slots!"
+            exit 1
+        fi
+
+        log "Adding key file to new key slot for $devname (UUID $dev)"
+        for try in 1 2 3; do
+            if cryptsetup luksAddKey "/dev/disk/by-uuid/$dev" "$rawkey"; then
+                break
+            elif [ $try -eq 3 ]; then
+                log "ERROR: Wrong password, aborting!"
+                log "You need to manually finish enrolling $rawkey"
+                log "as a key file for all desired LUKS devices, then"
+                log "remove the $rawkey file and re-run this script."
+                exit 1
+            fi
+        done
+    done
+
+    log "Shredding the unencrypted key file"
+    shred -zu "$rawkey"
+fi
+
+
+# define a TPM NVRAM area for storing freshness token hashes
+
+if ! checktpmnvram; then
+    log "Creating TPM NVRAM area for freshness tokens (prompts for TPM owner password)"
+    for try in 1 2 3; do
+        if createtpmnvram; then
+            break
+        elif [ $try -eq 3 ]; then
+            log "Too many failures, aborting!"
+            exit 1
+        fi
+    done
+fi
+
+
+# add the AEM media being created to the freshness database
+
+if suffixtoslot "$LABEL_SUFFIX"; then
+    log "WARNING: (possibly another) AEM media with the same label"
+    log "suffix is already enrolled in the freshness token database!"
+    log "Overwriting will result in the old AEM media failing to"
+    log "perform a successful AEM boot. If you're simply reinstalling"
+    log "on the same device or intentionally replacing an old AEM media"
+    log "that was lost/destroyed/etc., it is safe to continue."
+    read -p "Proceed? [y/N] " response
+    case "$response" in
+        y|Y) echo "continuing..." ;;
+        *) exit ;;
+    esac
+else
+    assignslottosuffix "$LABEL_SUFFIX"
+    log "Assigned slot $(suffixtoslot "$LABEL_SUFFIX") to this AEM media"
 fi
 
 

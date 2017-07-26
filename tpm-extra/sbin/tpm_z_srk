@@ -11,6 +11,5 @@ if tpm_sealdata -z </dev/null >/dev/null; then
     log "no, SRK isn't password protected"
     echo -z
 else
-    log "yes, SRK is password protected; resetting dictionary attack lock..."
-    tpm_resetdalock -z || true  # -z is an empty owner (not SRK) password
+    log "yes, SRK is password protected"
 fi

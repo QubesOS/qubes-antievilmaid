@@ -69,22 +69,23 @@ log "Mounting the ${LABEL:?} device..."
 mkdir -p "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
 
-if external "$DEV" && removable "$DEV"; then
-    alias remove=true
-else
-    alias remove=false
-fi
 
-
-# setup TPM
+# setup TPM & copy secrets to tmp
 
 log "Initializing TPM..."
 modprobe tpm_tis
 ip link set dev lo up
 mkdir -p "${TPMS_DIR%/*}"
+log "Copying sealed AEM secrets..."
 cp -Tr "$MNT/aem/${TPMS_DIR##*/}" "${TPMS_DIR}"
 tcsd_changer_identify
 tcsd
+
+
+# unmount AEM device
+
+log "Unmounting the $LABEL device..."
+umount "$MNT"
 
 
 # Extend PCR with LUKS header(s)
@@ -103,21 +104,19 @@ while read luksid; do
 done
 
 
-# unseal the secret and unmount the AEM device
+# set up caches
 
 sealed_secret_txt=$TPM_DIR/$LABEL/secret.txt.sealed2
 sealed_secret_png=$TPM_DIR/$LABEL/secret.png.sealed2
-
-if plymouth_active && [ -e "$sealed_secret_png" ]; then
-    alias png=true
-    SEALED_SECRET=$sealed_secret_png
-else
-    alias png=false
-    SEALED_SECRET=$sealed_secret_txt
-fi
+sealed_secret_key=$TPM_DIR/$LABEL/secret.key.sealed2
+sealed_secret_otp=$TPM_DIR/$LABEL/secret.otp.sealed2
+sealed_secret_fsh=$TPM_DIR/$LABEL/secret.fsh.sealed2
 
 mkdir -p "$CACHE_DIR"
 echo "${LABEL##$LABEL_PREFIX}" >"$SUFFIX_CACHE"
+
+
+# cache SRK password, if applicable
 
 Z=$(tpm_z_srk)
 
@@ -134,46 +133,173 @@ else
              break
         fi
 
-        log "Wrong SRK password, resetting dictionary attack lock..."
-        tpm_resetdalock -z || true  # -z is an empty owner (not SRK) password
+        log "Wrong SRK password"
     done
 fi
 
-log "Unsealing the secret..."
-if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
-   <"$SRK_PASSWORD_CACHE"; then
-    rm -rf "$CACHE_DIR"
+
+# check freshness token
+
+log "Unsealing freshness token..."
+if tpm_unsealdata $Z -i "$sealed_secret_fsh" -o /tmp/fresh \
+        < "$SRK_PASSWORD_CACHE"; then
+    log "Freshness token unsealed."
+else
+    log "Freshness token unsealing failed!"
+    exit 1
 fi
 
-log "Unmounting the $LABEL device..."
-umount "$MNT"
+if checkfreshness /tmp/fresh; then
+    log "Freshness token valid, continuing."
+else
+    log "Freshness token invalid!"
+    exit 1
+fi
+
+rm -f /tmp/fresh
 
 
-if [ ! -d "$CACHE_DIR" ]; then  # unseal succeeded
-    if png; then
-        # display secret in next dialog
-        WHERE="next to the prompt for it"
-        if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
-            cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
-        fi
-    else
-        # display secret in current dialog
-        WHERE="above"
-        {
-            message ""
-            message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
-            message ""
-        } 2>&1  # don't put the secret into the journal
+# OTP sanity check
+
+if [ -e "$sealed_secret_otp" ]; then
+    if ! external "$DEV" || ! removable "$DEV"; then
+        # evil maid can gain access to OTP secret, don't trust it
+        message "Multi-factor AEM device not external/removable, aborting!"
+        exit 1
     fi
-    message "Never type in your disk password unless the secret $WHERE is correct!"
+
+    alias otp=true
+    SEALED_SECRET=$sealed_secret_otp
+else
+    alias otp=false
+fi
 
 
-    # pause
+# tell user to remove AEM dev if RO
 
-    if remove; then
-        waitfor ! -b "$DEV"
+message ""
+message "You should now unplug the AEM device if it's read-only."
+message ""
+
+
+# unseal & show OTP if provisioned
+
+if otp; then
+    log "Unsealing TOTP shared secret seed..."
+    if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
+            < "$SRK_PASSWORD_CACHE"; then
+        log "TOTP secret unsealed."
+        seed=$(cat "$UNSEALED_SECRET")
+
+        message "Please verify your OTP device displays the same TOTP code"
+        message "as shown below. Should the codes match, press <ENTER> to"
+        message "unseal your LUKS key file. If you do now have access to"
+        message "your OTP device but wish to continue despite the security"
+        message "implications, press <ENTER>. Pressing <Q> will revert"
+        message "back to displaying PNG/TXT secret (if provisioned)."
+        message "Otherwise, shut down the computer."
+        message ""
+        message "[ $(date) ] TOTP code: $(oathtool --totp -b "$seed")"
+        last=$(date +%s)
+
+        if plymouth_active; then
+            plymouth watch-keystroke --keys=$'\n' --command='touch /tmp/mfa-cont' &
+            plymouth watch-keystroke --keys=Qq --command='touch /tmp/mfa-skip' &
+            while [ ! -e /tmp/mfa-cont ] && [ ! -e /tmp/mfa-skip ]; do
+                now=$(date +%s)
+                if [ "$((now % 30))" -eq 0 ] && [ ! "$last" == "$now" ]; then
+                    message "[ $(date) ] TOTP code: $(oathtool --totp -b "$seed")"
+                    last=$now
+                else
+                    sleep 0.1
+                fi
+            done
+
+            if [ -e /tmp/mfa-skip ]; then
+                alias otp=false
+                message "Reverting back to non-multi-factor AEM boot"
+            fi
+        else
+            tout=$((30 - ($(date +%s) % 30)))
+            while true; do
+                if systemd-ask-password --echo --timeout "$tout" \
+                        "Press <ENTER> to continue or <Q> + <ENTER> to skip multi-factor AEM." \
+                        >/tmp/mfa-resp; then
+                    if grep -qi q /tmp/mfa-resp; then
+                        alias otp=false
+                        message "Reverting back to non-multi-factor AEM boot"
+                    fi
+                    break
+                fi
+
+                message "[ $(date) ] TOTP code: $(oathtool --totp -b "$seed")"
+                tout=30
+            done
+        fi
+
+        rm -f "$UNSEALED_SECRET"
     else
-        if ! png; then
+        # unsealing OTP seed failed, don't even search for keyfile
+        alias otp=false
+    fi
+fi
+
+
+# determine which secret to use next
+
+alias png=false
+if otp; then
+    # user does not want to skip multi-factor AEM
+    SEALED_SECRET=$sealed_secret_key
+    # not checking key file existence since we DO NOT want
+    # the static secrets to be displayed anyway
+elif plymouth_active && [ -e "$sealed_secret_png" ]; then
+    alias png=true
+    SEALED_SECRET=$sealed_secret_png
+else
+    SEALED_SECRET=$sealed_secret_txt
+fi
+
+
+# unseal the next secret
+
+log "Unsealing the secret $SEALED_SECRET..."
+if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
+        <"$SRK_PASSWORD_CACHE"; then
+    if otp; then
+        # ask for LUKS key file passphrase
+        for try in 1 2 3; do
+            if systemd-ask-password "LUKS key file password" |
+                    scrypt dec -P "$UNSEALED_SECRET" /tmp/aem-keyfile; then
+                log "Correct LUKS key file password"
+                message "Key file decrypted."
+                # decrypted key file saved in /tmp/aem-keyfile;
+                # dracut "90crypt" module will parse the
+                #   rd.luks.key=/tmp/aem-keyfile
+                # kernel cmdline arg and attempt to use it;
+                # this file is deleted on root switch
+                # along with everything in /tmp
+                break
+            else
+                log "Wrong LUKS key file password"
+            fi
+        done
+    else
+        if png; then
+            # display secret in next dialog
+            message "Never type in your disk password unless the secret next to the prompt for it is correct!"
+            if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
+                cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
+            fi
+        else
+            # display secret in current dialog
+            {
+                message ""
+                message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
+                message ""
+            } 2>&1  # don't put the secret into the journal
+            message "Never type in your disk password unless the secret above is correct!"
+
             msg="Press <ENTER> to continue..."
             if plymouth_active; then
                 message "$msg"
@@ -186,12 +312,16 @@ if [ ! -d "$CACHE_DIR" ]; then  # unseal succeeded
 fi
 
 
+rm -f "$UNSEALED_SECRET"
+
+
 # Clear all messages to hide the secret. Do it even if the unsealing has failed,
 # because that's how an attacker would likely behave to trick absentminded users
 # into thinking that they've already seen the secret. (See AEM introductory blog
 # post FAQ, "Why are there no negative indicators")
 
-if remove || ! png; then
+# hiding msg for png secret would delete the password prompt warning
+if ! png; then
     if plymouth_active; then
         for m in "${PLYMOUTH_MESSAGES[@]}"; do
             plymouth hide-message --text="$m"
@@ -201,4 +331,10 @@ if remove || ! png; then
     clear
 fi
 
-rm -f "$UNSEALED_SECRET"
+
+# prevent sealing service from starting if user unplugged
+# the (supposedly read-only) AEM device
+
+if [ ! -b "$DEV" ]; then
+    rm -rf "$CACHE_DIR"
+fi

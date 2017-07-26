@@ -21,8 +21,11 @@ install() {
 
     dracut_install \
         /usr/sbin/anti-evil-maid-lib \
+        base32 \
         clear \
         cut \
+        date \
+        diff \
         file \
         /usr/share/misc/magic \
         grep \
@@ -30,7 +33,11 @@ install() {
         install \
         killall \
         lsblk \
+        oathtool \
+        od \
         printf \
+        scrypt \
+        seq \
         sha1sum \
         sha256sum \
         sort \
@@ -38,13 +45,15 @@ install() {
         tcsd \
         tcsd_changer_identify \
         tee \
-        tpm_getpubek \
+        touch \
         tpm_id \
+        tpm_nvinfo \
+        tpm_nvread \
         tpm_pcr_extend \
-        tpm_resetdalock \
         tpm_sealdata \
         tpm_unsealdata \
         tpm_z_srk \
+        tr \
         wc \
         xargs
 

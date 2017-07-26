@@ -5,6 +5,10 @@ TPMS_DIR=${TPM_DIR}s
 CACHE_DIR=/run/anti-evil-maid
 SRK_PASSWORD_CACHE=$CACHE_DIR/srk-password
 SUFFIX_CACHE=$CACHE_DIR/suffix
+TPM_FRESHNESS_PASSWORD=$AEM_DIR/tpm-freshness-pw
+TPM_FRESHNESS_INDEX="0x41454d"
+TPM_FRESHNESS_DB=$AEM_DIR/tpm-freshness-db
+TPM_FRESHNESS_SLOTS=8
 
 
 # work with or without plymouth
@@ -54,6 +58,169 @@ waitfor() {
     message "$_file $_what"
 }
 
+checktpmnvram() {
+    # checks whether the TPM NVRAM area is defined
+    # NOTE: tpm_nvinfo does not return non-zero if requested index
+    # is not a defined NVRAM area so we need to parse
+    if ! tpm_nvinfo -i "$TPM_FRESHNESS_INDEX" | grep -q 'AUTHWRITE'; then
+        return 1
+    fi
+}
+
+createtpmnvram() {
+    # create the world-readable/AUTHWRITE TPM NVRAM area to hold up to
+    # TPM_FRESHNESS_SLOTS anti-replay freshness token hashes
+    # NOTE: interactively asks for owner password (accepts password from
+    # stdin only if process has no controlling TTY)
+    if [ ! -e "$TPM_FRESHNESS_PASSWORD" ]; then
+        message "Generating TPM NVRAM area AUTHWRITE password"
+        head -c 16 /dev/random | od -A n -v -t x1 \
+            | tr -d ' \n' > "$TPM_FRESHNESS_PASSWORD"
+    fi
+
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
+
+    if ! tpm_nvdefine -i "$TPM_FRESHNESS_INDEX" \
+	    -s $((TPM_FRESHNESS_SLOTS * 20)) \
+            -p AUTHWRITE --pwda="$_pw" --pwdo; then
+        return 1
+    fi
+}
+
+suffixtoslot() {
+    # consults the $TPM_FRESHNESS_DB file and returns the
+    # slot number assigned to the AEM media given its label suffix
+    # as the first argument
+    if [ ! -e "$TPM_FRESHNESS_DB" ]; then
+        message "'$TPM_FRESHNESS_DB' does not exist, aborting!"
+        return 1
+    fi
+
+    if _slot=$(grep ":$1\$" "$TPM_FRESHNESS_DB"); then
+        echo "$_slot" | cut -d ':' -f 1 | head -n 1
+    else
+        return 1
+    fi
+}
+
+assignslottosuffix() {
+    # assigns an unused freshness slot number (if available) to an AEM
+    # media identified by its label suffix (optionally passed as the first
+    # argument
+    if [ ! -e "$TPM_FRESHNESS_DB" ]; then
+        touch "$TPM_FRESHNESS_DB"
+    fi
+
+    _suff=${1-$(cat "$SUFFIX_CACHE")}
+    if grep -q "$_suff" "$TPM_FRESHNESS_DB"; then
+        message "AEM device suffix '$_suff' already in DB!"
+        return 1
+    fi
+
+    _enrolled=$(wc -l < "$TPM_FRESHNESS_DB")
+    if [ "$_enrolled" -ge $TPM_FRESHNESS_SLOTS ]; then
+        message "No more freshness token slots available!"
+        return 1
+    fi
+
+    echo "$_enrolled:$_suff" >> "$TPM_FRESHNESS_DB"
+    echo "$_enrolled"
+}
+
+checkfreshness() {
+    # check whether hash of an usealed freshness token (file path
+    # given as an argument) is contained in TPM NVRAM area
+    # NOTE: tpm_nvread prints info msg to stdout for some reason,
+    # so we write the raw bytes to stderr and redirect stdout
+    # to /dev/null while stderr is redirected to stdout
+    # (the order here matters! "2>&1" needs to come *before*
+    # "1>/dev/null" to achieve desired result)
+    _hash=$(sha1sum "$1" | cut -d ' ' -f 1)
+    _lastslot=$((TPM_FRESHNESS_SLOTS - 1))
+    for _i in $(seq 0 $_lastslot); do
+        _slot=$(tpm_nvread -i "$TPM_FRESHNESS_INDEX" \
+            -n "$((_i * 20))" -s 20 \
+            -f /dev/stderr 2>&1 1>/dev/null \
+	    | od -A n -v -t x1 | tr -d ' \n')
+        if [ "$_hash" == "$_slot" ]; then
+            message "Matching freshness token hash found in slot #$_i"
+            return 0
+        fi
+    done
+    message "Freshness token does not match any slot in TPM NVRAM!"
+    return 1
+}
+
+updatefreshness() {
+    # takes a path to the new freshness token as an argument and
+    # stores its sha1 hash in the appropriate freshness token slot
+    # of the TPM NVRAM area; optional second argument is the AEM
+    # boot device label suffix
+    if [ ! -e "$TPM_FRESHNESS_PASSWORD" ]; then
+        message "TPM NVRAM area AUTHWRITE password file does not exist!"
+        return 1
+    fi
+
+    _suff=${2-$(cat "$SUFFIX_CACHE")}
+    if ! _slot=$(suffixtoslot "$_suff"); then
+        message "Suffix '$_suff' not in DB, attempting to create..."
+        if ! _slot=$(assignslottosuffix "$_suff"); then
+            message "Failed to add suffix '$_suff' into DB!"
+            return 1
+        fi
+    fi
+
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
+    _tmpf=$(mktemp)
+    sha1sum "$1" | cut -d ' ' -f 1 | xxd -r -ps > "$_tmpf"
+    if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
+	    -n "$((_slot * 20))" -s 20 \
+            --password="$_pw" -f "$_tmpf"; then
+        _ret=0
+    else
+        _ret=1
+    fi
+    rm -f "$_tmpf"
+    return $_ret
+}
+
+revokefreshness() {
+    # invalidates the freshness token of a specified AEM media (by its
+    # label suffix
+    if _slot=$(suffixtoslot "$1"); then
+        message "Invalidating freshness token for AEM device with suffix '$_suff'..."
+        _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
+        if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
+                -n "$((_slot * 20))" -s 20 \
+                --password="$_pw" -m "0xff"; then
+            message "Done."
+        else
+            message "Failed!"
+        fi
+    else
+        message "AEM device with label suffix '$_suff' not found in DB!"
+    fi
+}
+
+resetfreshness() {
+    # invalidates ALL freshness tokens
+    message "Invalidating **ALL** freshness tokens..."
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
+    if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
+            -s "$((TPM_FRESHNESS_SLOTS * 20))" \
+            --password="$_pw" -m "0xff"; then
+        message "Done."
+    else
+        message "Failed!"
+    fi
+}
+
+destroytpmnvram() {
+    # releases the TPM NVRAM area
+    # NOTE: requires owner password to be entered interactively
+    tpm_nvrelease -i "$TPM_FRESHNESS_INDEX" --pwdo
+}
+
 synctpms() {
     _label=${1:?}
     _mnt=${2:?}
@@ -96,11 +263,16 @@ external() {
 }
 
 removable() {
-    _rm=$(lsblk -dnr -o RM,LABEL "$1")
+    _rm="$(lsblk -dnr -o RM "$1") ${2-$(lsblk -dnr -o LABEL "$1")}"
     case "$_rm" in
         *.rm=[01]) _rm=${_rm##*=} ;;
                 *) _rm=${_rm%% *} ;;
     esac
 
     [ "$_rm" = 1 ]
+}
+
+writable() {
+    _ro=$(lsblk -dnr -o RO "$1")
+    [ "$_ro" = 0 ]
 }
