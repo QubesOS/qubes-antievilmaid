@@ -66,7 +66,7 @@ updatefreshness "$AEM_DIR/$LABEL/secret.fsh" "${1-$(cat "$SUFFIX_CACHE")}"
 mkdir -p "$TPM_DIR/$LABEL"
 
 SEALED=0
-for ext in txt png key otp fsh; do
+for ext in txt key otp fsh; do
      input=$AEM_DIR/$LABEL/secret.$ext
     output=$TPM_DIR/$LABEL/secret.$ext.sealed2
 

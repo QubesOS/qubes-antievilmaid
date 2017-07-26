@@ -13,7 +13,6 @@ MNT=/anti-evil-maid
 UNSEALED_SECRET=/tmp/unsealed-secret
 LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
-PLYMOUTH_THEME_UNSEALED_SECRET=/usr/share/plymouth/themes/qubes-dark/antievilmaid_secret.png
 
 
 PLYMOUTH_MESSAGES=()
@@ -107,7 +106,6 @@ done
 # set up caches
 
 sealed_secret_txt=$TPM_DIR/$LABEL/secret.txt.sealed2
-sealed_secret_png=$TPM_DIR/$LABEL/secret.png.sealed2
 sealed_secret_key=$TPM_DIR/$LABEL/secret.key.sealed2
 sealed_secret_otp=$TPM_DIR/$LABEL/secret.otp.sealed2
 sealed_secret_fsh=$TPM_DIR/$LABEL/secret.fsh.sealed2
@@ -196,7 +194,7 @@ if otp; then
         message "unseal your LUKS key file. If you do now have access to"
         message "your OTP device but wish to continue despite the security"
         message "implications, press <ENTER>. Pressing <Q> will revert"
-        message "back to displaying PNG/TXT secret (if provisioned)."
+        message "back to displaying the text secret (if provisioned)."
         message "Otherwise, shut down the computer."
         message ""
         message "[ $(date) ] TOTP code: $(oathtool --totp -b "$seed")"
@@ -247,15 +245,11 @@ fi
 
 # determine which secret to use next
 
-alias png=false
 if otp; then
     # user does not want to skip multi-factor AEM
     SEALED_SECRET=$sealed_secret_key
     # not checking key file existence since we DO NOT want
     # the static secrets to be displayed anyway
-elif plymouth_active && [ -e "$sealed_secret_png" ]; then
-    alias png=true
-    SEALED_SECRET=$sealed_secret_png
 else
     SEALED_SECRET=$sealed_secret_txt
 fi
@@ -285,28 +279,20 @@ if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
             fi
         done
     else
-        if png; then
-            # display secret in next dialog
-            message "Never type in your disk password unless the secret next to the prompt for it is correct!"
-            if file "$UNSEALED_SECRET" 2>/dev/null | grep -q PNG; then
-                cp "$UNSEALED_SECRET" "$PLYMOUTH_THEME_UNSEALED_SECRET"
-            fi
-        else
-            # display secret in current dialog
-            {
-                message ""
-                message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
-                message ""
-            } 2>&1  # don't put the secret into the journal
-            message "Never type in your disk password unless the secret above is correct!"
+        # display txt secret in current dialog
+        {
+            message ""
+            message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
+            message ""
+        } 2>&1  # don't put the secret into the journal
+        message "Never type in your disk password unless the secret above is correct!"
 
-            msg="Press <ENTER> to continue..."
-            if plymouth_active; then
-                message "$msg"
-                plymouth watch-keystroke --keys=$'\n'
-            else
-                systemd-ask-password "$msg" >/dev/null
-            fi
+        msg="Press <ENTER> to continue..."
+        if plymouth_active; then
+            message "$msg"
+            plymouth watch-keystroke --keys=$'\n'
+        else
+            systemd-ask-password "$msg" >/dev/null
         fi
     fi
 fi
@@ -320,16 +306,13 @@ rm -f "$UNSEALED_SECRET"
 # into thinking that they've already seen the secret. (See AEM introductory blog
 # post FAQ, "Why are there no negative indicators")
 
-# hiding msg for png secret would delete the password prompt warning
-if ! png; then
-    if plymouth_active; then
-        for m in "${PLYMOUTH_MESSAGES[@]}"; do
-            plymouth hide-message --text="$m"
-        done
-    fi
-
-    clear
+if plymouth_active; then
+    for m in "${PLYMOUTH_MESSAGES[@]}"; do
+        plymouth hide-message --text="$m"
+    done
 fi
+
+clear
 
 
 # prevent sealing service from starting if user unplugged

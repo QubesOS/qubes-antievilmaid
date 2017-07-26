@@ -164,11 +164,7 @@ My secret text
 has two lines
 END
 
-Or, if you prefer, a secret PNG image:
-
-# cp my-secret-image.png /var/lib/anti-evil-maid/aem/secret.png
-
-Note: You are saving these not-yet-sealed secrets to your root
+Note: You are saving this not-yet-sealed secret to your root
 filesystem without further encryption (besides that provided by LUKS).
 If an attacker somehow gains access to your decrypted filesystem data,
 e.g. by compelling you to reveal the LUKS passphrase, they can of
@@ -219,7 +215,7 @@ http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611
 and by searching for "min_ram" in the qubes mailing lists.
 
 c) Now, every time you boot your system (from your Anti Evil Maid stick)
-you should see your secret text/image or TOTP code displayed *before* you
+you should see your secret text or TOTP code displayed *before* you
 enter your LUKS disk encryption or key file passphrase.
 
 Xen/kernel/BIOS/firmware upgrades
