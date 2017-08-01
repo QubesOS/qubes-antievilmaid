@@ -58,6 +58,16 @@ waitfor() {
     message "$_file $_what"
 }
 
+waitforenter() {
+    msg='Press <ENTER> to continue...'
+    if plymouth_active; then
+        message "$msg"
+        plymouth watch-keystroke --keys=$'\n'
+    else
+        systemd-ask-password "$msg" >/dev/null
+    fi
+}
+
 checktpmnvram() {
     # checks whether the TPM NVRAM area is defined
     # NOTE: tpm_nvinfo does not return non-zero if requested index
@@ -80,7 +90,7 @@ createtpmnvram() {
     _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
 
     if ! tpm_nvdefine -i "$TPM_FRESHNESS_INDEX" \
-	    -s $((TPM_FRESHNESS_SLOTS * 20)) \
+            -s $((TPM_FRESHNESS_SLOTS * 20)) \
             -p AUTHWRITE --pwda="$_pw" --pwdo="$1"; then
         return 1
     fi
@@ -140,7 +150,7 @@ checkfreshness() {
         _slot=$(tpm_nvread -i "$TPM_FRESHNESS_INDEX" \
             -n "$((_i * 20))" -s 20 \
             -f /dev/stderr 2>&1 1>/dev/null \
-	    | od -A n -v -t x1 | tr -d ' \n')
+            | od -A n -v -t x1 | tr -d ' \n')
         if [ "$_hash" == "$_slot" ]; then
             message "Matching freshness token hash found in slot #$_i"
             return 0
@@ -172,7 +182,7 @@ updatefreshness() {
     _tmpf=$(mktemp)
     sha1sum "$1" | cut -d ' ' -f 1 | xxd -r -ps > "$_tmpf"
     if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
-	    -n "$((_slot * 20))" -s 20 \
+            -n "$((_slot * 20))" -s 20 \
             --password="$_pw" -f "$_tmpf"; then
         _ret=0
     else
