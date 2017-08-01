@@ -268,8 +268,3 @@ removable() {
 
     [ "$_rm" = 1 ]
 }
-
-writable() {
-    _ro=$(lsblk -dnr -o RO "$1")
-    [ "$_ro" = 0 ]
-}
