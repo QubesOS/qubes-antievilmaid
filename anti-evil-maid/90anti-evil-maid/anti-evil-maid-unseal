@@ -157,15 +157,9 @@ fi
 rm -f /tmp/fresh
 
 
-# OTP sanity check
+# check for OTP
 
 if [ -e "$sealed_secret_otp" ]; then
-    if ! external "$DEV" || ! removable "$DEV"; then
-        # evil maid can gain access to OTP secret, don't trust it
-        message "Multi-factor AEM device not external/removable, aborting!"
-        exit 1
-    fi
-
     alias otp=true
     SEALED_SECRET=$sealed_secret_otp
 else
