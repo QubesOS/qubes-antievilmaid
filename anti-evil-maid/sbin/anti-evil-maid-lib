@@ -69,9 +69,8 @@ checktpmnvram() {
 
 createtpmnvram() {
     # create the world-readable/AUTHWRITE TPM NVRAM area to hold up to
-    # TPM_FRESHNESS_SLOTS anti-replay freshness token hashes
-    # NOTE: interactively asks for owner password (accepts password from
-    # stdin only if process has no controlling TTY)
+    # TPM_FRESHNESS_SLOTS anti-replay freshness token hashes;
+    # takes TPM owner password as an agument
     if [ ! -e "$TPM_FRESHNESS_PASSWORD" ]; then
         message "Generating TPM NVRAM area AUTHWRITE password"
         head -c 16 /dev/random | od -A n -v -t x1 \
@@ -82,7 +81,7 @@ createtpmnvram() {
 
     if ! tpm_nvdefine -i "$TPM_FRESHNESS_INDEX" \
 	    -s $((TPM_FRESHNESS_SLOTS * 20)) \
-            -p AUTHWRITE --pwda="$_pw" --pwdo; then
+            -p AUTHWRITE --pwda="$_pw" --pwdo="$1"; then
         return 1
     fi
 }
@@ -216,9 +215,8 @@ resetfreshness() {
 }
 
 destroytpmnvram() {
-    # releases the TPM NVRAM area
-    # NOTE: requires owner password to be entered interactively
-    tpm_nvrelease -i "$TPM_FRESHNESS_INDEX" --pwdo
+    # releases the TPM NVRAM area; TPM owner pw as first argument
+    tpm_nvrelease -i "$TPM_FRESHNESS_INDEX" --pwdo="$1"
 }
 
 synctpms() {

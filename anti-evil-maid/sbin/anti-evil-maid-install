@@ -285,7 +285,7 @@ fi
 if ! checktpmnvram; then
     log "Creating TPM NVRAM area for freshness tokens (prompts for TPM owner password)"
     for try in 1 2 3; do
-        if createtpmnvram; then
+        if createtpmnvram "$(read -s -p 'TPM owner password: ')"; then
             break
         elif [ $try -eq 3 ]; then
             log "Too many failures, aborting!"
