@@ -280,14 +280,7 @@ if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
             message ""
         } 2>&1  # don't put the secret into the journal
         message "Never type in your disk password unless the secret above is correct!"
-
-        msg="Press <ENTER> to continue..."
-        if plymouth_active; then
-            message "$msg"
-            plymouth watch-keystroke --keys=$'\n'
-        else
-            systemd-ask-password "$msg" >/dev/null
-        fi
+        waitforenter
     fi
 fi
 

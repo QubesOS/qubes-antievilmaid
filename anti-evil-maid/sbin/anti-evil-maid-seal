@@ -19,15 +19,7 @@ trap 'rm -rf "$CACHE_DIR"' EXIT
 # (eg. AEM media read-only)
 _failure() {
     message "Failed to seal secrets (error @ line $1)!"
-
-    msg="Press <ENTER> to continue..."
-    if plymouth_active; then
-        message "$msg"
-        plymouth watch-keystroke --keys=$'\n'
-    else
-        systemd-ask-password "$msg" >/dev/null
-    fi
-
+    waitforenter
     exit 1
 }
 trap '_failure $LINENO' ERR
