@@ -20,6 +20,22 @@ log() {
     echo "${0##*/}: $1" >&2
 }
 
+tpm_nvwrite_stdin() {
+    local tmp
+    tmp=$(mktemp)
+    cat > "$tmp"
+    tpm_nvwrite -i "$TPM_ID_INDEX" -s 20 -f "$tmp"
+    rm -f "$tmp"
+}
+
+tpm_nvread_stdout() {
+    tpm_nvread -i "$TPM_ID_INDEX" -f /dev/stderr 2>&1 1>/dev/null
+}
+
+hex() {
+    cat | od -A n -v -t x1 | tr -d ' \n'
+}
+
 create() {
     # destroy existing NVRAM area
     if tpm_nvinfo -i "$TPM_ID_INDEX" | grep -q "WRITEDEFINE"; then
@@ -31,16 +47,8 @@ create() {
     log "Creating new TPM ID NVRAM area."
     tpm_nvdefine -i "$TPM_ID_INDEX" -s 20 -p "WRITEDEFINE|WRITEALL" --pwdo
 
-    # generate a random TPM ID
-    local tmp
-    tmp=$(mktemp)
-    head -c 20 /dev/random > "$tmp"
-
-    # write the ID into TPM NVRAM
-    tpm_nvwrite -i "$TPM_ID_INDEX" -s 20 -f "$tmp"
-
-    # delete temp file with ID
-    rm -f "$tmp"
+    # generate a random TPM ID and write it into NVRAM
+    head -c 20 /dev/random | tpm_nvwrite_stdin
 
     # lock the area to prevent non-owners from changing ID
     tpm_nvwrite -i "$TPM_ID_INDEX" -s 0
@@ -53,9 +61,7 @@ getid() {
         return 1
     fi
 
-    tpm_nvread -i "$TPM_ID_INDEX" -f /dev/stderr 2>&1 1>/dev/null \
-        | od -A n -v -t x1 \
-        | tr -d ' \n'
+    tpm_nvread_stdout | hex
     echo
 }
 
