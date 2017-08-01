@@ -153,18 +153,17 @@ checkfreshness() {
 updatefreshness() {
     # takes a path to the new freshness token as an argument and
     # stores its sha1 hash in the appropriate freshness token slot
-    # of the TPM NVRAM area; optional second argument is the AEM
-    # boot device label suffix
+    # of the TPM NVRAM area; second argument is the AEM boot device
+    # label suffix
     if [ ! -e "$TPM_FRESHNESS_PASSWORD" ]; then
         message "TPM NVRAM area AUTHWRITE password file does not exist!"
         return 1
     fi
 
-    _suff=${2-$(cat "$SUFFIX_CACHE")}
-    if ! _slot=$(suffixtoslot "$_suff"); then
-        message "Suffix '$_suff' not in DB, attempting to create..."
-        if ! _slot=$(assignslottosuffix "$_suff"); then
-            message "Failed to add suffix '$_suff' into DB!"
+    if ! _slot=$(suffixtoslot "$2"); then
+        message "Suffix '$2' not in DB, attempting to create..."
+        if ! _slot=$(assignslottosuffix "$2"); then
+            message "Failed to add suffix '$2' into DB!"
             return 1
         fi
     fi
