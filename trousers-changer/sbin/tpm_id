@@ -20,18 +20,6 @@ log() {
     echo "${0##*/}: $1" >&2
 }
 
-tpm_nvwrite_stdin() {
-    local tmp
-    tmp=$(mktemp)
-    cat > "$tmp"
-    tpm_nvwrite -i "$TPM_ID_INDEX" -s 20 -f "$tmp"
-    rm -f "$tmp"
-}
-
-tpm_nvread_stdout() {
-    tpm_nvread -i "$TPM_ID_INDEX" -f /dev/stderr 2>&1 1>/dev/null
-}
-
 hex() {
     cat | od -A n -v -t x1 | tr -d ' \n'
 }
@@ -48,7 +36,7 @@ create() {
     tpm_nvdefine -i "$TPM_ID_INDEX" -s 20 -p "WRITEDEFINE|WRITEALL" --pwdo
 
     # generate a random TPM ID and write it into NVRAM
-    head -c 20 /dev/random | tpm_nvwrite_stdin
+    head -c 20 /dev/random | tpm_nvwrite_stdin -i "$TPM_ID_INDEX" -s 20
 
     # lock the area to prevent non-owners from changing ID
     tpm_nvwrite -i "$TPM_ID_INDEX" -s 0
@@ -61,7 +49,7 @@ getid() {
         return 1
     fi
 
-    tpm_nvread_stdout | hex
+    tpm_nvread_stdout -i "$TPM_ID_INDEX" | hex
     echo
 }
 

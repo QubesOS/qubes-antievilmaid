@@ -1,0 +1,7 @@
+#!/bin/bash
+# accepts same options as tpm_nvread, except -f
+# writes the NVRAM data read to stdout
+set -e -o pipefail
+export LC_ALL=C
+
+tpm_nvread "$@" -f /dev/stderr 2>&1 1>/dev/null

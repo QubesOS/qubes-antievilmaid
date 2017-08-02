@@ -38,6 +38,10 @@ log() {
     echo "${0##*/}: $1" >&2
 }
 
+hex() {
+    cat | od -A n -v -t x1 | tr -d ' \n'
+}
+
 waitfor() {
     case $# in
         2) _file=$2; _what=connected ;;
@@ -83,8 +87,7 @@ createtpmnvram() {
     # takes TPM owner password as an agument
     if [ ! -e "$TPM_FRESHNESS_PASSWORD" ]; then
         message "Generating TPM NVRAM area AUTHWRITE password"
-        head -c 16 /dev/random | od -A n -v -t x1 \
-            | tr -d ' \n' > "$TPM_FRESHNESS_PASSWORD"
+        head -c 16 /dev/random | hex > "$TPM_FRESHNESS_PASSWORD"
     fi
 
     _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
@@ -139,18 +142,11 @@ assignslottosuffix() {
 checkfreshness() {
     # check whether hash of an usealed freshness token (file path
     # given as an argument) is contained in TPM NVRAM area
-    # NOTE: tpm_nvread prints info msg to stdout for some reason,
-    # so we write the raw bytes to stderr and redirect stdout
-    # to /dev/null while stderr is redirected to stdout
-    # (the order here matters! "2>&1" needs to come *before*
-    # "1>/dev/null" to achieve desired result)
     _hash=$(sha1sum "$1" | cut -d ' ' -f 1)
     _lastslot=$((TPM_FRESHNESS_SLOTS - 1))
     for _i in $(seq 0 $_lastslot); do
-        _slot=$(tpm_nvread -i "$TPM_FRESHNESS_INDEX" \
-            -n "$((_i * 20))" -s 20 \
-            -f /dev/stderr 2>&1 1>/dev/null \
-            | od -A n -v -t x1 | tr -d ' \n')
+        _slot=$(tpm_nvread_stdout -i "$TPM_FRESHNESS_INDEX" \
+            -n "$((_i * 20))" -s 20 | hex)
         if [ "$_hash" == "$_slot" ]; then
             message "Matching freshness token hash found in slot #$_i"
             return 0
@@ -179,16 +175,13 @@ updatefreshness() {
     fi
 
     _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
-    _tmpf=$(mktemp)
-    sha1sum "$1" | cut -d ' ' -f 1 | xxd -r -ps > "$_tmpf"
-    if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
-            -n "$((_slot * 20))" -s 20 \
-            --password="$_pw" -f "$_tmpf"; then
+    if sha1sum "$1" | cut -d ' ' -f 1 | xxd -r -ps \
+            | tpm_nvwrite_stdin -i "$TPM_FRESHNESS_INDEX" \
+              -n "$((_slot * 20))" -s 20 --password="$_pw"; then
         _ret=0
     else
         _ret=1
     fi
-    rm -f "$_tmpf"
     return $_ret
 }
 
