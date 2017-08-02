@@ -175,14 +175,9 @@ updatefreshness() {
     fi
 
     _pw=$(cat "$TPM_FRESHNESS_PASSWORD")
-    if sha1sum "$1" | cut -d ' ' -f 1 | xxd -r -ps \
-            | tpm_nvwrite_stdin -i "$TPM_FRESHNESS_INDEX" \
-              -n "$((_slot * 20))" -s 20 --password="$_pw"; then
-        _ret=0
-    else
-        _ret=1
-    fi
-    return $_ret
+    sha1sum "$1" | cut -d ' ' -f 1 | xxd -r -ps \
+    | tpm_nvwrite_stdin -i "$TPM_FRESHNESS_INDEX" \
+      -n "$((_slot * 20))" -s 20 --password="$_pw"
 }
 
 revokefreshness() {
