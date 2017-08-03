@@ -1,5 +1,5 @@
 #!/bin/sh -e
-
+export LC_ALL=C
 . anti-evil-maid-lib
 LABEL_SUFFIX_CHARS=0-9a-zA-Z=.-
 BOOT_DIR=/boot
@@ -254,7 +254,6 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.key" ]; then
         devname=$(readlink -f "/dev/disk/by-uuid/$dev")
 
         # check if LUKS device has any free key slots
-        # FIXME: possibility of failing due to i18n?
         if ! cryptsetup luksDump "/dev/disk/by-uuid/$dev" \
                 | grep -q DISABLED; then
             log "FATAL: Device $devname (UUID $dev) has no free key slots!"
