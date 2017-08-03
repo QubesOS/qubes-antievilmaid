@@ -142,7 +142,7 @@ elif tpm_resetdalock -z; then
     # no owner pw set, abort (required for freshness
     # tokens to be used securely)
     log "TPM has no owner password set, aborting!"
-    log "Please consult AEM redme for details."
+    log "Please consult AEM readme for details."
     exit 1
 fi
 
