@@ -65,7 +65,7 @@ while getopts s:Fhm opt; do
     case "$opt" in
         s) LABEL_SUFFIX=$OPTARG ;;
         F) F=-F ;;
-        m) alias mfa=true; systemctl start tcsd ;;
+        m) alias mfa=true ;;
         *) usage ;;
     esac
 done
@@ -89,11 +89,7 @@ if [ -z "$(getluksuuids)" ]; then
     exit 1
 fi
 
-if ! tpm_id >/dev/null; then
-    log "Creating a TPM ID (you will be prompted for owner pw)."
-    tpm_id -c
-fi
-
+systemctl start tcsd
 
 # examine device
 
@@ -117,6 +113,85 @@ PART_NUM=${PART_DEV_REAL##*[!0-9]}
 if ! [ "$PART_NUM" -gt 0 ]; then
     log "Couldn't extract partition number: $PART_NUM"
     exit 1
+fi
+
+
+# take ownership of the TPM using a randomly generated pw
+
+alias took_ownership=false
+if [ "$(cat /sys/class/tpm/tpm0/owned)" -ne 1 ]; then
+    log "Your TPM is not owned yet."
+    log "Generating a random TPM owner password..."
+    ownerpw=$(head -c 8 /dev/random | hex)
+    log "Password: $ownerpw"
+    log "You may (but need not) store this password in a safe place."
+
+    log "Taking ownership of the TPM..."
+    log "Please copy & paste the owner password generated above"
+    if replace; then
+        # external device, no need for SRK pw
+        tpm_takeownership -z
+    else
+        # internal device, SRK pw required
+        log "and then choose a SRK password."
+        tpm_takeownership
+    fi
+
+    alias took_ownership=true
+elif tpm_resetdalock -z; then
+    # no owner pw set, abort (required for freshness
+    # tokens to be used securely)
+    log "TPM has no owner password set, aborting!"
+    log "Please consult AEM redme for details."
+    exit 1
+fi
+
+
+# create a random TPM ID
+
+if ! tpm_id >/dev/null; then
+    log "Creating a TPM ID..."
+    TPM_ID_INDEX=$(tpm_id -i)
+
+    if took_ownership; then
+        pwdo="--pwdo=$ownerpw"
+    else
+        pwdo="--pwdo"
+    fi
+
+    # create a 20-byte write-once NVRAM area
+    tpm_nvdefine -i "$TPM_ID_INDEX" -s 20 -p "WRITEDEFINE|WRITEALL" "$pwdo"
+    # generate a random ID and write it into NVRAM
+    head -c 20 /dev/random | tpm_nvwrite_stdin -i "$TPM_ID_INDEX" -s 20
+    # lock the area to prevent non-owners from changing ID
+    tpm_nvwrite -i "$TPM_ID_INDEX" -s 0
+
+    # move TPM data to new location & restart tcsd
+    systemctl stop tcsd
+    mkdir -p "/var/lib/tpms/$(tpm_id)"
+    mv /var/lib/tpms/unknown/* "/var/lib/tpms/$(tpm_id)/"
+    rm -rf /var/lib/tpms/unknown
+    systemctl start tcsd
+fi
+
+
+# define a TPM NVRAM area for storing freshness token hashes
+
+if ! checktpmnvram; then
+    log "Creating TPM NVRAM area for freshness tokens..."
+    if took_ownership; then
+        createtpmnvram --pwdo="$ownerpw"
+    else
+        for try in 1 2 3; do
+            read -s -p 'TPM owner password: ' ownerpw
+            if createtpmnvram "$ownerpw"; then
+                break
+            elif [ $try -eq 3 ]; then
+                log "Too many failures, aborting!"
+                exit 1
+            fi
+        done
+    fi
 fi
 
 
@@ -276,22 +351,6 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.key" ]; then
 
     log "Shredding the unencrypted key file"
     shred -zu "$rawkey"
-fi
-
-
-# define a TPM NVRAM area for storing freshness token hashes
-
-if ! checktpmnvram; then
-    log "Creating TPM NVRAM area for freshness tokens (prompts for TPM owner password)"
-    for try in 1 2 3; do
-        read -s -p 'TPM owner password: ' ownerpw
-        if createtpmnvram "$ownerpw"; then
-            break
-        elif [ $try -eq 3 ]; then
-            log "Too many failures, aborting!"
-            exit 1
-        fi
-    done
 fi
 
 
