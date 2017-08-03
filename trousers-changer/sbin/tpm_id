@@ -10,8 +10,8 @@ usage() {
     cat <<EOF
 Prints a 20-byte hex string TPM ID followed by a newline.
 
-Usage: tpm_id [-c]
-    -c     (re-)create and print TPM ID (requires TPM owner password)
+Usage: tpm_id [-i]
+    -i     print the TPM ID NVRAM index
 EOF
     exit 1
 }
@@ -24,22 +24,8 @@ hex() {
     cat | od -A n -v -t x1 | tr -d ' \n'
 }
 
-create() {
-    # destroy existing NVRAM area
-    if tpm_nvinfo -i "$TPM_ID_INDEX" | grep -q "WRITEDEFINE"; then
-        log "Deleting existing TPM ID NVRAM area."
-        tpm_nvrelease -i "$TPM_ID_INDEX" --pwdo
-    fi
-
-    # create a new 20-byte write-once NVRAM area
-    log "Creating new TPM ID NVRAM area."
-    tpm_nvdefine -i "$TPM_ID_INDEX" -s 20 -p "WRITEDEFINE|WRITEALL" --pwdo
-
-    # generate a random TPM ID and write it into NVRAM
-    head -c 20 /dev/random | tpm_nvwrite_stdin -i "$TPM_ID_INDEX" -s 20
-
-    # lock the area to prevent non-owners from changing ID
-    tpm_nvwrite -i "$TPM_ID_INDEX" -s 0
+getindex() {
+    echo "$TPM_ID_INDEX"
 }
 
 getid() {
@@ -54,9 +40,9 @@ getid() {
 }
 
 
-while getopts cd opt; do
+while getopts i opt; do
     case "$opt" in
-        c) create ;;
+        i) getindex && exit 0 ;;
         *) usage ;;
     esac
 done
