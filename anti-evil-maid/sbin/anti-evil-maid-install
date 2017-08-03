@@ -180,7 +180,7 @@ fi
 if ! checktpmnvram; then
     log "Creating TPM NVRAM area for freshness tokens..."
     if took_ownership; then
-        createtpmnvram --pwdo="$ownerpw"
+        createtpmnvram "$ownerpw"
     else
         for try in 1 2 3; do
             read -s -p 'TPM owner password: ' ownerpw
