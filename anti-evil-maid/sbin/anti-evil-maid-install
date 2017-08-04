@@ -138,7 +138,7 @@ if [ "$(cat /sys/class/tpm/tpm0/owned)" -ne 1 ]; then
     fi
 
     alias took_ownership=true
-elif tpm_resetdalock -z; then
+elif tpm_resetdalock -z 2>/dev/null; then
     # no owner pw set, abort (required for freshness
     # tokens to be used securely)
     log "TPM has no owner password set, aborting!"
@@ -356,7 +356,7 @@ fi
 
 # add the AEM media being created to the freshness database
 
-if suffixtoslot "$LABEL_SUFFIX"; then
+if suffixtoslot "$LABEL_SUFFIX" >/dev/null; then
     log "WARNING: (possibly another) AEM media with the same label"
     log "suffix is already enrolled in the freshness token database!"
     log "Overwriting will result in the old AEM media failing to"
@@ -369,7 +369,7 @@ if suffixtoslot "$LABEL_SUFFIX"; then
         *) exit ;;
     esac
 else
-    assignslottosuffix "$LABEL_SUFFIX"
+    assignslottosuffix "$LABEL_SUFFIX" >/dev/null
     log "Assigned slot $(suffixtoslot "$LABEL_SUFFIX") to this AEM media"
 fi
 
