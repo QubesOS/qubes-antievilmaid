@@ -49,6 +49,7 @@ install() {
         tpm_id \
         tpm_nvinfo \
         tpm_nvread \
+        tpm_nvread_stdout \
         tpm_pcr_extend \
         tpm_sealdata \
         tpm_unsealdata \
