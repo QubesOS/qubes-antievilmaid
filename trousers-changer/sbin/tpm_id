@@ -31,7 +31,7 @@ getindex() {
 getid() {
     if ! tpm_nvinfo -i "$TPM_ID_INDEX" | grep -q "WRITEDEFINE"; then
         log "TPM NVRAM area at index $TPM_ID_INDEX is not defined!"
-        log "Hint: did you run 'anti-evil-maid-install' or 'tpm_id -c'?"
+        log "Hint: did you run 'anti-evil-maid-install'?"
         return 1
     fi
 
