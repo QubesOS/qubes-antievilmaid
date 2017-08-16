@@ -58,7 +58,11 @@ the article referenced above), certainly if you want to save the sealed secrets
 to your internal boot partition. In that case you SHOULD NOT pass the '-z'
 argument to tpm_takeownership.
 
-Please note that non-default owner password is required!
+Please note that non-default owner password is required (ie. do not pass '-y'
+argument to tpm_takeownership)! Without an owner password set, the single-use
+anti-replay "freshness" tokens would be useless, as an attacker could simply
+rewrite the TPM NVRAM area with previously-valid-and-captured freshness token
+hash(es).
 
 If your tpm has already been owned in the past, you can reset it by running
 tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS
@@ -77,6 +81,13 @@ You can then download the module and unzip it. All the modules can be downloaded
 from:
 
 https://software.intel.com/protected-download/267276/183305
+
+Also, make sure you have the latest RACM update, if available (2nd & 3rd gen):
+https://software.intel.com/system/files/article/183305/intel-txt-sinit-acm-revocation-tools-guide-rev1-0_2.pdf
+
+It's possible to use 3rd gen SINIT/RACM on 2nd gen platforms. In fact, the only
+RACM available at the time of writing is for the 3rd gen, while the 2nd gen
+platforms were also affected by the buffer overflow bug in old SINIT version.
 
 Finally, you should retrieve the BIN file inside /boot in dom0. E.g., run from
 dom0:
@@ -102,7 +113,15 @@ Please note that each AEM device you provision should have a unique
 filesystem label suffix (use the '-s' option). You may safely re-use
 suffixes for destroyed devices.
 
-Installation on read-only media is not yet supported.
+Installation directly onto a (truly) read-only media (such as a CD-R) is not
+supported. You can, however, copy the contents of an existing RW media onto
+RO media after the initial sealing takes place. Physical write-protect
+switches on SD cards or USB sticks are fine (install AEM in RW mode, then
+flip the switch and proceed to use as RO media). Remeber to always pull
+out the RO media when your text secret or TOTP code is displayed! Failing
+to do that will result in invalidation of freshness token in the TPM memory
+and the AEM media will fail to perform verified boot next time, falling
+back to non-AEM-protected mode.
 
 For example, to install on the internal boot partition (assuming that it
 is /dev/sda1):
@@ -121,9 +140,10 @@ computer. Long story short, if you ever need to boot your AEM-protected computer
 in public or anywhere a camera may be hidden, this is the thing you want to use.
 However, this setup requires an external boot media (eg. USB stick or memory
 card) and owning a suitable two-factor authentication device supporting time-based
-one-time passwords (TOTP), eg. an Android smartphone with the Google Authenticator
-app or a dedicated hardware token (which allows custom TOTP seeds to be used).
-The command to set this all up is:
+one-time passwords (TOTP). There are apps available for Android/Apple smartphones
+(Google Authenticator, FreeOTP Authenticator) and Windows Phone (Microsoft
+Authenticator). You can also use a dedicated hardware token (which must allow
+custom TOTP seeds to be imported). The command to set this all up is simple:
 
 # anti-evil-maid-install -m /dev/sdb1
 
@@ -200,9 +220,10 @@ once.
 
 If you get a message that the "PCR sanity check failed" and you are sure you
 have saved the right SINIT blob in step 4.a, then check the tboot log for
-details. The easiest way to view it is to set "logging=vga vga_delay=10" on the
-"multiboot /tboot.gz" line in grub.cfg and reboot. For more information, see
-the tboot readme (/usr/share/doc/tboot/README on an installed system).
+details. The easiest way to view it is to set "logging=vga vga_delay=10" on
+the "multiboot /tboot.gz" line in grub.cfg and reboot. Alternatively, run
+`sudo txt-stat` from dom0. For more information, see the tboot readme
+(/usr/share/doc/tboot/README on an installed system).
 
 b) If a chunk of your installed RAM seems to be missing after the reboot
 (which can be checked by running "xl info" in dom0), do the following:
@@ -233,4 +254,31 @@ What to do in case of compromise
 For a discussion of potential attacks against Anti Evil Maid, see the article
 referenced at the beginning.
 
-TODO: write up various scenarios and how to recover, best practices
+
+AEM media copied/stolen by an attacker
+--------------------------------------
+
+If you have your system up and running or have an extra AEM media using which
+you can boot the system before the attacker can get to it:
+
+* `sudo su` in dom0
+* `. /usr/sbin/anti-evil-maid-lib` (note the dot at the beginning)
+* `revokefreshness <suffix>` (where `<suffix>` is the missing label suffix)
+
+In case you do not remember the used media label suffix, they're all stored
+in `/var/lib/anti-evil-maid/tpm-freshness-db`. If the particular media had
+no special suffix set, use `revokefreshness ""`. Alternatively, `resetfreshness`
+will wipe all freshness tokens from the TPM (thus invalidating all enrolled AEM
+media and forcing you to boot an unverified system).
+
+As a last resort, you can attempt to reset the TPM from BIOS (with similar effect
+to `resetfreshness`). Otherwise, it's game over.
+
+
+Someone saw my AEM text secret/LUKS passphrase
+----------------------------------------------
+
+You should've installed AEM in multi-factor mode. Better luck next time.
+
+
+TODO: write up more scenarios and how to recover, best practices
