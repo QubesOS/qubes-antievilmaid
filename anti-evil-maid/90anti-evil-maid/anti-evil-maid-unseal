@@ -187,7 +187,7 @@ if otp; then
         message "as shown below. Should the codes match, press <ENTER> to"
         message "unseal your LUKS key file. If you do now have access to"
         message "your OTP device but wish to continue despite the security"
-        message "implications, press <ENTER>. Pressing <Q> will revert"
+        message "implications, press <ENTER>. Pressing <T> will revert"
         message "back to displaying the text secret (if provisioned)."
         message "Otherwise, shut down the computer."
         message ""
@@ -196,7 +196,7 @@ if otp; then
 
         if plymouth_active; then
             plymouth watch-keystroke --keys=$'\n' --command='touch /tmp/mfa-cont' &
-            plymouth watch-keystroke --keys=Qq --command='touch /tmp/mfa-skip' &
+            plymouth watch-keystroke --keys=Tt --command='touch /tmp/mfa-skip' &
             while [ ! -e /tmp/mfa-cont ] && [ ! -e /tmp/mfa-skip ]; do
                 now=$(date +%s)
                 if [ "$((now % 30))" -eq 0 ] && [ ! "$last" == "$now" ]; then
@@ -215,9 +215,9 @@ if otp; then
             tout=$((30 - ($(date +%s) % 30)))
             while true; do
                 if systemd-ask-password --echo --timeout "$tout" \
-                        "Press <ENTER> to continue or <Q> + <ENTER> to skip multi-factor AEM." \
+                        "Press <ENTER> to continue or <T> + <ENTER> to skip multi-factor AEM." \
                         >/tmp/mfa-resp; then
-                    if grep -qi q /tmp/mfa-resp; then
+                    if grep -qi t /tmp/mfa-resp; then
                         alias otp=false
                         message "Reverting back to non-multi-factor AEM boot"
                     fi
