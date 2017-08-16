@@ -185,7 +185,7 @@ if otp; then
 
         message "Please verify your OTP device displays the same TOTP code"
         message "as shown below. Should the codes match, press <ENTER> to"
-        message "unseal your LUKS key file. If you do now have access to"
+        message "unseal your LUKS key file. If you do not have access to"
         message "your OTP device but wish to continue despite the security"
         message "implications, press <ENTER>. Pressing <T> will revert"
         message "back to displaying the text secret (if provisioned)."
