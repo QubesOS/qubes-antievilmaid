@@ -47,28 +47,11 @@ PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73
 
 ... then your TPM is supported by your kernel.
 
-3) Take ownership of your TPM. This, among other things, would generate
-the TPM SRK key used for sealing process:
-
-# systemctl restart tcsd
-# tpm_takeownership -z
-
-You may want to use non-default password for the SRK key (see the discussion in
-the article referenced above), certainly if you want to save the sealed secrets
-to your internal boot partition. In that case you SHOULD NOT pass the '-z'
-argument to tpm_takeownership.
-
-Please note that non-default owner password is required (ie. do not pass '-y'
-argument to tpm_takeownership)! Without an owner password set, the single-use
-anti-replay "freshness" tokens would be useless, as an attacker could simply
-rewrite the TPM NVRAM area with previously-valid-and-captured freshness token
-hash(es).
-
 If your tpm has already been owned in the past, you can reset it by running
 tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS
 (e.g.: TPM Authentication Reset).
 
-4) Setup Anti Evil Maid
+3) Setup Anti Evil Maid
 
 a) SINIT module
 
@@ -191,7 +174,7 @@ e.g. by compelling you to reveal the LUKS passphrase, they can of
 course see these secrets. So they are probably not the right place to
 store your most intimate confessions. ;)
 
-5) Reboot the system, choose one of the entries called "AEM Qubes". This will
+4) Reboot the system, choose one of the entries called "AEM Qubes". This will
 attempt to perform a "measured launch" using tboot and the SINIT module you
 downloaded, which records the Xen, kernel, and initrd versions used in PCRs
 17-19 of the TPM for use in sealing and unsealing your secret. If the measured
