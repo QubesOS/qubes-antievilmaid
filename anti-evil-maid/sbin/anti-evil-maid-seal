@@ -5,8 +5,8 @@ shopt -s expand_aliases
 # Listing tcsd.service in anti-evil-maid-seal.service's Requires= and After=
 # would cause it to always be started (even when not booting in AEM mode or
 # when sealing is unnecessary) due to the way systemd evaluates conditions.
-# Putting the systemctl command in ExecStartPre= is also insufficient: The user
-# might want to run this script manually after changing the secret(s).
+# Putting the systemctl command in ExecStartPre= is also insufficient: The
+# user might want to run this script manually after changing the secret(s).
 
 systemctl start tcsd
 

@@ -195,12 +195,15 @@ if otp; then
         last=$(date +%s)
 
         if plymouth_active; then
-            plymouth watch-keystroke --keys=$'\n' --command='touch /tmp/mfa-cont' &
-            plymouth watch-keystroke --keys=Tt --command='touch /tmp/mfa-skip' &
+            plymouth watch-keystroke --keys=$'\n' \
+                --command='touch /tmp/mfa-cont' &
+            plymouth watch-keystroke --keys=Tt \
+                --command='touch /tmp/mfa-skip' &
             while [ ! -e /tmp/mfa-cont ] && [ ! -e /tmp/mfa-skip ]; do
                 now=$(date +%s)
                 if [ "$((now % 30))" -eq 0 ] && [ ! "$last" == "$now" ]; then
-                    message "[ $(date) ] TOTP code: $(oathtool --totp -b "$seed")"
+                    code=$(oathtool --totp -b "$seed")
+                    message "[ $(date) ] TOTP code: $code"
                     last=$now
                 else
                     sleep 0.1
@@ -214,8 +217,10 @@ if otp; then
         else
             tout=$((30 - ($(date +%s) % 30)))
             while true; do
+                msg="Press <ENTER> to continue or <T> + <ENTER>"
+                msg="$msg to skip multi-factor AEM."
                 if systemd-ask-password --echo --timeout "$tout" \
-                        "Press <ENTER> to continue or <T> + <ENTER> to skip multi-factor AEM." \
+                        "$msg" \
                         >/tmp/mfa-resp; then
                     if grep -qi t /tmp/mfa-resp; then
                         alias otp=false
@@ -224,7 +229,8 @@ if otp; then
                     break
                 fi
 
-                message "[ $(date) ] TOTP code: $(oathtool --totp -b "$seed")"
+                code=$(oathtool --totp -b "$seed")
+                message "[ $(date) ] TOTP code: $code"
                 tout=30
             done
         fi
@@ -279,7 +285,8 @@ if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
             message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
             message ""
         } 2>&1  # don't put the secret into the journal
-        message "Never type in your disk password unless the secret above is correct!"
+        message "Never type in your disk password unless"
+        message "the secret above is correct!"
         waitforenter
     fi
 fi
@@ -288,10 +295,11 @@ fi
 rm -f "$UNSEALED_SECRET"
 
 
-# Clear all messages to hide the secret. Do it even if the unsealing has failed,
-# because that's how an attacker would likely behave to trick absentminded users
-# into thinking that they've already seen the secret. (See AEM introductory blog
-# post FAQ, "Why are there no negative indicators")
+# Clear all messages to hide the secret. Do it even if the unsealing has
+# failed, because that's how an attacker would likely behave to trick
+# absentminded users into thinking that they've already seen the secret.
+# (See AEM introductory blog post FAQ, "Why are there no negative
+# indicators")
 
 if plymouth_active; then
     for m in "${PLYMOUTH_MESSAGES[@]}"; do

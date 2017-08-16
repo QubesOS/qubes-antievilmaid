@@ -20,19 +20,21 @@ Usage:
 Arguments:
   -s: <device> gets labeled "$LABEL_PREFIX<suffix>"
 
-      <suffix> can be composed of 0-13 characters from the alphabet $LABEL_SUFFIX_CHARS
+      <suffix> can be composed of 0-13 characters from the alphabet
+        $LABEL_SUFFIX_CHARS
       It defaults to <device>'s current suffix, if any, or the empty string
       otherwise. Each of your AEM installations must have a unique suffix.
 
-      This suffix has no particular meaning, except that you can let it end in
-      .rm=1 or .rm=0 to hint that <device> is removable or fixed, respectively,
-      no matter what the Linux kernel detects.
+      This suffix has no particular meaning, except that you can let it end
+      in .rm=1 or .rm=0 to hint that <device> is removable or fixed,
+      respectively, no matter what the Linux kernel detects.
 
   -F: passed on to mkfs.ext4 (don't ask for confirmation, etc.)
 
   -m: set up a multi-factor auth AEM media (EXPERIMENTAL)
-      Using time-based one time password and a LUKS key file, provides resistance
-      to shoulder surfing and video surveillance based passphrase snooping.
+      Using time-based one time password and a LUKS key file, provides
+      resistance to shoulder surfing and video surveillance based passphrase
+      snooping.
 
 
 Examples:
@@ -198,10 +200,10 @@ fi
 # MFA-specific checks
 
 if mfa && ! external "$PART_DEV"; then
-    log "MFA-enabled AEM cannot be installed on the same storage device as Qubes OS."
+    log "MFA AEM cannot be installed on same storage device as Qubes OS."
     exit 1
 elif mfa && ! removable "$PART_DEV" "$LABEL" ; then
-    log "MFA-enabled AEM can only be used with removable media."
+    log "MFA AEM can only be used with removable media."
     log "Should the device be, in fact, removable (autodetection failed),"
     log "add '.rm=1' at the end of disk label suffix using the '-s' option."
     exit 1
@@ -298,8 +300,8 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
             log "Entered TOTP code is invalid!"
             if [ "$try" -lt $totp_tries ]; then
                 log "Please check clock synchronization."
-                log "If you made a mistake while manually entering the secret,"
-                log "remove the added token, repeat the process and try again."
+                log "If you made mistake while manually entering the secret,"
+                log "remove the added token, repeat the process & try again."
                 log ""
             else
                 log "Aborting AEM setup..."

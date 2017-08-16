@@ -60,17 +60,18 @@ You should download the SINIT module required for your system.
 Intel documented the required SINIT module depending on your CPU platform in:
 http://software.intel.com/en-us/articles/intel-trusted-execution-technology
 
-You can then download the module and unzip it. All the modules can be downloaded
-from:
+You can then download the module and unzip it. All the modules can be
+downloaded from:
 
 https://software.intel.com/protected-download/267276/183305
 
 Also, make sure you have the latest RACM update, if available (2nd & 3rd gen):
 https://software.intel.com/system/files/article/183305/intel-txt-sinit-acm-revocation-tools-guide-rev1-0_2.pdf
 
-It's possible to use 3rd gen SINIT/RACM on 2nd gen platforms. In fact, the only
-RACM available at the time of writing is for the 3rd gen, while the 2nd gen
-platforms were also affected by the buffer overflow bug in old SINIT version.
+It's possible to use 3rd gen SINIT/RACM on 2nd gen platforms. In fact, the
+only RACM available at the time of writing is for the 3rd gen, while the 2nd
+gen platforms were also affected by the buffer overflow bug in old SINIT
+version.
 
 Finally, you should retrieve the BIN file inside /boot in dom0. E.g., run from
 dom0:
@@ -80,10 +81,10 @@ $ sudo -s
 
 NOTE: The SINIT files are digitally signed by Intel. While there is no easy
 way to verify their integrity after downloading (and after copying to Dom0),
-still, the operation of placing such a file into Dom0's /boot filesystem should
-be reasonably safe to do -- after all the file should not be processed by any
-software in Dom0, and only by the SENTER instruction of the processes, which,
-we hope, correctly verifies the signature before executing it...
+still, the operation of placing such a file into Dom0's /boot filesystem
+should be reasonably safe to do -- after all the file should not be processed
+by any software in Dom0, and only by the SENTER instruction of the processes,
+which, we hope, correctly verifies the signature before executing it...
 
 b) Create an Anti Evil Maid device:
 
@@ -117,16 +118,17 @@ Or better, create an external AEM boot device (in this case an SD card):
 
 Alternatively, a multi-factor authentication AEM boot device can be created,
 which provides additional protection against shoulder surfing and video
-surveillance -- with the above setups, if an attacker sees your disk encryption
-password as you're typing it then they can simply steal and decrypt your
-computer. Long story short, if you ever need to boot your AEM-protected computer
-in public or anywhere a camera may be hidden, this is the thing you want to use.
-However, this setup requires an external boot media (eg. USB stick or memory
-card) and owning a suitable two-factor authentication device supporting time-based
-one-time passwords (TOTP). There are apps available for Android/Apple smartphones
-(Google Authenticator, FreeOTP Authenticator) and Windows Phone (Microsoft
-Authenticator). You can also use a dedicated hardware token (which must allow
-custom TOTP seeds to be imported). The command to set this all up is simple:
+surveillance -- with the above setups, if an attacker sees your disk
+encryption password as you're typing it then they can simply steal and decrypt
+your computer. Long story short, if you ever need to boot your AEM-protected
+computer in public or anywhere a camera may be hidden, this is the thing you
+want to use. However, this setup requires an external boot media (eg. USB
+stick or memory card) and owning a suitable two-factor authentication device
+supporting time-based one-time passwords (TOTP). There are apps available for
+Android/Apple smartphones (Google Authenticator, FreeOTP Authenticator) and
+Windows Phone (Microsoft Authenticator). You can also use a dedicated hardware
+token (which must allow custom TOTP seeds to be imported). The command to set
+this all up is simple:
 
 # anti-evil-maid-install -m /dev/sdb1
 
@@ -143,11 +145,12 @@ For more details, see the associated qubes-devel mailing list thread:
 If you've chosen to install AEM on an external device (ie. not the internal
 drive), you should then remove the internal boot partition from dom0's
 /etc/fstab, never mount it again in dom0, and never boot from it again,
-because an attacker might modify it to exploit GRUB or dom0 filesystem drivers.
+because an attacker might modify it to exploit GRUB or dom0 filesystem
+drivers.
 
-Note: If you choose to use a USB device (e.g., a flash drive) as your AEM device
-and you previously created a USB qube, then you may have to unhide your USB
-controller from dom0:
+Note: If you choose to use a USB device (e.g., a flash drive) as your AEM
+device and you previously created a USB qube, then you may have to unhide
+your USB controller from dom0:
 
   1. Open the file `/etc/default/grub` in dom0.
   2. Find the line that begins with `GRUB_CMDLINE_LINUX`.
@@ -178,8 +181,8 @@ store your most intimate confessions. ;)
 attempt to perform a "measured launch" using tboot and the SINIT module you
 downloaded, which records the Xen, kernel, and initrd versions used in PCRs
 17-19 of the TPM for use in sealing and unsealing your secret. If the measured
-launch fails for any reason, tboot will fall back to a normal boot and AEM will
-not function.
+launch fails for any reason, tboot will fall back to a normal boot and AEM
+will not function.
 
 a) Enter your SRK password if prompted in case you have set one in step
 3. You won't see your secret afterwards, because it hasn't been sealed
@@ -250,12 +253,14 @@ you can boot the system before the attacker can get to it:
 
 In case you do not remember the used media label suffix, they're all stored
 in `/var/lib/anti-evil-maid/tpm-freshness-db`. If the particular media had
-no special suffix set, use `revokefreshness ""`. Alternatively, `resetfreshness`
-will wipe all freshness tokens from the TPM (thus invalidating all enrolled AEM
-media and forcing you to boot an unverified system).
+no special suffix set, use `revokefreshness ""`.
 
-As a last resort, you can attempt to reset the TPM from BIOS (with similar effect
-to `resetfreshness`). Otherwise, it's game over.
+Alternatively, `resetfreshness` will wipe all freshness tokens from the TPM
+(thus invalidating all enrolled AEM media and forcing you to boot an
+unverified system).
+
+As a last resort, you can attempt to reset the TPM from BIOS (with similar
+effect to `resetfreshness`). Otherwise, it's game over.
 
 
 Someone saw my LUKS passphrase
