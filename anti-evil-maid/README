@@ -258,10 +258,48 @@ As a last resort, you can attempt to reset the TPM from BIOS (with similar effec
 to `resetfreshness`). Otherwise, it's game over.
 
 
-Someone saw my AEM text secret/LUKS passphrase
-----------------------------------------------
+Someone saw my LUKS passphrase
+------------------------------
 
-You should've installed AEM in multi-factor mode. Better luck next time.
+You should've installed AEM in multi-factor mode.
+
+If you're fairly confident the attacker does not posess a bitwise copy
+of your encrypted Qubes OS drive, change the LUKS passphrase:
+
+* determine the path to LUKS-encrypted disk (usually /dev/sda2)
+* add a new password with `sudo cryptsetup luksAddKey <disk>`
+* remove old one with `sudo cryptsetup luksRemoveKey <disk>`
+
+As these actions will change the LUKS header, which is fed into one
+of the TPM PCRs upon each AEM boot, all the existing AEM media will
+get invalidated (ie. fall back to unverified boot).
+
+Beware that solid-state devices will most likely NOT overwrite the
+LUKS header, but rather write the new one into another memory cell
+(due to wear leveling algorithms designed to prolong SSD life).
+If you're worried about this and have recent-enough backups (as
+you always should), perform an ATA secure erase of the whole SSD
+using a live CD and then reinstall Qubes OS.
+https://ata.wiki.kernel.org/index.php/ATA_Secure_Erase
+
+
+Someone saw my text secret
+--------------------------
+
+Again, if you're going to boot your Qubes OS in public places,
+using multi-factor AEM is strongly recommended.
+
+Assuming the attacker haven't yet had access to your computer
+(in order to install a compromised bootloader which will show
+the correct secret but record your LUKS passphrase), simply
+changing the text secret and re-creating affected AEM media
+(if you used same secret for multiple ones) will do.
+
+The text secrets are stored in
+`/var/lib/anti-evil-maid/aem<suffix>/secret.txt`
+
+Make sure to never trust the old text secret ever again!
+
 
 
 TODO: write up more scenarios and how to recover, best practices
