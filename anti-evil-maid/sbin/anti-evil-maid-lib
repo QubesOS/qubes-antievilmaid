@@ -148,7 +148,6 @@ checkfreshness() {
         _slot=$(tpm_nvread_stdout -i "$TPM_FRESHNESS_INDEX" \
             -n "$((_i * 20))" -s 20 | hex)
         if [ "$_hash" == "$_slot" ]; then
-            message "Matching freshness token hash found in slot #$_i"
             return 0
         fi
     done
