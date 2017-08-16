@@ -13,3 +13,4 @@ ExecStart=/sbin/anti-evil-maid-unseal
 StandardInput=null
 StandardOutput=tty
 StandardError=journal+console
+TimeoutStartSec=300
