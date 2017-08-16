@@ -126,7 +126,7 @@ if [ "$(cat /sys/class/tpm/tpm0/owned)" -ne 1 ]; then
     log "Generating a random TPM owner password..."
     ownerpw=$(head -c 8 /dev/random | hex)
     log "Password: $ownerpw"
-    log "You may (but need not) store this password in a safe place."
+    log "You may store this password in a safe place."
 
     log "Taking ownership of the TPM..."
     log "Please copy & paste the owner password generated above"
@@ -200,12 +200,14 @@ fi
 # MFA-specific checks
 
 if mfa && ! external "$PART_DEV"; then
-    log "MFA AEM cannot be installed on same storage device as Qubes OS."
+    log "MFA AEM cannot be installed on the same"
+    log "storage device as Qubes OS."
     exit 1
 elif mfa && ! removable "$PART_DEV" "$LABEL" ; then
     log "MFA AEM can only be used with removable media."
-    log "Should the device be, in fact, removable (autodetection failed),"
-    log "add '.rm=1' at the end of disk label suffix using the '-s' option."
+    log "Should the device be, in fact, removable"
+    log "(autodetection failed), add '.rm=1' at the end"
+    log "of disk label suffix using the '-s' option."
     exit 1
 fi
 
@@ -274,23 +276,24 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
 
     # display the text form of secret to user, too
     human_readable_secret="$(echo "$otp_secret" | sed 's/\(....\)/\1\ /g')"
-    log "Alternatively, you may manually enter the following secret into"
-    log "your OTP device:"
+    log "Alternatively, you may manually enter the following"
+    log "secret into your OTP device:"
     log "    $human_readable_secret"
 
     if timedatectl status | grep -q 'RTC in local TZ: yes'; then
         log ""
-        log "WARNING: Your computer's RTC (real-time clock) is set to"
-        log "store time in local timezone. This will cause wrong TOTP"
-        log "codes to be generated during AEM boot. Please fix this by"
-        log "running (as root):"
+        log "WARNING: Your computer's RTC (real-time clock) is set"
+        log "to store time in local timezone. This will cause wrong"
+        log "TOTP codes to be generated during AEM boot. Please fix"
+        log "this by running (as root):"
         log "    timedatectl set-local-rtc 0"
     fi
 
     # check whether secret was provisioned correctly
     log ""
-    log "After you have set up your OTP device, please enter the code"
-    log "displayed on your device and press <ENTER> to continue."
+    log "After you have set up your OTP device, please enter"
+    log "the code displayed on your device and press <ENTER>"
+    log "to continue."
     log ""
 
     totp_tries=3
@@ -333,7 +336,8 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.key" ]; then
         # check if LUKS device has any free key slots
         if ! cryptsetup luksDump "/dev/disk/by-uuid/$dev" \
                 | grep -q DISABLED; then
-            log "FATAL: Device $devname (UUID $dev) has no free key slots!"
+            log "FATAL: Device $devname (UUID $dev)"
+            log "has no free key slots!"
             exit 1
         fi
 
@@ -359,12 +363,13 @@ fi
 # add the AEM media being created to the freshness database
 
 if suffixtoslot "$LABEL_SUFFIX" >/dev/null; then
-    log "WARNING: (possibly another) AEM media with the same label"
-    log "suffix is already enrolled in the freshness token database!"
-    log "Overwriting will result in the old AEM media failing to"
-    log "perform a successful AEM boot. If you're simply reinstalling"
-    log "on the same device or intentionally replacing an old AEM media"
-    log "that was lost/destroyed/etc., it is safe to continue."
+    log "WARNING: (possibly another) AEM media with the same"
+    log "label suffix is already enrolled in the freshness token"
+    log "database! Overwriting will result in the old AEM media"
+    log "failing to perform a successful AEM boot. If you're"
+    log "simply reinstalling on the same device or intentionally"
+    log "replacing an old AEM media that was lost/destroyed/etc.,"
+    log "it is safe to continue."
     read -p "Proceed? [y/N] " response
     case "$response" in
         y|Y) echo "continuing..." ;;
@@ -372,7 +377,8 @@ if suffixtoslot "$LABEL_SUFFIX" >/dev/null; then
     esac
 else
     assignslottosuffix "$LABEL_SUFFIX" >/dev/null
-    log "Assigned slot $(suffixtoslot "$LABEL_SUFFIX") to this AEM media"
+    slot=$(suffixtoslot "$LABEL_SUFFIX")
+    log "Assigned slot $slot to this AEM media"
 fi
 
 
