@@ -16,10 +16,18 @@ LUKS_PCR=13
 
 
 PLYMOUTH_MESSAGES=()
+
 plymouth_message() {
     plymouth message --text="$*"
     PLYMOUTH_MESSAGES+=("$*")
 }
+
+plymouth_messages_hide() {
+    for m in "${PLYMOUTH_MESSAGES[@]}"; do
+        plymouth hide-message --text="$m"
+    done
+}
+
 . anti-evil-maid-lib
 
 
@@ -127,7 +135,8 @@ else
     for try in 1 2 3; do
         log "Prompting for SRK password..."
 
-        if systemd-ask-password "TPM SRK password to unseal the secret" |
+        if systemd-ask-password --timeout=0 \
+                                "TPM SRK password to unseal the secret(s)" |
            tee "$SRK_PASSWORD_CACHE" |
            tpm_sealdata -i /dev/null -o /dev/null; then
              log "Correct SRK password"
@@ -159,145 +168,90 @@ else
 fi
 
 
-# check for OTP
+# unseal & show OTP if provisioned
+# unseal & decrypt key file unless the user switches to text secret mode
 
 if [ -e "$sealed_secret_otp" ]; then
     alias otp=true
-    SEALED_SECRET=$sealed_secret_otp
 else
     alias otp=false
 fi
 
-
-# unseal & show OTP if provisioned
-
 if otp; then
     log "Unsealing TOTP shared secret seed..."
-    if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
+    if tpm_unsealdata $Z -i "$sealed_secret_otp" -o "$UNSEALED_SECRET" \
             < "$SRK_PASSWORD_CACHE"; then
         log "TOTP secret unsealed."
-        seed=$(cat "$UNSEALED_SECRET")
 
-        message "Please verify your OTP device displays the same TOTP code"
-        message "as shown below. Should the codes match, press <ENTER> to"
-        message "unseal your LUKS key file. If you do not have access to"
-        message "your OTP device but wish to continue despite the security"
-        message "implications, press <ENTER>. Pressing <T> will revert"
-        message "back to displaying the text secret (if provisioned)."
-        message "Otherwise, shut down the computer."
+        message "Never type in your key file password unless the code below is correct!"
         message ""
-        message "[ $(date) ] TOTP code: $(oathtool --totp -b "$seed")"
-        last=$(date +%s)
 
-        if plymouth_active; then
-            plymouth watch-keystroke --keys=$'\n' \
-                --command='touch /tmp/mfa-cont' &
-            plymouth watch-keystroke --keys=Tt \
-                --command='touch /tmp/mfa-skip' &
-            while [ ! -e /tmp/mfa-cont ] && [ ! -e /tmp/mfa-skip ]; do
+        seed=$(cat "$UNSEALED_SECRET")
+        last=
+        {
+            trap 'plymouth_messages_hide; exit' TERM
+            while :; do
                 now=$(date +%s)
-                if [ "$((now % 30))" -eq 0 ] && [ ! "$last" == "$now" ]; then
+                if [ -z "$last" ] ||
+                   [ "$((now % 30))" = 0 -a "$last" != "$now" ]; then
                     code=$(oathtool --totp -b "$seed")
                     message "[ $(date) ] TOTP code: $code"
                     last=$now
-                else
-                    sleep 0.1
                 fi
+                sleep 0.1
             done
+        } &
+        totp_loop_pid=$!
 
-            if [ -e /tmp/mfa-skip ]; then
-                alias otp=false
-                message "Reverting back to non-multi-factor AEM boot"
-            fi
-        else
-            tout=$((30 - ($(date +%s) % 30)))
-            while true; do
-                msg="Press <ENTER> to continue or <T> + <ENTER>"
-                msg="$msg to skip multi-factor AEM."
-                if systemd-ask-password --echo --timeout "$tout" \
-                        "$msg" \
-                        >/tmp/mfa-resp; then
-                    if grep -qi t /tmp/mfa-resp; then
-                        alias otp=false
-                        message "Reverting back to non-multi-factor AEM boot"
-                    fi
+        if tpm_unsealdata $Z -i "$sealed_secret_key" -o "$UNSEALED_SECRET" \
+           <"$SRK_PASSWORD_CACHE"; then
+            for try in 1 2 3; do
+                pass=$(systemd-ask-password --timeout=0 \
+                       'LUKS key file password (or "t" to show text secret)')
+
+                if [ "$pass" = "t" ]; then
+                    alias otp=false
                     break
                 fi
 
-                code=$(oathtool --totp -b "$seed")
-                message "[ $(date) ] TOTP code: $code"
-                tout=30
+                if scrypt dec -P "$UNSEALED_SECRET" /tmp/aem-keyfile \
+                   <<<"$pass"; then
+                    log "Correct LUKS key file password"
+                    # dracut "90crypt" module will parse the
+                    #   rd.luks.key=/tmp/aem-keyfile
+                    # kernel cmdline arg and attempt to use it;
+                    # this file is deleted on root switch
+                    # along with everything in /tmp
+                    break
+                else
+                    log "Wrong LUKS key file password"
+                fi
             done
         fi
-    else
-        # unsealing OTP seed failed, don't even search for keyfile
-        alias otp=false
+
+        kill "$totp_loop_pid"
     fi
 fi
 
 
-# determine which secret to use next
+# unseal text secret
 
-if otp; then
-    # user does not want to skip multi-factor AEM
-    SEALED_SECRET=$sealed_secret_key
-    # not checking key file existence since we DO NOT want
-    # the static secrets to be displayed anyway
-else
-    SEALED_SECRET=$sealed_secret_txt
-fi
-
-
-# unseal the next secret
-
-log "Unsealing the secret $SEALED_SECRET..."
-if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
+if ! otp; then
+    log "Unsealing text secret..."
+    if tpm_unsealdata $Z -i "$sealed_secret_txt" -o "$UNSEALED_SECRET" \
         <"$SRK_PASSWORD_CACHE"; then
-    if otp; then
-        # ask for LUKS key file passphrase
-        for try in 1 2 3; do
-            if systemd-ask-password "LUKS key file password" |
-                    scrypt dec -P "$UNSEALED_SECRET" /tmp/aem-keyfile; then
-                log "Correct LUKS key file password"
-                message "Key file decrypted."
-                # decrypted key file saved in /tmp/aem-keyfile;
-                # dracut "90crypt" module will parse the
-                #   rd.luks.key=/tmp/aem-keyfile
-                # kernel cmdline arg and attempt to use it;
-                # this file is deleted on root switch
-                # along with everything in /tmp
-                break
-            else
-                log "Wrong LUKS key file password"
-            fi
-        done
-    else
-        # display txt secret in current dialog
         {
             message ""
             message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"
             message ""
         } 2>&1  # don't put the secret into the journal
-        message "Never type in your disk password unless"
-        message "the secret above is correct!"
+        message "Never type in your disk password unless the secret above is correct!"
         waitforenter
     fi
+
+    plymouth_messages_hide
+    clear
 fi
-
-
-# Clear all messages to hide the secret. Do it even if the unsealing has
-# failed, because that's how an attacker would likely behave to trick
-# absentminded users into thinking that they've already seen the secret.
-# (See AEM introductory blog post FAQ, "Why are there no negative
-# indicators")
-
-if plymouth_active; then
-    for m in "${PLYMOUTH_MESSAGES[@]}"; do
-        plymouth hide-message --text="$m"
-    done
-fi
-
-clear
 
 
 # prevent sealing service from starting if user unplugged
