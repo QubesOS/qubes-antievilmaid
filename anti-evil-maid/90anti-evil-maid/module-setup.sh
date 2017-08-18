@@ -25,7 +25,6 @@ install() {
         clear \
         cut \
         date \
-        diff \
         file \
         /usr/share/misc/magic \
         grep \
@@ -39,7 +38,6 @@ install() {
         scrypt \
         seq \
         sha1sum \
-        sha256sum \
         sort \
         tail \
         tcsd \
