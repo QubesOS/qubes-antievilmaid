@@ -12,6 +12,7 @@ ExecStart=/usr/sbin/anti-evil-maid-seal
 Type=oneshot
 StandardOutput=journal+console
 StandardError=inherit
+TimeoutStartSec=300
 
 [Install]
 WantedBy=basic.target
