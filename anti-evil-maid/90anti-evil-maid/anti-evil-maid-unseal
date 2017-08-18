@@ -97,7 +97,6 @@ while read luksid; do
     cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \
                --header-backup-file "$LUKS_HEADER_DUMP"
     luks_header_hash=$(sha1sum "$LUKS_HEADER_DUMP" | cut -f 1 -d ' ')
-    rm -f "$LUKS_HEADER_DUMP"
     log "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
     tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash"
 done
@@ -154,8 +153,6 @@ else
     log "Freshness token invalid!"
     exit 1
 fi
-
-rm -f /tmp/fresh
 
 
 # check for OTP
@@ -235,8 +232,6 @@ if otp; then
                 tout=30
             done
         fi
-
-        rm -f "$UNSEALED_SECRET"
     else
         # unsealing OTP seed failed, don't even search for keyfile
         alias otp=false
@@ -291,9 +286,6 @@ if tpm_unsealdata $Z -i "$SEALED_SECRET" -o "$UNSEALED_SECRET" \
         waitforenter
     fi
 fi
-
-
-rm -f "$UNSEALED_SECRET"
 
 
 # Clear all messages to hide the secret. Do it even if the unsealing has
