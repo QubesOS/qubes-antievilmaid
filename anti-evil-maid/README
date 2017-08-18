@@ -184,10 +184,9 @@ downloaded, which records the Xen, kernel, and initrd versions used in PCRs
 launch fails for any reason, tboot will fall back to a normal boot and AEM
 will not function.
 
-a) Enter your SRK password if prompted in case you have set one in step
-3. You won't see your secret afterwards, because it hasn't been sealed
-yet. Enter your disk decryption passphrase anyway, right now you still
-trust your system.
+a) Enter your SRK password if prompted. You won't see your secret afterwards,
+because it hasn't been sealed yet. Enter your disk decryption passphrase
+anyway, right now you still trust your system.
 
 As the system continues booting, AEM will automatically seal your
 secret(s). You should see a line, or multiple lines, like this one:
@@ -205,7 +204,7 @@ them and you want to reseal immediately, run anti-evil-maid-seal manually
 once.
 
 If you get a message that the "PCR sanity check failed" and you are sure you
-have saved the right SINIT blob in step 4.a, then check the tboot log for
+have saved the right SINIT blob in step 3.a, then check the tboot log for
 details. The easiest way to view it is to set "logging=vga vga_delay=10" on
 the "multiboot /tboot.gz" line in grub.cfg and reboot. Alternatively, run
 `sudo txt-stat` from dom0. For more information, see the tboot readme
@@ -217,7 +216,7 @@ b) If a chunk of your installed RAM seems to be missing after the reboot
 # echo 'export GRUB_CMDLINE_TBOOT=min_ram=0x2000000' >>/etc/default/grub
 # grub2-mkconfig -o /boot/grub2/grub.cfg
 
-Then go to step 5.a again. A discussion of this problem can be found at
+Then go to step 4.a again. A discussion of this problem can be found at
 http://thread.gmane.org/gmane.comp.boot-loaders.tboot.devel/610/focus=611
 and by searching for "min_ram" in the qubes mailing lists.
 
@@ -231,7 +230,7 @@ Xen/kernel/BIOS/firmware upgrades
 After Xen, kernel, BIOS, or firmware upgrades, you will need to reboot
 and enter your disk decryption passphrase even though you can't see your
 secret. It will be resealed again automatically later in the boot process
-(see step 5.a).
+(see step 4.a).
 
 
 What to do in case of compromise
