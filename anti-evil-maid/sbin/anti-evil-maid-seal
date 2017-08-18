@@ -30,8 +30,8 @@ trap '_failure $LINENO' ERR
 source /etc/anti-evil-maid.conf
 Z=$(tpm_z_srk)
 
-
-LABEL=$LABEL_PREFIX${1-$(cat "$SUFFIX_CACHE")}
+LABEL_SUFFIX=${1-$(cat "$SUFFIX_CACHE")}
+LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 DEV=/dev/disk/by-label/$LABEL
 
 
@@ -50,7 +50,7 @@ fi
 # regenerate the freshness token and store it's hash in TPM
 
 head -c 20 /dev/random > "$AEM_DIR/$LABEL/secret.fsh"
-updatefreshness "$AEM_DIR/$LABEL/secret.fsh" "${1-$(cat "$SUFFIX_CACHE")}"
+updatefreshness "$AEM_DIR/$LABEL/secret.fsh" "$LABEL_SUFFIX"
 
 
 # seal and save secret(s) to root partition
