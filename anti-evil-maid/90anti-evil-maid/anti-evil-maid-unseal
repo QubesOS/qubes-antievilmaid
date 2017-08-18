@@ -142,6 +142,7 @@ log "Unsealing freshness token..."
 if tpm_unsealdata $Z -i "$sealed_secret_fsh" -o /tmp/fresh \
         < "$SRK_PASSWORD_CACHE"; then
     log "Freshness token unsealed."
+    >"$CACHE_DIR/unseal-success"
 else
     log "Freshness token unsealing failed!"
     exit 1
