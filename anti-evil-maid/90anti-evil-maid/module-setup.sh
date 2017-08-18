@@ -22,6 +22,7 @@ install() {
     dracut_install \
         /usr/sbin/anti-evil-maid-lib \
         base32 \
+        blockdev \
         clear \
         cut \
         date \

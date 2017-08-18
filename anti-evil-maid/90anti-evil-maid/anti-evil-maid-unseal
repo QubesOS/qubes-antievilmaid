@@ -86,6 +86,10 @@ tcsd
 log "Unmounting the $LABEL device..."
 umount "$MNT"
 
+if [ "$(blockdev --getro "$DEV")" = 1 ]; then
+    message "You should now unplug the AEM device if it is intentionally read-only."
+fi
+
 
 # Extend PCR with LUKS header(s)
 
@@ -163,13 +167,6 @@ if [ -e "$sealed_secret_otp" ]; then
 else
     alias otp=false
 fi
-
-
-# tell user to remove AEM dev if RO
-
-message ""
-message "You should now unplug the AEM device if it's read-only."
-message ""
 
 
 # unseal & show OTP if provisioned
