@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e -o pipefail
+set -e -o pipefail -o errtrace
 shopt -s expand_aliases
 
 # Listing tcsd.service in anti-evil-maid-seal.service's Requires= and After=
