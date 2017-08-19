@@ -264,9 +264,8 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
         > "$AEM_DIR/$LABEL/secret.otp"
 
     # construct OTP URI
-    otp_label="Qubes%20OS%3A%20Anti%20Evil%20Maid"
     otp_secret="$(cat "$AEM_DIR/$LABEL/secret.otp")"
-    otp_uri="otpauth://totp/${otp_label}?secret=${otp_secret}"
+    otp_uri="otpauth://totp/${LABEL}?secret=${otp_secret}"
 
     # create an ANSI text QR code and show it in the terminal
     echo "$otp_uri" | qrencode -t ansiutf8
