@@ -151,7 +151,7 @@ fi
 # check freshness token
 
 log "Unsealing freshness token..."
-if tpm_unsealdata $Z -i "$sealed_secret_fsh" -o /tmp/fresh \
+if tpm_unsealdata $Z -i "$sealed_secret_fsh" -o "$UNSEALED_SECRET" \
         < "$SRK_PASSWORD_CACHE"; then
     log "Freshness token unsealed."
     >"$CACHE_DIR/unseal-success"
@@ -160,7 +160,7 @@ else
     exit 1
 fi
 
-if checkfreshness /tmp/fresh; then
+if checkfreshness "$UNSEALED_SECRET"; then
     log "Freshness token valid, continuing."
 else
     log "Freshness token invalid!"
