@@ -127,8 +127,11 @@ stick or memory card) and owning a suitable two-factor authentication device
 supporting time-based one-time passwords (TOTP). There are apps available for
 Android/Apple smartphones (Google Authenticator, FreeOTP Authenticator) and
 Windows Phone (Microsoft Authenticator). You can also use a dedicated hardware
-token (which must allow custom TOTP seeds to be imported). The command to set
-this all up is simple:
+token, either a reseedable one (letting the AEM installer generate a seed for
+you), or a manufacturer-seeded token (you will need to store the seed in
+/var/lib/anti-evil-maid/aem<suffix>/secret.otp in base32 format without spaces
+removing any trailing "=" characters, then run the AEM installer). The command
+to set this all up is simple:
 
 # anti-evil-maid-install -m /dev/sdb1
 
