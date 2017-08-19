@@ -249,7 +249,7 @@ AEM media copied/stolen by an attacker
 If you have your system up and running or have an extra AEM media using which
 you can boot the system before the attacker can get to it:
 
-* `sudo su` in dom0
+* `sudo -s` in dom0
 * `. /usr/sbin/anti-evil-maid-lib` (note the dot at the beginning)
 * `revokefreshness <suffix>` (where `<suffix>` is the missing label suffix)
 
