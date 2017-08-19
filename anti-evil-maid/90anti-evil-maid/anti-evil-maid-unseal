@@ -14,7 +14,6 @@ UNSEALED_SECRET=/tmp/unsealed-secret
 LUKS_HEADER_DUMP=/tmp/luks-header-dump
 LUKS_PCR=13
 
-
 PLYMOUTH_MESSAGES=()
 
 plymouth_message() {
@@ -77,7 +76,7 @@ mkdir -p "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
 
 
-# setup TPM & copy secrets to tmp
+# setup TPM & copy secrets to initrd tmpfs
 
 log "Initializing TPM..."
 modprobe tpm_tis
@@ -87,6 +86,11 @@ log "Copying sealed AEM secrets..."
 cp -Tr "$MNT/aem/${TPMS_DIR##*/}" "${TPMS_DIR}"
 tcsd_changer_identify
 tcsd
+
+SEALED_SECRET_TXT=$TPM_DIR/$LABEL/secret.txt.sealed2
+SEALED_SECRET_KEY=$TPM_DIR/$LABEL/secret.key.sealed2
+SEALED_SECRET_OTP=$TPM_DIR/$LABEL/secret.otp.sealed2
+SEALED_SECRET_FSH=$TPM_DIR/$LABEL/secret.fsh.sealed2
 
 
 # unmount AEM device
@@ -114,18 +118,10 @@ while read luksid; do
 done
 
 
-# set up caches
-
-sealed_secret_txt=$TPM_DIR/$LABEL/secret.txt.sealed2
-sealed_secret_key=$TPM_DIR/$LABEL/secret.key.sealed2
-sealed_secret_otp=$TPM_DIR/$LABEL/secret.otp.sealed2
-sealed_secret_fsh=$TPM_DIR/$LABEL/secret.fsh.sealed2
+# cache suffix and SRK password, if applicable
 
 mkdir -p "$CACHE_DIR"
 echo "${LABEL##$LABEL_PREFIX}" >"$SUFFIX_CACHE"
-
-
-# cache SRK password, if applicable
 
 Z=$(tpm_z_srk)
 
@@ -151,7 +147,7 @@ fi
 # check freshness token
 
 log "Unsealing freshness token..."
-if tpm_unsealdata $Z -i "$sealed_secret_fsh" -o "$UNSEALED_SECRET" \
+if tpm_unsealdata $Z -i "$SEALED_SECRET_FSH" -o "$UNSEALED_SECRET" \
         < "$SRK_PASSWORD_CACHE"; then
     log "Freshness token unsealed."
     >"$CACHE_DIR/unseal-success"
@@ -171,7 +167,7 @@ fi
 # unseal & show OTP if provisioned
 # unseal & decrypt key file unless the user switches to text secret mode
 
-if [ -e "$sealed_secret_otp" ]; then
+if [ -e "$SEALED_SECRET_OTP" ]; then
     alias otp=true
 else
     alias otp=false
@@ -179,7 +175,7 @@ fi
 
 if otp; then
     log "Unsealing TOTP shared secret seed..."
-    if tpm_unsealdata $Z -i "$sealed_secret_otp" -o "$UNSEALED_SECRET" \
+    if tpm_unsealdata $Z -i "$SEALED_SECRET_OTP" -o "$UNSEALED_SECRET" \
             < "$SRK_PASSWORD_CACHE"; then
         log "TOTP secret unsealed."
 
@@ -203,7 +199,7 @@ if otp; then
         } &
         totp_loop_pid=$!
 
-        if tpm_unsealdata $Z -i "$sealed_secret_key" -o "$UNSEALED_SECRET" \
+        if tpm_unsealdata $Z -i "$SEALED_SECRET_KEY" -o "$UNSEALED_SECRET" \
            <"$SRK_PASSWORD_CACHE"; then
             for try in 1 2 3; do
                 pass=$(systemd-ask-password --timeout=0 \
@@ -238,7 +234,7 @@ fi
 
 if ! otp; then
     log "Unsealing text secret..."
-    if tpm_unsealdata $Z -i "$sealed_secret_txt" -o "$UNSEALED_SECRET" \
+    if tpm_unsealdata $Z -i "$SEALED_SECRET_TXT" -o "$UNSEALED_SECRET" \
         <"$SRK_PASSWORD_CACHE"; then
         {
             message ""
