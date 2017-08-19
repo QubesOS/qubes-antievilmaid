@@ -44,7 +44,6 @@ install() {
         tcsd \
         tcsd_changer_identify \
         tee \
-        touch \
         tpm_id \
         tpm_nvinfo \
         tpm_nvread \

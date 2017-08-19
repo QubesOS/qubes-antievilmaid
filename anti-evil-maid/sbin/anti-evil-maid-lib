@@ -120,7 +120,7 @@ assignslottosuffix() {
     # media identified by its label suffix (optionally passed as the first
     # argument
     if [ ! -e "$TPM_FRESHNESS_DB" ]; then
-        touch "$TPM_FRESHNESS_DB"
+        >"$TPM_FRESHNESS_DB"
     fi
 
     _suff=${1-$(cat "$SUFFIX_CACHE")}
