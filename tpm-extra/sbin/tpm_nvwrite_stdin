@@ -2,20 +2,8 @@
 # accepts same options as tpm_nvwrite, except -f
 # writes data from stdin into TPM NVRAM
 set -e -o pipefail
-export LC_ALL=C
 
 _tmp=$(mktemp)
-
-# TODO: use `head -c <size>` instead of cat if `-s <size>` or
-#       `--size <size>` passed in order to support /dev/{,u}random
-#        or /dev/zero as inputs
+trap 'rm -f "$_tmp"' EXIT
 cat > "$_tmp"
-
-if tpm_nvwrite "$@" -f "$_tmp"; then
-    _ret=0
-else
-    _ret=1
-fi
-
-rm -f "$_tmp"
-exit "$_ret"
+tpm_nvwrite "$@" -f "$_tmp"
