@@ -56,7 +56,8 @@ if ! tpm_id >/dev/null; then
     log "Creating TPM ID..."
     tpm_id_index=$(tpm_id -i)
     # create a 20-byte write-once NVRAM area
-    tpm_nvdefine -i "$tpm_id_index" -s 20 -p "WRITEDEFINE|WRITEALL" "$OWNERPW"
+    tpm_nvdefine -i "$tpm_id_index" -s 20 -p "WRITEDEFINE|WRITEALL" \
+                 --pwdo="$OWNERPW"
     # generate a random ID and write it into NVRAM
     head -c 20 /dev/random | tpm_nvwrite_stdin -i "$tpm_id_index" -s 20
     # lock the area to prevent non-owners from changing ID

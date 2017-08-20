@@ -35,38 +35,17 @@ plymouth_messages_hide() {
 udevadm trigger
 udevadm settle
 
-GLOB=/dev/disk/by-label/$LABEL_PREFIX*
-MSG="Waiting for $GLOB to be connected..."
+DEV="/dev/disk/by-uuid/$(getbootdevuuid)"
+waitfor -b "$DEV"
 
-plymouth pause-progress
-while :; do
-    n=$(lsblk -nr -o PARTLABEL,LABEL | grep -cE "(^| )$LABEL_PREFIX") || true
-    case "$n" in
-        0)
-            if [ -n "$MSG" ]; then
-                message "$MSG"
-                MSG=
-            fi
-            sleep 0.1
-        ;;
 
-        1)
-            DEV=($GLOB)
-            if [ -z "$MSG" ]; then
-                message "$DEV connected"
-            fi
-            break
-        ;;
+# make sure the fs label starts with $LABEL_PREFIX
 
-        *)
-            message "Error: found ${n:-?} $GLOB devices!"
-            exit 1
-        ;;
-    esac
-done
-plymouth unpause-progress
-
-LABEL=${DEV##*/}
+LABEL=$(lsblk -dnr -o LABEL "$DEV")
+if [[ ! "$LABEL" =~ ^$LABEL_PREFIX.* ]]; then
+    log "AEM boot device $DEV has wrong label: $LABEL"
+    exit 1
+fi
 
 
 # mount AEM device

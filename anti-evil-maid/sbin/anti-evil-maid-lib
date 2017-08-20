@@ -33,6 +33,16 @@ getluksuuids() {
     done
 }
 
+getbootdevuuid() {
+    _CMDLINE=${_CMDLINE-$(cat /proc/cmdline)}
+
+    for _param in $_CMDLINE; do
+       case "$_param" in rd.antievilmaid.uuid=*)
+           echo "${_param#*=}"
+       esac
+    done
+}
+
 log() {
     echo "${0##*/}: $1" >&2
 }
