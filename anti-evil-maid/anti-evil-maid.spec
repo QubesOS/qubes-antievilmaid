@@ -44,6 +44,7 @@ cp -r systemd $RPM_BUILD_ROOT/usr/lib
 /usr/sbin/anti-evil-maid-install
 /usr/sbin/anti-evil-maid-lib
 /usr/sbin/anti-evil-maid-seal
+/usr/sbin/anti-evil-maid-tpm-setup
 /usr/share/doc/anti-evil-maid/README
 /usr/lib/systemd/system/anti-evil-maid-seal.service
 /usr/lib/systemd/system/tcsd.service.d/anti-evil-maid-seal.conf

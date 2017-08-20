@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e -o pipefail
+shopt -s expand_aliases
+
+source anti-evil-maid-lib
+
+
+if ! [ $# = 0 -o $# = 1 -a "$1" = "-z" ]; then
+    echo "Usage: ${0##*/} [-z]"
+    exit 1
+fi
+
+if [ "$(cat /sys/class/tpm/tpm0/owned)" != 0 ]; then
+    log "You must reset/clear your TPM chip first."
+    exit 1
+fi
+
+ownerpw=$(head -c 16 /dev/random | base64)
+lines=( "$ownerpw" "$ownerpw" )
+
+if [ $# = 0 ]; then  # set an SRK password
+    for try in 1 2 3; do
+        read -s -p "Choose SRK password: "  srkpw
+        echo
+        read -s -p "Confirm SRK password: " srkpw2
+        echo
+
+        [ "$srkpw" != "$srkpw2" ] || break
+        log "Passwords didn't match"
+        [ "$try" != 3 ] || exit 1
+    done
+    lines+=( "$srkpw" "$srkpw" )
+fi
+
+log "Taking ownership of the TPM..."
+printf '%s\n' "${lines[@]}" | notty tpm_takeownership "$@"
+echo >&2
+echo "$ownerpw" >"$AEM_DIR"/tpm-owner-pw
+
+# - generate NVRAM ID
+# - move system.dat around

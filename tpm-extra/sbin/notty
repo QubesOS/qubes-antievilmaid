@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Usage: notty command [arguments...]
+#
+# FIXME:HACK: write and upstream patches for tpm_* utils that don't accept
+#             --pwdo= yet, then drop this silly wrapper script
+
+exec unshare --mount --propagation slave sh -c \
+'mount --bind /run/systemd/inaccessible/chr /dev/tty && exec "$@"' -- "$@"
