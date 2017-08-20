@@ -15,8 +15,11 @@ if [ "$(cat /sys/class/tpm/tpm0/owned)" != 0 ]; then
     exit 1
 fi
 
-ownerpw=$(head -c 16 /dev/random | base64)
-lines=( "$ownerpw" "$ownerpw" )
+
+# - take ownership of TPM
+
+OWNERPW=$(head -c 16 /dev/random | base64)
+lines=( "$OWNERPW" "$OWNERPW" )
 
 if [ $# = 0 ]; then  # set an SRK password
     for try in 1 2 3; do
@@ -35,7 +38,40 @@ fi
 log "Taking ownership of the TPM..."
 printf '%s\n' "${lines[@]}" | notty tpm_takeownership "$@"
 echo >&2
-echo "$ownerpw" >"$AEM_DIR"/tpm-owner-pw
+echo "$OWNERPW" >"$AEM_DIR"/tpm-owner-pw
+systemctl restart tcsd
 
 # - generate NVRAM ID
+
+if ! tpm_id >/dev/null; then
+    # TPM reset does not clear NVRAM, reusing old ID is fine though
+    log "Creating TPM ID..."
+    tpm_id_index=$(tpm_id -i)
+    # create a 20-byte write-once NVRAM area
+    tpm_nvdefine -i "$tpm_id_index" -s 20 -p "WRITEDEFINE|WRITEALL" "$OWNERPW"
+    # generate a random ID and write it into NVRAM
+    head -c 20 /dev/random | tpm_nvwrite_stdin -i "$tpm_id_index" -s 20
+    # lock the area to prevent non-owners from changing ID
+    tpm_nvwrite -i "$tpm_id_index" -s 0
+fi
+
+
+# - create freshness token area
+
+if checktpmnvram; then
+    # delete old freshness area as the old access password is most likely lost
+    # (in case it isn't, the area will simply get recreated with the same pw)
+    log "Deleting old freshness token NVRAM area..."
+    destroytpmnvram "$OWNERPW"
+fi
+log "Creating freshness token NVRAM area..."
+createtpmnvram "$OWNERPW"
+
+
 # - move system.dat around
+
+systemctl stop tcsd
+mkdir -p "/var/lib/tpms/$(tpm_id)"
+mv /var/lib/tpms/unknown/* "/var/lib/tpms/$(tpm_id)/"
+rm -rf /var/lib/tpms/unknown
+systemctl start tcsd

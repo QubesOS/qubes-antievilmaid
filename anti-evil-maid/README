@@ -51,6 +51,19 @@ If your tpm has already been owned in the past, you can reset it by running
 tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS
 (e.g.: TPM Authentication Reset).
 
+c) Initialize the TPM for use with AEM
+
+# anti-evil-maid-tpm-setup -z
+
+In case you want to install AEM to an internal disk, an SRK password must
+be set up in order for AEM to be secure. The SRK password can be set up
+by NOT passing the "-z" option to the above command. Should you not
+anticipate future need for internal AEM boot device and want to use
+external media only, use the "-z" option. If you later decide to provision
+AEM on the internal drive, re-run "anti-evil-maid-setup" (without "-z").
+This will invalidate sealed secrets on all existing external AEM media
+(so make sure to boot from each one of them in order to re-seal secrets).
+
 3) Setup Anti Evil Maid
 
 a) SINIT module
@@ -89,9 +102,6 @@ which, we hope, correctly verifies the signature before executing it...
 b) Create an Anti Evil Maid device:
 
 # anti-evil-maid-install -h
-
-Upon first installation, you will be prompted to allow creating a random
-TPM ID and an NVRAM area for storing anti-replay "freshness" token hashes.
 
 Please note that each AEM device you provision should have a unique
 filesystem label suffix (use the '-s' option). You may safely re-use
