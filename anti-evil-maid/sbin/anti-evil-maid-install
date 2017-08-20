@@ -375,7 +375,7 @@ if suffixtoslot "$LABEL_SUFFIX" >/dev/null; then
         *) exit ;;
     esac
 else
-    assignslottosuffix "$LABEL_SUFFIX" >/dev/null
+    assignslottosuffix "$LABEL_SUFFIX"
     slot=$(suffixtoslot "$LABEL_SUFFIX")
     log "Assigned slot $slot to this AEM media"
 fi

@@ -252,9 +252,9 @@ you can boot the system before the attacker can get to it:
 * `. /usr/sbin/anti-evil-maid-lib` (note the dot at the beginning)
 * `revokefreshness <suffix>` (where `<suffix>` is the missing label suffix)
 
-In case you do not remember the used media label suffix, they're all stored
-in `/var/lib/anti-evil-maid/tpm-freshness-db`. If the particular media had
-no special suffix set, use `revokefreshness ""`.
+In case you do not remember the used media label suffix, take a look at
+`/var/lib/anti-evil-maid/`. If the particular media had no special suffix set
+(i.e. if the subdirectory is just named `aem`), use `revokefreshness ""`.
 
 Alternatively, `resetfreshness` will wipe all freshness tokens from the TPM
 (thus invalidating all enrolled AEM media and forcing you to boot an

@@ -53,6 +53,7 @@ install() {
         tpm_unsealdata \
         tpm_z_srk \
         tr \
+        uniq \
         wc \
         xargs
 
