@@ -129,9 +129,8 @@ Android/Apple smartphones (Google Authenticator, FreeOTP Authenticator) and
 Windows Phone (Microsoft Authenticator). You can also use a dedicated hardware
 token, either a reseedable one (letting the AEM installer generate a seed for
 you), or a manufacturer-seeded token (you will need to store the seed in
-/var/lib/anti-evil-maid/aem<suffix>/secret.otp in base32 format without spaces
-removing any trailing "=" characters, then run the AEM installer). The command
-to set this all up is simple:
+/var/lib/anti-evil-maid/aem<suffix>/secret.otp in base32 format, then run the
+AEM installer). The command to set this all up is simple:
 
 # anti-evil-maid-install -m /dev/sdb1
 
