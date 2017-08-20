@@ -38,7 +38,11 @@ log() {
 }
 
 hex() {
-    cat | od -A n -v -t x1 | tr -d ' \n'
+    od -A n -v -t x1 | tr -dc 0-9a-f
+}
+
+unhex() {
+    tr -dc 0-9a-f | sed 's/\(..\)/\\x\1/g' | xargs -0 printf
 }
 
 waitfor() {

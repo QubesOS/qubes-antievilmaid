@@ -1,5 +1,4 @@
 #!/bin/sh -e
-export LC_ALL=C
 . anti-evil-maid-lib
 LABEL_SUFFIX_CHARS=0-9a-zA-Z=.-
 BOOT_DIR=/boot
@@ -329,29 +328,16 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.key" ]; then
     mkdir -p "$AEM_DIR/$LABEL"
     scrypt enc "$rawkey" "$AEM_DIR/$LABEL/secret.key"
 
-    for dev in $(getluksuuids); do
-        devname=$(readlink -f "/dev/disk/by-uuid/$dev")
+    for uuid in $(getluksuuids); do
+        dev=/dev/disk/by-uuid/$uuid
+        devname=$(readlink -f "$dev")
 
-        # check if LUKS device has any free key slots
-        if ! cryptsetup luksDump "/dev/disk/by-uuid/$dev" \
-                | grep -q DISABLED; then
-            log "FATAL: Device $devname (UUID $dev)"
-            log "has no free key slots!"
-            exit 1
-        fi
+        log "Adding key file to new key slot for $devname (UUID $uuid)"
 
-        log "Adding key file to new key slot for $devname (UUID $dev)"
-        for try in 1 2 3; do
-            if cryptsetup luksAddKey "/dev/disk/by-uuid/$dev" "$rawkey"; then
-                break
-            elif [ $try -eq 3 ]; then
-                log "ERROR: Wrong password, aborting!"
-                log "You need to manually finish enrolling $rawkey"
-                log "as a key file for all desired LUKS devices, then"
-                log "remove the $rawkey file and re-run this script."
-                exit 1
-            fi
-        done
+        dmsetup table --showkeys luks-"$uuid" |
+        cut -d ' ' -f 5 |
+        unhex |
+        cryptsetup luksAddKey --master-key-file /dev/stdin "$dev" "$rawkey"
     done
 
     log "Shredding the unencrypted key file"

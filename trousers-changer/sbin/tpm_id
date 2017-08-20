@@ -21,7 +21,7 @@ log() {
 }
 
 hex() {
-    cat | od -A n -v -t x1 | tr -d ' \n'
+    od -A n -v -t x1 | tr -dc 0-9a-f
 }
 
 getindex() {
