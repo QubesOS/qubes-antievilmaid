@@ -54,8 +54,8 @@ fi
 
 # regenerate the freshness token and store it's hash in TPM
 
-head -c 20 /dev/random > "$AEM_DIR/$LABEL/secret.fsh"
-updatefreshness "$AEM_DIR/$LABEL/secret.fsh" "$LABEL_SUFFIX"
+head -c 20 /dev/random > "$AEM_DIR/$LABEL/secret.fre"
+updatefreshness "$AEM_DIR/$LABEL/secret.fre" "$LABEL_SUFFIX"
 
 
 # seal and save secret(s) to root partition
@@ -63,7 +63,7 @@ updatefreshness "$AEM_DIR/$LABEL/secret.fsh" "$LABEL_SUFFIX"
 mkdir -p "$TPM_DIR/$LABEL"
 
 SEALED=0
-for ext in txt key otp fsh; do
+for ext in txt key otp fre; do
      input=$AEM_DIR/$LABEL/secret.$ext
     output=$TPM_DIR/$LABEL/secret.$ext.sealed2
 

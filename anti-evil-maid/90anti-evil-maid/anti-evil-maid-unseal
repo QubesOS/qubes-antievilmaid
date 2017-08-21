@@ -73,7 +73,7 @@ tcsd
 SEALED_SECRET_TXT=$TPM_DIR/$LABEL/secret.txt.sealed2
 SEALED_SECRET_KEY=$TPM_DIR/$LABEL/secret.key.sealed2
 SEALED_SECRET_OTP=$TPM_DIR/$LABEL/secret.otp.sealed2
-SEALED_SECRET_FSH=$TPM_DIR/$LABEL/secret.fsh.sealed2
+SEALED_SECRET_FRE=$TPM_DIR/$LABEL/secret.fre.sealed2
 
 
 # unmount AEM device
@@ -130,7 +130,7 @@ fi
 # check freshness token
 
 log "Unsealing freshness token..."
-if tpm_unsealdata $Z -i "$SEALED_SECRET_FSH" -o "$UNSEALED_SECRET" \
+if tpm_unsealdata $Z -i "$SEALED_SECRET_FRE" -o "$UNSEALED_SECRET" \
         < "$SRK_PASSWORD_CACHE"; then
     log "Freshness token unsealed."
     >"$CACHE_DIR/unseal-success"
