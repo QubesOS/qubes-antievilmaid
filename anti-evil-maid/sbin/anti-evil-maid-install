@@ -200,19 +200,12 @@ fi
 if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
     log "Generating new 160-bit TOTP seed"
     mkdir -p "$AEM_DIR/$LABEL"
-    head -c 20 /dev/random \
-        | base32 -w 0 \
-        | tr -d '=' \
-        > "$AEM_DIR/$LABEL/secret.otp"
-
-    # construct OTP URI
-    otp_secret="$(cat "$AEM_DIR/$LABEL/secret.otp")"
-    otp_uri="otpauth://totp/${LABEL}?secret=${otp_secret}"
+    otp_secret=$(head -c 20 /dev/random | base32 -w 0 | tr -d =)
+    echo "$otp_secret" > "$AEM_DIR/$LABEL/secret.otp"
 
     # create an ANSI text QR code and show it in the terminal
+    otp_uri="otpauth://totp/${LABEL}?secret=${otp_secret}"
     echo "$otp_uri" | qrencode -t ansiutf8
-
-    # show QR code
     log "Please scan the above QR code with your OTP device."
 
     # display the text form of secret to user, too
