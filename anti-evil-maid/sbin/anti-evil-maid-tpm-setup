@@ -23,7 +23,7 @@ fi
 
 # - take ownership of TPM
 
-OWNERPW=$(head -c 16 /dev/random | base64)
+OWNERPW=$(head -c 16 /dev/random | hex)
 lines=( "$OWNERPW" "$OWNERPW" )
 
 if [ $# = 0 ]; then  # set an SRK password
