@@ -111,7 +111,7 @@ Installation directly onto a (truly) read-only media (such as a CD-R) is not
 supported. You can, however, copy the contents of an existing RW media onto
 RO media after the initial sealing takes place. Physical write-protect
 switches on SD cards or USB sticks are fine (install AEM in RW mode, then
-flip the switch and proceed to use as RO media). Remeber to always pull
+flip the switch and proceed to use as RO media). Remember to always pull
 out the RO media when your text secret or TOTP code is displayed! Failing
 to do that will result in invalidation of freshness token in the TPM memory
 and the AEM media will fail to perform verified boot next time, falling
@@ -133,14 +133,15 @@ encryption password as you're typing it then they can simply steal and decrypt
 your computer. Long story short, if you ever need to boot your AEM-protected
 computer in public or anywhere a camera may be hidden, this is the thing you
 want to use. However, this setup requires an external boot media (eg. USB
-stick or memory card) and owning a suitable two-factor authentication device
-supporting time-based one-time passwords (TOTP). There are apps available for
-Android/Apple smartphones (Google Authenticator, FreeOTP Authenticator) and
-Windows Phone (Microsoft Authenticator). You can also use a dedicated hardware
-token, either a reseedable one (letting the AEM installer generate a seed for
-you), or a manufacturer-seeded token (you will need to store the seed in
-/var/lib/anti-evil-maid/aem<suffix>/secret.otp in base32 format, then run the
-AEM installer). The command to set this all up is simple:
+stick or memory card) for maximum protection and owning a suitable two-factor
+authentication device supporting time-based one-time passwords (TOTP). There
+are apps available for Android/Apple smartphones (Google Authenticator,
+FreeOTP Authenticator) and Windows Phone (Microsoft Authenticator). You can
+also use a dedicated hardware token, either a reseedable one (letting the AEM
+installer generate a seed for you), or a manufacturer-seeded token (you will
+need to store the seed in /var/lib/anti-evil-maid/aem<suffix>/secret.otp in
+base32 format, then run the AEM installer). The command to set this all up is
+simple:
 
 # anti-evil-maid-install -m /dev/sdb1
 
@@ -179,7 +180,7 @@ your USB controller from dom0:
 
 c) Create a secret text (note: it cannot be larger than 255 bytes):
 
-Note: This step is unneccessary if using the multi-factor auth setup, but
+Note: This step is unnecessary if using the multi-factor auth setup, but
 can serve as a fallback option in case you ever find yourself temporarily
 not having access to your 2FA device (eg. smartphone or hardware TOTP token).
 
@@ -285,7 +286,7 @@ Someone saw my LUKS passphrase
 
 You should've installed AEM in multi-factor mode.
 
-If you're fairly confident the attacker does not posess a bitwise copy
+If you're fairly confident the attacker does not possess a bitwise copy
 of your encrypted Qubes OS drive, change the LUKS passphrase:
 
 * determine the path to LUKS-encrypted disk (usually /dev/sda2)
