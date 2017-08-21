@@ -46,7 +46,7 @@ log "Taking ownership of the TPM..."
 printf '%s\n' "${lines[@]}" |
 notty env LC_ALL=C tpm_takeownership "$@" 2> >(grep -vF "Confirm password:" >&2)
 
-echo "$OWNERPW" >"$AEM_DIR"/tpm-owner-pw
+echo "$OWNERPW" >"$TPM_OWNER_PASSWORD_FILE"
 
 
 # - generate NVRAM ID

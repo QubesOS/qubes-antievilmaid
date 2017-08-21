@@ -28,8 +28,8 @@ trap '_failure $LINENO' ERR
 # define sealing and device variables
 
 source /etc/anti-evil-maid.conf
+notty tpm_resetdalock <"$TPM_OWNER_PASSWORD_FILE" || true
 Z=$(tpm_z_srk)
-
 LABEL_SUFFIX=${1-$(cat "$SUFFIX_CACHE")}
 LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 
