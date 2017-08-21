@@ -34,7 +34,6 @@ install() {
         killall \
         lsblk \
         oathtool \
-        od \
         printf \
         scrypt \
         sed \
@@ -56,7 +55,8 @@ install() {
         tr \
         uniq \
         wc \
-        xargs
+        xargs \
+        xxd
 
     dracut_install \
         $systemdsystemunitdir/anti-evil-maid-unseal.service \
