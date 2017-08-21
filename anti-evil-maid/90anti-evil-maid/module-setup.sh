@@ -37,6 +37,7 @@ install() {
         od \
         printf \
         scrypt \
+        sed \
         seq \
         sha1sum \
         sort \

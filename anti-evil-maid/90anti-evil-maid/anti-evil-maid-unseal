@@ -32,7 +32,7 @@ plymouth_messages_hide() {
 
 # find AEM device
 
-UUID=$(getbootdevuuid)
+UUID=$(getparams rd.antievilmaid.uuid)
 DEV=/dev/disk/by-uuid/$UUID
 
 udevadm trigger

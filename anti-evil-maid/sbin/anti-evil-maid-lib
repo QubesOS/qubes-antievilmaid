@@ -22,25 +22,21 @@ else
 fi
 
 
-getluksuuids() {
+getparams() {
     _CMDLINE=${_CMDLINE-$(cat /proc/cmdline)}
 
     for _param in $_CMDLINE; do
-       case "$_param" in rd.luks.uuid=*|rd_LUKS_UUID=*)
-           _param=${_param#*=}
-           echo  "${_param#luks-}"
-       esac
+        for _key; do
+            case "$_param" in "$_key"=*)
+                printf '%s\n' "${_param#*=}"
+                break
+            esac
+        done
     done
 }
 
-getbootdevuuid() {
-    _CMDLINE=${_CMDLINE-$(cat /proc/cmdline)}
-
-    for _param in $_CMDLINE; do
-       case "$_param" in rd.antievilmaid.uuid=*)
-           echo "${_param#*=}"
-       esac
-    done
+getluksuuids() {
+    getparams rd.luks.uuid rd_LUKS_UUID | sed s/^luks-//
 }
 
 log() {
