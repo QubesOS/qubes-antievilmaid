@@ -44,7 +44,7 @@ esac
 
 pcrs=$(printf %s "$SEAL" | grep -Eo '\b1[3789]\b') || true
 
-if grep -E "^PCR-(${pcrs//$'\n'/|}):( 00| FF){20}" /sys/devices/*/*/pcrs;
+if grep -E "^PCR-(${pcrs//$'\n'/|}):( 00| FF){20}" "$SYSFS_TPM_DIR"/pcrs;
    [ $? != 1 ]; then
     message "PCR sanity check failed!"
     message "See /usr/share/doc/anti-evil-maid/README for details."

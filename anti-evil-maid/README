@@ -34,7 +34,7 @@ required dependencies and tools.
 
 b) Verify kernel support for TPM:
 
-# cat /sys/devices/*/*/pcrs
+# cat /sys/class/tpm/tpm0/pcrs
 
 If you see something like this:
 

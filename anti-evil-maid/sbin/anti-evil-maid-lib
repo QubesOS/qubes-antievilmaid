@@ -1,4 +1,5 @@
 LABEL_PREFIX=aem
+SYSFS_TPM_DIR=/sys/class/tpm/tpm0
 AEM_DIR=/var/lib/anti-evil-maid
 TPM_DIR=/var/lib/tpm
 TPMS_DIR=${TPM_DIR}s
