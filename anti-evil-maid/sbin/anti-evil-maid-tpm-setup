@@ -51,6 +51,7 @@ echo "$OWNERPW" >"$TPM_OWNER_PASSWORD_FILE"
 
 # - generate NVRAM ID
 
+alias provisioned_id=false
 if [[ $(tpm_id 2>/dev/null) == "unknown" ]]; then
     # TPM reset does not clear NVRAM, reusing old ID is fine though
     log "Creating TPM ID..."
@@ -62,6 +63,7 @@ if [[ $(tpm_id 2>/dev/null) == "unknown" ]]; then
     head -c 20 /dev/random | tpm_nvwrite_stdin -i "$tpm_id_index" -s 20
     # lock the area to prevent non-owners from changing ID
     tpm_nvwrite -i "$tpm_id_index" -s 0
+    alias provisioned_id=true
 fi
 
 
@@ -79,9 +81,11 @@ createtpmnvram "$OWNERPW"
 
 # - move system.dat around
 
-tpm_id=$(tpm_id)
-systemctl stop tcsd
-mkdir -p "/var/lib/tpms/$tpm_id"
-mv /var/lib/tpms/unknown/* "/var/lib/tpms/$tpm_id/"
-rm -rf /var/lib/tpms/unknown
-systemctl start tcsd
+if provisioned_id; then
+    tpm_id=$(tpm_id)
+    systemctl stop tcsd
+    mkdir -p "/var/lib/tpms/$tpm_id"
+    mv /var/lib/tpms/unknown/* "/var/lib/tpms/$tpm_id/"
+    rm -rf /var/lib/tpms/unknown
+    systemctl start tcsd
+fi
