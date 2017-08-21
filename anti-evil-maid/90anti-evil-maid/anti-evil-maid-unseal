@@ -162,6 +162,7 @@ if otp; then
             < "$SRK_PASSWORD_CACHE"; then
         log "TOTP secret unsealed."
 
+        message ""
         message "Never type in your key file password unless the code below is correct!"
         message ""
 
