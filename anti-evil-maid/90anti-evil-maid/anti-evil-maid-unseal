@@ -42,8 +42,8 @@ waitfor -b "$DEV"
 # make sure the fs label starts with $LABEL_PREFIX
 
 LABEL=$(lsblk -dnr -o LABEL "$DEV")
-if [[ ! "$LABEL" =~ ^$LABEL_PREFIX.* ]]; then
-    log "AEM boot device $DEV has wrong label: $LABEL"
+if [[ "$LABEL" != "$LABEL_PREFIX"* ]]; then
+    message "AEM boot device $DEV has wrong label: $LABEL"
     exit 1
 fi
 
