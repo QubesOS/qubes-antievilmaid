@@ -10,8 +10,13 @@ if ! [ $# = 0 -o $# = 1 -a "$1" = "-z" ]; then
     exit 1
 fi
 
+if [ "$(id -ur)" != 0 ]; then
+    log "This command must be run as root!"
+    exit 1
+fi
+
 if [ "$(cat /sys/class/tpm/tpm0/owned)" != 0 ]; then
-    log "You must reset/clear your TPM chip first."
+    log "You must reset/clear your TPM chip first!"
     exit 1
 fi
 
@@ -35,11 +40,14 @@ if [ $# = 0 ]; then  # set an SRK password
     lines+=( "$srkpw" "$srkpw" )
 fi
 
-log "Taking ownership of the TPM..."
-printf '%s\n' "${lines[@]}" | notty tpm_takeownership "$@"
-echo >&2
-echo "$OWNERPW" >"$AEM_DIR"/tpm-owner-pw
 systemctl restart tcsd
+
+log "Taking ownership of the TPM..."
+printf '%s\n' "${lines[@]}" |
+notty env LC_ALL=C tpm_takeownership "$@" 2> >(grep -vF "Confirm password:" >&2)
+
+echo "$OWNERPW" >"$AEM_DIR"/tpm-owner-pw
+
 
 # - generate NVRAM ID
 
