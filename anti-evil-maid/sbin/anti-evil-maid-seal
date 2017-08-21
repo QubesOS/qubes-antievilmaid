@@ -34,7 +34,7 @@ LABEL_SUFFIX=${1-$(cat "$SUFFIX_CACHE")}
 LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 
 case $# in
-    0) DEV=/dev/disk/by-uuid/$(getparams rd.antievilmaid.uuid) ;;
+    0) DEV=/dev/disk/by-uuid/$(getparams aem.uuid) ;;
     1) DEV=/dev/disk/by-label/$LABEL ;;
     *) exit 1 ;;
 esac

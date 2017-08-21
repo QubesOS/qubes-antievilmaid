@@ -131,7 +131,7 @@ linux_entry ()
         fi
 	module	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args} \${xen_rm_opts}
 	echo	'$(echo "$lmessage" | grub_quote)'
-	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} rd.antievilmaid rd.antievilmaid.uuid=${GRUB_DEVICE_BOOT_UUID} rd.luks.key=/tmp/aem-keyfile rd.luks.crypttab=no
+	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} aem.uuid=${GRUB_DEVICE_BOOT_UUID} rd.luks.key=/tmp/aem-keyfile rd.luks.crypttab=no
 EOF
   if test -n "${initrd}" ; then
     # TRANSLATORS: ramdisk isn't identifier. Should be translated.
