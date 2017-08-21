@@ -120,15 +120,23 @@ fi
 # MFA-specific checks
 
 if mfa && ! external "$PART_DEV"; then
-    log "MFA AEM cannot be installed on the same"
-    log "storage device as Qubes OS."
-    exit 1
+    log "WARNING: Installing MFA AEM on the same disk"
+    log "as Qubes OS will NOT provide any resistance"
+    log "against keyboard observation during boot!"
+    log "Additionally, compromise recovery using"
+    log "freshness token revocation will be a lot"
+    log "less feasible."
+    waitforenter
 elif mfa && ! removable "$PART_DEV" "$LABEL" ; then
-    log "MFA AEM can only be used with removable media."
-    log "Should the device be, in fact, removable"
-    log "(autodetection failed), add '.rm=1' at the end"
-    log "of disk label suffix using the '-s' option."
-    exit 1
+    log "WARNING: Installing MFA AEM on an internal"
+    log "disk will NOT provide any resistance"
+    log "against keyboard observation during boot!"
+    log "Additionally, compromise recovery using"
+    log "freshness token revocation will be a lot"
+    log "less feasible."
+    log "You can safely ignore this warning if the"
+    log "device in question is, in fact, removable."
+    waitforenter
 fi
 
 

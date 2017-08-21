@@ -154,7 +154,13 @@ This key file will then get added to your encrypted drive's LUKS key slot.
 For more details, see the associated qubes-devel mailing list thread:
   https://groups.google.com/d/topic/qubes-devel/8cAjSyg1msM/discussion
 
-If you've chosen to install AEM on an external device (ie. not the internal
+In case you would like to install multi-factor AEM on internal disk, beware
+that keyboard observation attacks cannot be prevented! Plus, you still need
+to have TPM SRK password set. The only advantage over plain static text secret
+is, of course, that there's not static secret **shown on the screen** to
+observe (ie. cover the keyboard while typing AEM passwords).
+
+If you've chosen to install AEM on an external device (and not the internal
 drive), you should then remove the internal boot partition from dom0's
 /etc/fstab, never mount it again in dom0, and never boot from it again,
 because an attacker might modify it to exploit GRUB or dom0 filesystem
