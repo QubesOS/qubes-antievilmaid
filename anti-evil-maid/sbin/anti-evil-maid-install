@@ -173,6 +173,28 @@ if [   -n "$OLD_LABEL" -a \
 fi
 
 
+# add the AEM media being created to the freshness database
+
+if suffixtoslot "$LABEL_SUFFIX" >/dev/null; then
+    log "WARNING: (possibly another) AEM media with the same"
+    log "label suffix is already enrolled in the freshness token"
+    log "database! Overwriting will result in the old AEM media"
+    log "failing to perform a successful AEM boot. If you're"
+    log "simply reinstalling on the same device or intentionally"
+    log "replacing an old AEM media that was lost/destroyed/etc.,"
+    log "it is safe to continue."
+    read -p "Proceed? [y/N] " response
+    case "$response" in
+        y|Y) echo "continuing..." ;;
+        *) exit ;;
+    esac
+else
+    assignslottosuffix "$LABEL_SUFFIX"
+    slot=$(suffixtoslot "$LABEL_SUFFIX")
+    log "Assigned slot $slot to this AEM media"
+fi
+
+
 # MFA: generate a TOTP seed
 
 if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
@@ -263,28 +285,6 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.key" ]; then
 
     log "Shredding the unencrypted key file"
     shred -zu "$rawkey"
-fi
-
-
-# add the AEM media being created to the freshness database
-
-if suffixtoslot "$LABEL_SUFFIX" >/dev/null; then
-    log "WARNING: (possibly another) AEM media with the same"
-    log "label suffix is already enrolled in the freshness token"
-    log "database! Overwriting will result in the old AEM media"
-    log "failing to perform a successful AEM boot. If you're"
-    log "simply reinstalling on the same device or intentionally"
-    log "replacing an old AEM media that was lost/destroyed/etc.,"
-    log "it is safe to continue."
-    read -p "Proceed? [y/N] " response
-    case "$response" in
-        y|Y) echo "continuing..." ;;
-        *) exit ;;
-    esac
-else
-    assignslottosuffix "$LABEL_SUFFIX"
-    slot=$(suffixtoslot "$LABEL_SUFFIX")
-    log "Assigned slot $slot to this AEM media"
 fi
 
 
