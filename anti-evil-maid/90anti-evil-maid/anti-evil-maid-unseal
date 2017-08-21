@@ -50,7 +50,7 @@ fi
 
 # mount AEM device
 
-log "Mounting the ${LABEL:?} device..."
+log "Mounting $DEV (\"$LABEL\")..."
 mkdir -p "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
 
@@ -74,7 +74,7 @@ SEALED_SECRET_FSH=$TPM_DIR/$LABEL/secret.fsh.sealed2
 
 # unmount AEM device
 
-log "Unmounting the $LABEL device..."
+log "Unmounting $DEV (\"$LABEL\")..."
 umount "$MNT"
 
 if [ "$(blockdev --getro "$DEV")" = 1 ]; then
