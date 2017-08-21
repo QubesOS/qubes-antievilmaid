@@ -32,14 +32,18 @@ plymouth_messages_hide() {
 
 # find AEM device
 
+UUID=$(getbootdevuuid)
+DEV=/dev/disk/by-uuid/$UUID
+
 udevadm trigger
 udevadm settle
-
-DEV="/dev/disk/by-uuid/$(getbootdevuuid)"
 waitfor -b "$DEV"
 
-
-# make sure the fs label starts with $LABEL_PREFIX
+n=$(lsblk -nr -o UUID | grep -Fixc "$UUID") || true
+if [ "$n" != 1 ]; then
+    message "Error: found ${n:-?} devices with UUID $UUID"
+    exit 1
+fi
 
 LABEL=$(lsblk -dnr -o LABEL "$DEV")
 if [[ "$LABEL" != "$LABEL_PREFIX"* ]]; then
