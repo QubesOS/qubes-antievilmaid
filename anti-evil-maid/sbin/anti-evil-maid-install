@@ -229,7 +229,7 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
         log "TOTP codes to be generated during AEM boot. Please fix"
         log "this by running (as root):"
         log "    timedatectl set-local-rtc 0"
-	waitforenter
+        waitforenter
     fi
 
     # check whether secret was provisioned correctly
