@@ -11,6 +11,7 @@ Requires:	dracut grub2-tools parted tboot tpm-tools
 Requires:	tpm-extra >= 4.0.0
 Requires:	trousers-changer >= 4.0.0
 Requires:	systemd >= 227
+Requires:	coreutils >= 8.25-2
 Requires:	scrypt qrencode oathtool
 Requires(post):	dracut grub2-tools tboot systemd
 Obsoletes:	anti-evil-maid-dracut
