@@ -18,6 +18,23 @@ Requirements
 * If you are using LUKS with LVM, you must encrypt the whole volume group
   instead of each volume, or else AEM will fail to boot.
 
+Upgrading to AEM v4
+===================
+
+If you have an existing AEM installation, there are a few steps required
+after updating AEM packages to version >= 4.0 (available since Qubes R4).
+
+The easiest way to upgrade is to completely reset the TPM and start from
+scratch and re-create all existing AEM devices.
+
+Should you want to migrate without resetting the TPM (in case you're using
+it for something else besides Qubes AEM), you can manually replicate the
+steps taken in the TPM setup script (/usr/sbin/anti-evil-maid-tpm-setup).
+Note that you still need to re-create all provisioned AEM media afterwards.
+
+Otherwise, perform a TPM reset (via BIOS) and skip to the "Installation"
+section below.
+
 Installation
 =============
 
