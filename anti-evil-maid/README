@@ -77,9 +77,13 @@ be set up in order for AEM to be secure. The SRK password can be set up
 by NOT passing the "-z" option to the above command. Should you not
 anticipate future need for internal AEM boot device and want to use
 external media only, use the "-z" option. If you later decide to provision
-AEM on the internal drive, re-run "anti-evil-maid-setup" (without "-z").
-This will invalidate sealed secrets on all existing external AEM media
-(so make sure to boot from each one of them in order to re-seal secrets).
+AEM on the internal drive, create an SRK password first:
+
+# tpm_changeownerauth -s
+
+You will need to copy & paste the randomly-generated TPM owner password
+from the /var/lib/anti-evil-maid/tpm-owner-pw file. Existing AEM media
+will _not_ need to be re-sealed.
 
 3) Setup Anti Evil Maid
 
