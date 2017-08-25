@@ -30,7 +30,7 @@ Arguments:
 
   -F: passed on to mkfs.ext4 (don't ask for confirmation, etc.)
 
-  -m: set up a multi-factor auth AEM media (EXPERIMENTAL)
+  -m: set up a multi-factor auth AEM media
       Using time-based one time password and a LUKS key file, provides
       resistance to shoulder surfing and video surveillance based passphrase
       snooping.
