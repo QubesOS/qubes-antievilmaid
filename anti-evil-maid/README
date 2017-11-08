@@ -98,6 +98,8 @@ is /dev/sda1):
 
 # anti-evil-maid-install /dev/sda1
 
+# grub2-mkconfig -o /boot/grub2/grub.cfg
+
 Or better, create an external AEM boot device (in this case an SD card):
 
 # anti-evil-maid-install /dev/mmcblk0p1
