@@ -136,6 +136,9 @@ if tpm_unsealdata $Z -i "$SEALED_SECRET_FRE" -o "$UNSEALED_SECRET" \
     >"$CACHE_DIR/unseal-success"
 else
     log "Freshness token unsealing failed!"
+    log "This is expected during the first boot from a particular"
+    log "AEM media or after updating any of the boot components or"
+    log "changing their configuration."
     exit 1
 fi
 

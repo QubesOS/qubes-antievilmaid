@@ -225,7 +225,8 @@ launch fails for any reason, tboot will fall back to a normal boot and AEM
 will not function.
 
 a) Enter your SRK password if prompted. You won't see your secret afterwards,
-because it hasn't been sealed yet. Enter your disk decryption passphrase
+because it hasn't been sealed yet (seeing a `Freshness token unsealing
+failed!` message here is expected). Enter your disk decryption passphrase
 anyway, right now you still trust your system.
 
 As the system continues booting, AEM will automatically seal your
@@ -269,8 +270,16 @@ Xen/kernel/BIOS/firmware upgrades
 
 After Xen, kernel, BIOS, or firmware upgrades, you will need to reboot
 and enter your disk decryption passphrase even though you can't see your
-secret. It will be resealed again automatically later in the boot process
-(see step 4.a).
+secret. Please note that you will see a `Freshness toekn unsealing failed!`
+error. It (along with your AEM secrets) will be resealed again automatically
+later in the boot process (see step 4.a).
+
+Some additional things that can cause AEM secrets and freshness token to
+fail to unseal (non-exhaustive list):
+
+* changing the LUKS header of the encrypted root partition
+* modifying the initrd (adding/removing files or just re-generating it)
+* changing kernel commandline parameters in GRUB
 
 
 What to do in case of compromise
