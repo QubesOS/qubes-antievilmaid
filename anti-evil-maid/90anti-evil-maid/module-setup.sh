@@ -24,6 +24,7 @@ install() {
         base32 \
         blockdev \
         clear \
+        cryptsetup \
         cut \
         date \
         file \
