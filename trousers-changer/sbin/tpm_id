@@ -3,7 +3,7 @@ set -e -o pipefail
 export LC_ALL=C
 
 
-TPM_ID_INDEX="0x517562"
+TPM_ID_INDEX="0x7562"
 
 
 usage() {
