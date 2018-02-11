@@ -14,6 +14,12 @@ alias plymouth_message="plymouth message --text"
 source anti-evil-maid-lib
 trap 'rm -rf "$CACHE_DIR"' EXIT
 
+if [ ! -e "$SUFFIX_CACHE" ] && [ $# -ne 1 ]; then
+    message "AEM media suffix cache file does not exist"
+    message "and you didn't specify a suffix as the"
+    message "first positional argument to this script."
+    exit 1
+fi
 
 # scream loudly if sealing fails for some reason
 # (eg. AEM media read-only)
