@@ -10,13 +10,76 @@ For more information and discussion about potential attacks see:
 http://blog.invisiblethings.org/2011/09/07/anti-evil-maid.html
 (Note that this article is somewhat outdated, e.g. AEM uses Intel TXT now.)
 
-Requirements
-============
+Requirements and security notes ("before you start")
+====================================================
+
+* Only TPM version 1.2 is currently supported.
 
 * AEM is not compatible with (U)EFI boot. Legacy boot is required.
 
 * If you are using LUKS with LVM, you must encrypt the whole volume group
   instead of each volume, or else AEM will fail to boot.
+
+* You MUST set a TPM owner password
+
+* Unless you're installing AEM to internal disk, TPM SRK password SHOULD
+  NOT be set (otherwise tboot will not be able to check whether critical
+  parts of RAM were not altered during S3 sleep). Please be aware that by
+  installing to internal disk and setting a TPM SRK password, your RAM
+  WILL NOT be protected against tampering when your laptop is suspended,
+  so make sure it is completely shut down any time an attacker might gain
+  physical access.
+
+* When RAM tampering is detected on wake-up from S3 sleep, the default
+  tboot policy only prints a warning into its log (`sudo txt-stat`) so
+  even if you checked it immediately after each wake-up, the attacker
+  might already have exfiltrated your login passphrase. Fix this by
+  either using two-factor for desktop login (weak) or create stronger
+  Launch Control Policy (LCP) and Verified Launch Policy (LCP) and write
+  them into TPM NVRAM -- especially make sure that tboot will forcefully
+  halt/reboot the platform if RAM tampering is detected. See tboot docs
+  for more information (`/usr/share/doc/tboot`). Creating a small NVRAM
+  area for tboot to write last error code might be a good idea for
+  debugging crashes on S3 suspend/resume:
+
+  `sudo tpmnv_defindex -i 0x20000002 -s 8 -pv 0 -rl 0x07 -wl 0x07 -p <ownerpw>`
+
+* Be aware that Intel TXT is vulnerable to System Management Mode (SMM)
+  exploits like overwriting System Management Interrupt (SMI) handlers.
+  Since SMM code is stored in platform firmware (BIOS) which usually is
+  updatable (and thus can be overwritten by an attacker), it is quite
+  an attractive target (and not just for the NSA). This can be fixed by
+  integrating an SMI Transfer Monitor (STM) into the platform (but this,
+  again, relies on the the same BIOS vendor who wrote a buggy SMM code
+  to safely implement STM). Additionally, STM does not appear to be
+  widely available yet (STM specification released mid-2015 by Intel).
+  You can check whether your platform includes STM:
+
+    `sudo txt-stat | grep -iA 1 stm`
+
+  Seeing "stm: 0" and "stm_hash" being all zeros means you DO NOT have
+  STM. Either way, BIOS is now part of your Trusted Computing Base (TCB)
+  and you need to prevent attackers with physical access from modifying
+  it. Good luck.
+
+  Some hints: connect the write protect pin on BIOS flash chip to ground
+  (prevents attacker from booting their own software which would bypass
+  BIOS protections and overwrite it) and make sure physically accessing
+  the chip will be tamper-evident by eg. covering the screws holding
+  laptop body together in glitter and taking high-res photos, then
+  examining before each use.
+
+* To recap -- you need to fully trust:
+  * CPU (Intel, since we're depending on TXT)
+    * sometimes over-optimizes for performance at the cost of security,
+      see eg. Meltdown/Spectre, cache attacks against SGX enclaves, ...
+  * TPM (various vendors)
+    * few known attacks sniffing and injecting commands on the LPC bus;
+      differential power analysis; buggy RSA key generation code
+  * BIOS (a few vendors)
+    * it's full of holes!
+  * that the attacker cannot get physically inside your laptop without
+    you noticing (see the glitter hint above)
 
 Upgrading to AEM v4
 ===================
