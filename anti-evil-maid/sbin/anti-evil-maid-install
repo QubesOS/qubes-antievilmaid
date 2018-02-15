@@ -341,10 +341,12 @@ if replace; then
 
     log "Bind mounting $PART_MNT at $BOOT_DIR"
     mount --bind "$PART_MNT" "$BOOT_DIR"
+fi
 
-    log "Generating GRUB configuration"
-    grub2-mkconfig -o "$GRUB_CFG"
+log "Generating GRUB configuration"
+grub2-mkconfig -o "$GRUB_CFG"
 
+if replace; then
     log "Unmounting bind mounted $BOOT_DIR"
     umount "$BOOT_DIR"
 fi
