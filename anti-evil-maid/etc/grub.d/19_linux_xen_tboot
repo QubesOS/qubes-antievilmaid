@@ -150,6 +150,10 @@ EOF
 	module	/${sinit_module}
 EOF
     done
+  else
+    message="$(gettext_printf "Anti Evil Maid (AEM): Missing SINIT module!")"
+    echo	'$message'
+    gettext_printf "Anti Evil Maid (AEM): Missing SINIT module!" >&2
   fi
   sed "s/^/$submenu_indentation/" << EOF
 }
