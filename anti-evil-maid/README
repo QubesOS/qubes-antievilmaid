@@ -5,6 +5,9 @@ Anti Evil Maid is an implementation of a TPM-based dynamic (Intel TXT) trusted
 boot for dracut/initramfs-based OSes (Fedora, Qubes, etc.) with a primary goal
 to prevent Evil Maid attacks.
 
+In short, AEM relies on TPM and a feature found in Intel's vPro CPUs (TXT) to
+detect tampering of various boot components.
+
 For more information and discussion about potential attacks see:
 
 http://blog.invisiblethings.org/2011/09/07/anti-evil-maid.html
@@ -70,6 +73,11 @@ Requirements and security notes ("before you start")
   laptop body together in glitter and taking high-res photos, then
   examining before each use.
 
+* You might want to consider assessing the firmware security of your
+  platform using an automated tool such as CHIPSEC:
+
+    https://github.com/chipsec/chipsec
+
 * To recap -- you need to fully trust:
   * CPU (Intel, since we're depending on TXT)
     * sometimes over-optimizes for performance at the cost of security,
@@ -77,6 +85,10 @@ Requirements and security notes ("before you start")
   * TPM (various vendors)
     * few known attacks sniffing and injecting commands on the LPC bus;
       differential power analysis; buggy RSA key generation code
+    * note that any potential TPM exploits (should) have no means of
+      compromising your system directly -- a TPM under attacker's control
+      can only be used to hide the fact that a compromise has occurred
+      (ie. defeating the whole AEM feature)
   * BIOS (a few vendors)
     * it's full of holes!
   * that the attacker cannot get physically inside your laptop without
