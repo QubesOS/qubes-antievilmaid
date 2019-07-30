@@ -1,6 +1,0 @@
-#!/bin/bash
-# accepts same options as tpm_nvread, except -f
-# writes the NVRAM data read to stdout
-set -e -o pipefail
-
-tpm_nvread "$@" -f /dev/stderr 2>&1 1>/dev/null

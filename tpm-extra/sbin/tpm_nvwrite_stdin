@@ -1,9 +1,0 @@
-#!/bin/bash
-# accepts same options as tpm_nvwrite, except -f
-# writes data from stdin into TPM NVRAM
-set -e -o pipefail
-
-_tmp=$(mktemp)
-trap 'rm -f "$_tmp"' EXIT
-cat > "$_tmp"
-tpm_nvwrite "$@" -f "$_tmp"
