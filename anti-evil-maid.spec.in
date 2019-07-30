@@ -1,10 +1,5 @@
-%define name anti-evil-maid
-%define subdir %{?qubes_builder:%{name}/}
-%define _builddir %(pwd)/%{subdir}
-%{!?version: %define version %(cat %{subdir}version)}
-
-Name:		%{name}
-Version:	%{version}
+Name:		anti-evil-maid
+Version:	@VERSION@
 Release:	1%{?dist}
 Summary:    	Anti Evil Maid for initramfs-based systems.
 Requires:	dracut grub2-tools parted tboot tpm-tools
@@ -18,9 +13,13 @@ Obsoletes:	anti-evil-maid-dracut
 Vendor:		Invisible Things Lab
 License:	GPL
 URL:		http://www.qubes-os.org
+Source0:	%{name}-%{version}.tar.gz
 
 %description
 Anti Evil Maid for initramfs-based systems.
+
+%prep
+%setup -q
 
 %install
 
@@ -81,3 +80,6 @@ fi
 
 %triggerin -- tboot
 chmod -x %tboot_grub
+
+%changelog
+@CHANGELOG@
