@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: bionic
 language: generic
 install: git clone https://github.com/QubesOS/qubes-builder ~/qubes-builder
 script: ~/qubes-builder/scripts/travis-build
