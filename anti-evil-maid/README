@@ -206,7 +206,9 @@ suffixes for destroyed devices.
 
 Installation directly onto a (truly) read-only media (such as a CD-R) is not
 supported. You can, however, copy the contents of an existing RW media onto
-RO media after the initial sealing takes place. Remember to always pull
+RO media after the initial sealing takes place. Physical write-protect
+switches on USB sticks are fine (install AEM in RW mode, then
+flip the switch and proceed to use as RO media). Remember to always pull
 out the RO media when your text secret or TOTP code is displayed! Failing
 to do that will result in invalidation of freshness token in the TPM memory
 and the AEM media will fail to perform verified boot next time, falling
