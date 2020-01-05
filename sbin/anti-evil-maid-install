@@ -213,7 +213,7 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
 
     # create an ANSI text QR code and show it in the terminal
     otp_uri="otpauth://totp/${LABEL}?secret=${otp_secret}"
-    echo "$otp_uri" | qrencode -t ansiutf8
+    echo -n "$otp_uri" | qrencode -t ansiutf8
     log "Please scan the above QR code with your OTP device."
 
     # display the text form of secret to user, too
