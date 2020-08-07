@@ -1,7 +1,3 @@
-sudo: required
-dist: bionic
-language: generic
-install: git clone https://github.com/QubesOS/qubes-builder ~/qubes-builder
-script: ~/qubes-builder/scripts/travis-build
-env:
- - DIST_DOM0=fc31 USE_QUBES_REPO_VERSION=4.1 USE_QUBES_REPO_TESTING=1
+import:
+  - source: QubesOS/qubes-continuous-integration:R4.1/travis-base-r4.1.yml
+  - source: QubesOS/qubes-continuous-integration:R4.1/travis-dom0-r4.1.yml
