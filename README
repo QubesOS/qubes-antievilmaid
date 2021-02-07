@@ -176,7 +176,7 @@ downloaded from:
 https://software.intel.com/protected-download/267276/183305
 
 Also, make sure you have the latest RACM update, if available (2nd & 3rd gen):
-https://software.intel.com/system/files/article/183305/intel-txt-sinit-acm-revocation-tools-guide-rev1-0_2.pdf
+https://cdrdv2.intel.com/v1/dl/getContent/630744?wapkw=intel%20txt%20sinit%20acm%20revocation%20
 
 It's possible to use 3rd gen SINIT/RACM on 2nd gen platforms. In fact, the
 only RACM available at the time of writing is for the 3rd gen, while the 2nd
