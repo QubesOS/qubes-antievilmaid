@@ -169,11 +169,14 @@ You should download the SINIT module required for your system.
 
 Intel documented the required SINIT module depending on your CPU platform in:
 http://software.intel.com/en-us/articles/intel-trusted-execution-technology
+But DO NOT download the modules besides the SINIT/RACM from here. The download links provide old versions and broken binaries.
 
-You can then download the module and unzip it. All the modules can be
+You can then download the module and unzip it. All the modules could be
 downloaded from:
 
-https://software.intel.com/protected-download/267276/183305
+https://cdrdv2.intel.com/v1/dl/getContent/630744?wapkw=intel%20txt%20sinit%20acm%20revocation%20
+
+Find the module fitting to your platform and rename it to the names mentioned on the intel website link.
 
 Also, make sure you have the latest RACM update, if available (2nd & 3rd gen):
 https://software.intel.com/system/files/article/183305/intel-txt-sinit-acm-revocation-tools-guide-rev1-0_2.pdf
