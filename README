@@ -19,6 +19,10 @@ Requirements and security notes ("before you start")
 * Only TPM version 1.2 is currently supported. It may be possible to
   configure your 2.0 TPM to emulate the 1.2 interface.
 
+* You may need to downgrade the bios version to make the TPM functional. 
+  For example the latest compatible version for thinkpad x230 is v.2.70. 
+  Newer bios versions for this particular model do not work with AEM.
+  
 * AEM is not compatible with (U)EFI boot. Legacy boot is required.
 
 * If you are using LUKS with LVM, you must encrypt the whole volume group
@@ -143,6 +147,13 @@ PCR-04: 93 33 4E 81 A6 9C 80 54 D6 87 C7 FD 76 7C 6F 4C 70 FC C6 73
 If your tpm has already been owned in the past, you can reset it by running
 tpm_clear -z, powering your computer off, and then resetting TPM in the BIOS
 (e.g.: TPM Authentication Reset).
+If you receive error messages or you can not clean TPM manually run from dom0:
+
+$ sudo -s
+# echo 14 >/sys/class/tpm/tpm0/ppi/request
+
+Reboot your computer. You will see a blue screen with a message to clean, 
+activate and enable TPM. Confirm to continue to the step below.
 
 c) Initialize the TPM for use with AEM
 
