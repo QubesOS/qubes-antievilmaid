@@ -1,3 +1,0 @@
-import:
-  - source: QubesOS/qubes-continuous-integration:R4.1/travis-base-r4.1.yml
-  - source: QubesOS/qubes-continuous-integration:R4.1/travis-dom0-r4.1.yml
