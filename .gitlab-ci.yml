@@ -1,5 +1,9 @@
 include:
-  - project: 'QubesOS/qubes-continuous-integration'
-    file: '/r4.1/gitlab-base.yml'
-  - project: 'QubesOS/qubes-continuous-integration'
-    file: '/r4.1/gitlab-dom0.yml'
+- file: /r4.1/gitlab-base.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.1/gitlab-dom0.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.2/gitlab-base.yml
+  project: QubesOS/qubes-continuous-integration
+- file: /r4.2/gitlab-host.yml
+  project: QubesOS/qubes-continuous-integration
