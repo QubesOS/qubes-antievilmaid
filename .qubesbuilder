@@ -1,4 +1,4 @@
 host:
   rpm:
-    spec:
+    build:
     - anti-evil-maid.spec
