@@ -279,10 +279,7 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.key" ]; then
 
         log "Adding key file to new key slot for $devname (UUID $uuid)"
 
-        dmsetup table --showkeys luks-"$uuid" |
-        cut -d ' ' -f 5 |
-        unhex |
-        cryptsetup luksAddKey --master-key-file /dev/stdin "$dev" "$rawkey"
+        cryptsetup luksAddKey "$dev" "$rawkey"
     done
 
     log "Shredding the unencrypted key file"
