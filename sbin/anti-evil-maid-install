@@ -5,6 +5,7 @@ BOOT_DIR=/boot
 GRUB_DIR=$BOOT_DIR/grub2
 GRUB_CFG=$GRUB_DIR/grub.cfg
 
+validatetpm || exit 1
 
 usage() {
     cat <<END

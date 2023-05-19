@@ -4,6 +4,8 @@ shopt -s expand_aliases
 
 source anti-evil-maid-lib
 
+validatetpm || exit 1
+
 
 if ! { [ $# = 0 ] || { [ $# = 1 ] && [ "$1" = "-z" ]; }; } then
     echo "Usage: ${0##*/} [-z]"

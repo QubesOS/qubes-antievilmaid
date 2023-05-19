@@ -64,6 +64,10 @@ mount -t ext4 -o ro "$DEV" "$MNT"
 
 log "Initializing TPM..."
 modprobe tpm_tis
+if ! validatetpm; then
+    umount "$MNT"
+    exit 1
+fi
 ip link set dev lo up
 mkdir -p "${TPMS_DIR%/*}"
 log "Copying sealed AEM secrets..."

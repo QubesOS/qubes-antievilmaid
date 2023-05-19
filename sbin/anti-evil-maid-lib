@@ -276,3 +276,23 @@ removable() {
 
     [ "$_rm" = 1 ]
 }
+
+validatetpm() {
+    if [ ! -d "$SYSFS_TPM_DIR" ]; then
+        message "$SYSFS_TPM_DIR isn't present"
+        return 1
+    fi
+
+    _tpm_version=$(cat "$SYSFS_TPM_DIR/tpm_version_major")
+    if [ -z "$_tpm_version" ]; then
+        message "Failed to determine the version of the TPM"
+        return 1
+    fi
+    if [ "$_tpm_version" -eq 2 ]; then
+        message "TPM 2.0 detected. TPM 2.0 is currently unsupported"
+        message "Note: some TPM 2.0 devices can be configured to act as TPM 1.2"
+        return 1
+    fi
+
+    return 0
+}

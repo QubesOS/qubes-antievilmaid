@@ -6,6 +6,8 @@ alias plymouth_message="plymouth message --text"
 source anti-evil-maid-lib
 trap 'rm -rf "$CACHE_DIR"' EXIT
 
+validatetpm || exit 1
+
 # Listing tcsd.service in anti-evil-maid-seal.service's Requires= and After=
 # would cause it to always be started (even when not booting in AEM mode or
 # when sealing is unnecessary) due to the way systemd evaluates conditions.
