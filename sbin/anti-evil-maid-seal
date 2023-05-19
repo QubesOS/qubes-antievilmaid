@@ -2,6 +2,10 @@
 set -e -o pipefail -o errtrace
 shopt -s expand_aliases
 
+alias plymouth_message="plymouth message --text"
+source anti-evil-maid-lib
+trap 'rm -rf "$CACHE_DIR"' EXIT
+
 # Listing tcsd.service in anti-evil-maid-seal.service's Requires= and After=
 # would cause it to always be started (even when not booting in AEM mode or
 # when sealing is unnecessary) due to the way systemd evaluates conditions.
@@ -9,10 +13,6 @@ shopt -s expand_aliases
 # user might want to run this script manually after changing the secret(s).
 
 systemctl start tcsd
-
-alias plymouth_message="plymouth message --text"
-source anti-evil-maid-lib
-trap 'rm -rf "$CACHE_DIR"' EXIT
 
 if [ ! -e "$SUFFIX_CACHE" ] && [ $# -ne 1 ]; then
     message "AEM media suffix cache file does not exist"
