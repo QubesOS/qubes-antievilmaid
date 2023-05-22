@@ -188,7 +188,8 @@ updatefreshness() {
 revokefreshness() {
     # invalidates the freshness token of a specified AEM media (by its
     # label suffix
-    if _slot=$(suffixtoslot "$1"); then
+    _suff=$1
+    if _slot=$(suffixtoslot "$_suff"); then
         message "Revoking freshness token for AEM media w/ suffix '$_suff'..."
         _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
         if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
