@@ -329,7 +329,7 @@ if replace; then
     done
 
     log "Copying GRUB themes"
-    dst=$PART_MNT/${GRUB_DIR#$BOOT_DIR/}
+    dst=$PART_MNT/${GRUB_DIR#"$BOOT_DIR"/}
     mkdir "$dst"
     cp -r "$GRUB_DIR/themes" "$dst"
 

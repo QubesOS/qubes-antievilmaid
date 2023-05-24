@@ -104,7 +104,7 @@ done
 # cache suffix and SRK password, if applicable
 
 mkdir -p "$CACHE_DIR"
-echo "${LABEL##$LABEL_PREFIX}" >"$SUFFIX_CACHE"
+echo "${LABEL##"$LABEL_PREFIX"}" >"$SUFFIX_CACHE"
 
 Z=$(tpm_z_srk)
 
