@@ -131,7 +131,7 @@ assignslottosuffix() {
     _lastslot=$((TPM_FRESHNESS_SLOTS - 1))
     _freeslot=$(
         {
-            cat $_slotfilesglob 2>/dev/null || true
+            cat "$_slotfilesglob" 2>/dev/null || true
             seq 0 $_lastslot
         } | sort -n | uniq -u | head -n 1
     )

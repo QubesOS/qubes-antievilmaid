@@ -11,7 +11,7 @@ function check_device() {
     recursion_limit="${2:-10}"
 
     if [ -r "$sysfs_path/dm/name" ]; then
-        dm_name=$(cat $sysfs_path/dm/name)
+        dm_name=$(cat "$sysfs_path"/dm/name)
         dm_target=$(dmsetup table "$dm_name" | cut -d ' ' -f 3)
         # This also ensures that the dm table have only single entry
         if [ "$dm_target" = "crypt" ]; then
@@ -33,26 +33,26 @@ function check_device() {
 
 
 root_name="$(getarg root)"
-if echo $root_name | grep -q = ; then
-    root_matches=$(blkid -t $root_name | wc -l)
-    if [ $root_matches -gt 1 ]; then
+if echo "$root_name" | grep -q = ; then
+    root_matches=$(blkid -t "$root_name" | wc -l)
+    if [ "$root_matches" -gt 1 ]; then
         die "AEM: multiple devices matching $root_name found, aborting!"
     fi
-    root_dev=$(blkid -o device -t $root_name)
+    root_dev=$(blkid -o device -t "$root_name")
 else
     root_dev=$root_name
 fi
 
-root_devid=$(lsblk -dnr -o MAJ:MIN $root_dev)
+root_devid=$(lsblk -dnr -o MAJ:MIN "$root_dev")
 
-if ! check_device /sys/dev/block/$root_devid; then
+if ! check_device /sys/dev/block/"$root_devid"; then
     die "AEM: (bogus?) root device found not encrypted!"
 fi
 
 for lv in $(getarg rd.lvm.lv); do
-    if [ -e /dev/$lv ]; then
-        devid=$(lsblk -dnr -o MAJ:MIN /dev/$lv)
-        if ! check_device /sys/dev/block/$devid; then
+    if [ -e /dev/"$lv" ]; then
+        devid=$(lsblk -dnr -o MAJ:MIN /dev/"$lv")
+        if ! check_device /sys/dev/block/"$devid"; then
             die "AEM: (bogus?) device /dev/$lv found not encrypted!"
         fi
     fi
