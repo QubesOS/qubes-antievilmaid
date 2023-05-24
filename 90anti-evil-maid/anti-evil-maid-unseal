@@ -111,7 +111,7 @@ Z=$(tpm_z_srk)
 if [ -n "$Z" ]; then
     >"$SRK_PASSWORD_CACHE"
 else
-    for try in 1 2 3; do
+    for _ in 1 2 3; do
         log "Prompting for SRK password..."
 
         if systemd-ask-password --timeout=0 \
@@ -188,7 +188,7 @@ if otp; then
 
         if tpm_unsealdata $Z -i "$SEALED_SECRET_KEY" -o "$UNSEALED_SECRET" \
            <"$SRK_PASSWORD_CACHE"; then
-            for try in 1 2 3; do
+            for _ in 1 2 3; do
                 pass=$(systemd-ask-password --timeout=0 \
                        'LUKS key file password (or "t" to show text secret)')
 
