@@ -28,9 +28,9 @@ lines=( "$OWNERPW" "$OWNERPW" )
 
 if [ $# = 0 ]; then  # set an SRK password
     for try in 1 2 3; do
-        read -s -p "Choose SRK password: "  srkpw
+        read -r -s -p "Choose SRK password: "  srkpw
         echo
-        read -s -p "Confirm SRK password: " srkpw2
+        read -r -s -p "Confirm SRK password: " srkpw2
         echo
 
         [ "$srkpw" != "$srkpw2" ] || break

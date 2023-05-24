@@ -90,7 +90,7 @@ fi
 
 getluksuuids |
 sort -u |
-while read luksid; do
+while read -r luksid; do
     waitfor -b "/dev/disk/by-uuid/$luksid"
 
     cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \

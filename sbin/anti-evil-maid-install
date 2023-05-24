@@ -191,7 +191,7 @@ if suffixtoslot "$LABEL_SUFFIX" >/dev/null; then
     log "simply reinstalling on the same device or intentionally"
     log "replacing an old AEM media that was lost/destroyed/etc.,"
     log "it is safe to continue."
-    read -p "Proceed? [y/N] " response
+    read -r -p "Proceed? [y/N] " response
     case "$response" in
         y|Y) echo "continuing..." ;;
         *) exit ;;
@@ -241,7 +241,7 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
 
     totp_tries=3
     for try in $(seq $totp_tries); do
-        read -p "Code: "
+        read -r -p "Code: "
         if ! oathtool --totp -b "$otp_secret" "$REPLY" >/dev/null; then
             log "Entered TOTP code is invalid!"
             if [ "$try" -lt $totp_tries ]; then
