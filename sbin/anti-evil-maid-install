@@ -74,7 +74,7 @@ done
 case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*|??????????????*) usage; esac
 LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 case $# in
     1) PART_DEV=$1 ;;
     *) usage ;;
