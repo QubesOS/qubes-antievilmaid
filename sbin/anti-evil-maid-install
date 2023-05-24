@@ -104,7 +104,7 @@ else
 fi
 
 WHOLE_DEV=$(lsblk -dnp -o PKNAME "$PART_DEV")
-if ! [ -b "$WHOLE_DEV" -a "$WHOLE_DEV" != "$PART_DEV" ]; then
+if [ ! -b "$WHOLE_DEV" ] || [ "$WHOLE_DEV" == "$PART_DEV" ]; then
     log "Couldn't find parent device: $WHOLE_DEV"
     exit 1
 fi
@@ -174,9 +174,9 @@ fi
 
 # move secrets if label changed
 
-if [   -n "$OLD_LABEL" -a \
-       -e "$AEM_DIR/$OLD_LABEL" -a \
-     ! -e "$AEM_DIR/$LABEL" ]; then
+if [   -n "$OLD_LABEL" ] &&
+   [   -e "$AEM_DIR/$OLD_LABEL" ] &&
+   [ ! -e "$AEM_DIR/$LABEL" ]; then
     mv -v "$AEM_DIR/$OLD_LABEL" "$AEM_DIR/$LABEL"
 fi
 

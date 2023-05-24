@@ -176,7 +176,7 @@ if otp; then
             while :; do
                 now=$(date +%s)
                 if [ -z "$last" ] ||
-                   [ "$((now % 30))" = 0 -a "$last" != "$now" ]; then
+                   { [ "$((now % 30))" = 0 ] && [ "$last" != "$now" ]; }; then
                     code=$(oathtool --totp -b "$seed")
                     message "[ $(date) ] TOTP code: $code"
                     last=$now
