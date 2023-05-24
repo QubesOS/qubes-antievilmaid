@@ -109,7 +109,7 @@ echo "${LABEL##"$LABEL_PREFIX"}" >"$SUFFIX_CACHE"
 Z=$(tpm_z_srk)
 
 if [ -n "$Z" ]; then
-    >"$SRK_PASSWORD_CACHE"
+    true >"$SRK_PASSWORD_CACHE"
 else
     for _ in 1 2 3; do
         log "Prompting for SRK password..."
@@ -133,7 +133,7 @@ log "Unsealing freshness token..."
 if tpm_unsealdata $Z -i "$SEALED_SECRET_FRE" -o "$UNSEALED_SECRET" \
         < "$SRK_PASSWORD_CACHE"; then
     log "Freshness token unsealed."
-    >"$CACHE_DIR/unseal-success"
+    true >"$CACHE_DIR/unseal-success"
 else
     log "Freshness token unsealing failed!"
     log "This is expected during the first boot from a particular"
