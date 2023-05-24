@@ -33,6 +33,7 @@ trap '_failure $LINENO' ERR
 
 # define sealing and device variables
 
+# shellcheck source=../etc/anti-evil-maid.conf
 source /etc/anti-evil-maid.conf
 notty tpm_resetdalock <"$TPM_OWNER_PASSWORD_FILE" || true
 Z=$(tpm_z_srk)
@@ -73,6 +74,7 @@ for ext in txt key otp fre; do
      input=$AEM_DIR/$LABEL/secret.$ext
     output=$TPM_DIR/$LABEL/secret.$ext.sealed2
 
+    # shellcheck disable=SC2086
     if [ ! -e "$input" ]; then
         message "Absent $input"
     elif [ -e "$CACHE_DIR"/unseal-success ] &&

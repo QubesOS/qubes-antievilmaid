@@ -1,11 +1,15 @@
 LABEL_PREFIX=aem
+# shellcheck disable=SC2034
 SYSFS_TPM_DIR=/sys/class/tpm/tpm0
 AEM_DIR=/var/lib/anti-evil-maid
 TPM_DIR=/var/lib/tpm
 TPMS_DIR=${TPM_DIR}s
 CACHE_DIR=/run/anti-evil-maid
+# shellcheck disable=SC2034
 SRK_PASSWORD_CACHE=$CACHE_DIR/srk-password
+# shellcheck disable=SC2034
 SUFFIX_CACHE=$CACHE_DIR/suffix
+# shellcheck disable=SC2034
 TPM_OWNER_PASSWORD_FILE=$AEM_DIR/tpm-owner-pw
 TPM_FRESHNESS_PASSWORD_FILE=$AEM_DIR/tpm-freshness-pw
 TPM_FRESHNESS_INDEX="0x454d"

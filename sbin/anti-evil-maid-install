@@ -71,6 +71,7 @@ while getopts s:Fhm opt; do
     esac
 done
 
+# shellcheck disable=SC2102
 case "$LABEL_SUFFIX" in *[!$LABEL_SUFFIX_CHARS]*|??????????????*) usage; esac
 LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 
@@ -217,6 +218,7 @@ if mfa && [ ! -e "$AEM_DIR/$LABEL/secret.otp" ]; then
     log "Please scan the above QR code with your OTP device."
 
     # display the text form of secret to user, too
+    # shellcheck disable=SC2001
     human_readable_secret="$(echo "$otp_secret" | sed 's/\(....\)/\1\ /g')"
     log "Alternatively, you may manually enter the following"
     log "secret into your OTP device:"

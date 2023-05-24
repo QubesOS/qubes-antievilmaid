@@ -1,3 +1,13 @@
+checks:shellcheck:
+  stage: checks
+  tags:
+    - docker
+  script:
+    - cd sbin/
+    - shellcheck -s bash * ../etc/anti-evil-maid.conf
+    - cd ../90anti-evil-maid/
+    - shellcheck -s bash anti-evil-maid-unseal ../sbin/anti-evil-maid-lib
+
 include:
 - file: /r4.1/gitlab-base.yml
   project: QubesOS/qubes-continuous-integration

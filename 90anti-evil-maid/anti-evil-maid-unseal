@@ -27,6 +27,7 @@ plymouth_messages_hide() {
     done
 }
 
+# shellcheck source=../sbin/anti-evil-maid-lib
 . anti-evil-maid-lib
 
 
@@ -130,6 +131,7 @@ fi
 # check freshness token
 
 log "Unsealing freshness token..."
+# shellcheck disable=SC2086
 if tpm_unsealdata $Z -i "$SEALED_SECRET_FRE" -o "$UNSEALED_SECRET" \
         < "$SRK_PASSWORD_CACHE"; then
     log "Freshness token unsealed."
@@ -161,6 +163,7 @@ fi
 
 if otp; then
     log "Unsealing TOTP shared secret seed..."
+    # shellcheck disable=SC2086
     if tpm_unsealdata $Z -i "$SEALED_SECRET_OTP" -o "$UNSEALED_SECRET" \
             < "$SRK_PASSWORD_CACHE"; then
         log "TOTP secret unsealed."
@@ -186,6 +189,7 @@ if otp; then
         } &
         totp_loop_pid=$!
 
+        # shellcheck disable=SC2086
         if tpm_unsealdata $Z -i "$SEALED_SECRET_KEY" -o "$UNSEALED_SECRET" \
            <"$SRK_PASSWORD_CACHE"; then
             for _ in 1 2 3; do
@@ -221,6 +225,7 @@ fi
 
 if ! otp; then
     log "Unsealing text secret..."
+    # shellcheck disable=SC2086
     if tpm_unsealdata $Z -i "$SEALED_SECRET_TXT" -o "$UNSEALED_SECRET" \
         <"$SRK_PASSWORD_CACHE"; then
         {
