@@ -1,4 +1,5 @@
-#!/bin/sh -e
+#!/bin/bash
+set -euo pipefail
 . anti-evil-maid-lib
 LABEL_SUFFIX_CHARS=0-9a-zA-Z=.-
 BOOT_DIR=/boot
@@ -62,11 +63,12 @@ END
 # check invocation
 
 alias mfa=false
-unset LABEL_SUFFIX F
+LABEL_SUFFIX=
+F=()
 while getopts s:Fhm opt; do
     case "$opt" in
         s) LABEL_SUFFIX=$OPTARG ;;
-        F) F=-F ;;
+        F) F=( -F ) ;;
         m) alias mfa=true ;;
         *) usage ;;
     esac
@@ -167,7 +169,7 @@ esac
 
 if replace; then
     log "Creating new ext4 filesystem labeled $LABEL"
-    mkfs.ext4 $F -L "$LABEL" "$PART_DEV"
+    mkfs.ext4 "${F[@]}" -L "$LABEL" "$PART_DEV"
 else
     log "Labeling filesystem $LABEL"
     e2label "$PART_DEV" "$LABEL"

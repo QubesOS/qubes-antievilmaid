@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e -o pipefail -o errtrace
+set -euo pipefail -o errtrace
 shopt -s expand_aliases
 
 alias plymouth_message="plymouth message --text"

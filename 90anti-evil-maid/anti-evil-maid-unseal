@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e -o pipefail
+set -euo pipefail
 shopt -s expand_aliases
 
 # Anti Evil Maid for dracut by Invisible Things Lab

@@ -3,7 +3,9 @@
 # shellcheck disable=SC1091
 . /lib/dracut-lib.sh
 
-set -e
+# this cannot contain -u option because it causes an error inside
+# /lib/dracut-lib.sh
+set -eo pipefail
 shopt -s expand_aliases
 
 function check_device() {
