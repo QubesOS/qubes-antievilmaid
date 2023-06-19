@@ -72,13 +72,8 @@ log "Creating freshness token NVRAM area..."
 createtpmnvram "$OWNERPW"
 
 
-# - move system.dat around
+# - update TPMs directory after provisioning
 
 if provisioned_id; then
-    tpm_id=$(tpm_id)
-    systemctl stop tcsd
-    mkdir -p "/var/lib/tpms/$tpm_id"
-    mv /var/lib/tpms/unknown/* "/var/lib/tpms/$tpm_id/"
-    rm -rf /var/lib/tpms/unknown
-    systemctl start tcsd
+    postprovisioning
 fi

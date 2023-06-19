@@ -318,6 +318,17 @@ provisiontpmid() {
     tpm_nvwrite -i "$_tpm_id_index" -s 0
 }
 
+postprovisioning() {
+    # takes care of updating /var/lib/tpms after a successful provisioning by
+    # provisiontpmid
+    _tpmid=$(tpm_id)
+    mkdir -p "/var/lib/tpms/$_tpmid"
+    systemctl stop tcsd
+    mv "$TPMS_DIR"/unknown/* "$TPMS_DIR/$_tpmid/"
+    rm -rf "$TPMS_DIR/unknown"
+    systemctl start tcsd
+}
+
 checksrkpass() {
     # checks whether contents of $SRK_PASSWORD_CACHE file is a valid SRK
     # password, signals result with exit code
