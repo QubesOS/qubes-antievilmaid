@@ -149,10 +149,16 @@ assignslottosuffix() {
     echo "$_freeslot" >> "$_slotfile"
 }
 
+hashfile() {
+    # computes hash of a file passed as the only argument
+    _path=$1
+    sha1sum "$_path" | cut -d ' ' -f 1
+}
+
 checkfreshness() {
     # check whether hash of an usealed freshness token (file path
     # given as an argument) is contained in TPM NVRAM area
-    _hash=$(sha1sum "$1" | cut -d ' ' -f 1)
+    _hash=$(hashfile "$1")
     _lastslot=$((TPM_FRESHNESS_SLOTS - 1))
     for _i in $(seq 0 $_lastslot); do
         _slot=$(tpm_nvread_stdout -i "$TPM_FRESHNESS_INDEX" \
@@ -184,7 +190,7 @@ updatefreshness() {
     fi
 
     _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
-    sha1sum "$1" | cut -d ' ' -f 1 | unhex \
+    hashfile "$1" | unhex \
     | tpm_nvwrite_stdin -i "$TPM_FRESHNESS_INDEX" \
       -n "$((_slot * 20))" -s 20 --password="$_pw"
 }

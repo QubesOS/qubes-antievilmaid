@@ -101,7 +101,7 @@ while read -r luksid; do
 
     cryptsetup luksHeaderBackup "/dev/disk/by-uuid/$luksid" \
                --header-backup-file "$LUKS_HEADER_DUMP"
-    luks_header_hash=$(sha1sum "$LUKS_HEADER_DUMP" | cut -f 1 -d ' ')
+    luks_header_hash=$(hashfile "$LUKS_HEADER_DUMP")
     log "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
     tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash"
 done
