@@ -302,3 +302,8 @@ validatetpm() {
 
     return 0
 }
+
+tpmowned() {
+    # checks whether TPM is already owned, signals results with exit code
+    [ "$(cat "$SYSFS_TPM_DIR"/owned)" -ne 0 ]
+}

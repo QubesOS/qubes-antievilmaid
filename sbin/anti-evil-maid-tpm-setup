@@ -17,7 +17,7 @@ if [ "$(id -ur)" != 0 ]; then
     exit 1
 fi
 
-if [ "$(cat "$SYSFS_TPM_DIR"/owned)" != 0 ]; then
+if tpmowned; then
     log "You must reset/clear your TPM chip first!"
     exit 1
 fi
