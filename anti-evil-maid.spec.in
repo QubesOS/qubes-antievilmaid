@@ -8,6 +8,7 @@ Requires:	trousers-changer >= 4.0.0
 Requires:	systemd >= 227
 Requires:	coreutils >= 8.25-2
 Requires:	scrypt qrencode oathtool
+Requires:	tpm2-tools
 Requires(post):	dracut grub2-tools tboot systemd
 Obsoletes:	anti-evil-maid-dracut
 Vendor:		Invisible Things Lab

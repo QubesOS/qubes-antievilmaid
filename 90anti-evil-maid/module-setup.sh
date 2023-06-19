@@ -1,7 +1,7 @@
 #!/bin/bash
 
 check() {
-    which tpm_unsealdata  >/dev/null 2>&1 || return 1
+    which tpm_unsealdata tpm2_unseal  >/dev/null 2>&1 || return 1
 }
 
 
@@ -10,7 +10,7 @@ check() {
 
 
 installkernel() {
-    instmods tpm_tis
+    instmods tpm_tis tpm_crb
 }
 
 install() {
@@ -58,6 +58,32 @@ install() {
         wc \
         xargs \
         xxd
+
+    # TPM2-related:
+    # tpm2-tools
+    dracut_install \
+        tpm2_changeauth \
+        tpm2_create \
+        tpm2_createprimary \
+        tpm2_evictcontrol \
+        tpm2_encryptdecrypt \
+        tpm2_flushcontext \
+        tpm2_load \
+        tpm2_nvdefine \
+        tpm2_nvread \
+        tpm2_nvreadpublic \
+        tpm2_nvundefine \
+        tpm2_nvwrite \
+        tpm2_nvwritelock \
+        tpm2_pcrextend \
+        tpm2_pcrread \
+        tpm2_policycommandcode \
+        tpm2_startauthsession \
+        tpm2_unseal
+    # such tpm2-tss libraries must be listed explicitly because they are
+    # discovered at runtime instead of being linked to during build
+    dracut_install \
+        /usr/lib64/libtss2-tcti-device.so.0*
 
     dracut_install \
         $systemdsystemunitdir/anti-evil-maid-unseal.service \
