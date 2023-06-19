@@ -26,7 +26,7 @@ fi
 # - take ownership of TPM
 
 OWNERPW=$(head -c 16 /dev/random | hex)
-lines=( "$OWNERPW" "$OWNERPW" )
+srkpw=
 
 if [ $# = 0 ]; then  # set an SRK password
     for try in 1 2 3; do
@@ -39,14 +39,12 @@ if [ $# = 0 ]; then  # set an SRK password
         log "Passwords didn't match"
         [ "$try" != 3 ] || exit 1
     done
-    lines+=( "$srkpw" "$srkpw" )
 fi
 
 systemctl restart tcsd
 
 log "Taking ownership of the TPM..."
-printf '%s\n' "${lines[@]}" |
-notty env LC_ALL=C tpm_takeownership "$@" 2> >(grep -vF "Confirm password:" >&2)
+tpmtakeownership "$OWNERPW" "$srkpw"
 
 echo "$OWNERPW" >"$TPM_OWNER_PASSWORD_FILE"
 

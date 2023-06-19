@@ -343,3 +343,21 @@ tpmunsealdata() {
     tpm_unsealdata "${_nosrkpass[@]}" -i "$_infile" -o "$_outfile" \
                  < "$SRK_PASSWORD_CACHE"
 }
+
+tpmtakeownership() {
+    # takes ownership of the TPM, accepts owner and SRK passwords in this order
+    _opw=$1
+    _srkpw=$2
+
+    _lines=( "$_opw" "$_opw" )
+    _nosrkpass=()
+    if [ -n "$_srkpw" ]; then
+        _lines+=( "$_srkpw" "$_srkpw" )
+    else
+        _nosrkpass=( -z )
+    fi
+
+    printf '%s\n' "${_lines[@]}" |
+      notty env LC_ALL=C tpm_takeownership "${_nosrkpass[@]}" \
+          2> >(grep -vF "Confirm password:" >&2)
+}
