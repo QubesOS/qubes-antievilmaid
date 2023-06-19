@@ -320,3 +320,9 @@ provisiontpmid() {
     # lock the area to prevent non-owners from changing ID
     tpm_nvwrite -i "$_tpm_id_index" -s 0
 }
+
+checksrkpass() {
+    # checks whether contents of $SRK_PASSWORD_CACHE file is a valid SRK
+    # password, signals result with exit code
+    tpm_sealdata -i /dev/null -o /dev/null < "$SRK_PASSWORD_CACHE"
+}

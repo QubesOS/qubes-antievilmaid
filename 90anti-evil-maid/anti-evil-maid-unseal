@@ -121,9 +121,8 @@ else
         log "Prompting for SRK password..."
 
         if systemd-ask-password --timeout=0 \
-                                "TPM SRK password to unseal the secret(s)" |
-           tee "$SRK_PASSWORD_CACHE" |
-           tpm_sealdata -i /dev/null -o /dev/null; then
+                                "TPM SRK password to unseal the secret(s)" \
+                                > "$SRK_PASSWORD_CACHE" && checksrkpass; then
              log "Correct SRK password"
              break
         fi
