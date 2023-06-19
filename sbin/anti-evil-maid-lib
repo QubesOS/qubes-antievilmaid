@@ -83,7 +83,7 @@ waitforenter() {
         message "$msg"
         plymouth watch-keystroke --keys=$'\n'
     else
-        systemd-ask-password --timeout=0 "$msg" >/dev/null
+        systemd-ask-password --timeout=0 --echo=no "$msg" >/dev/null
     fi
 }
 
