@@ -58,16 +58,15 @@ fi
 log "Mounting $DEV (\"$LABEL\")..."
 mkdir -p "$MNT"
 mount -t ext4 -o ro "$DEV" "$MNT"
+# this way an error prior to unmounting will keep the device usable after initrd
+trap 'umount "$MNT"' EXIT
 
 
 # setup TPM & copy secrets to initrd tmpfs
 
 log "Initializing TPM..."
 modprobe tpm_tis
-if ! validatetpm; then
-    umount "$MNT"
-    exit 1
-fi
+validatetpm || exit 1
 ip link set dev lo up
 mkdir -p "${TPMS_DIR%/*}"
 log "Copying sealed AEM secrets..."
@@ -85,6 +84,8 @@ SEALED_SECRET_FRE=$TPM_DIR/$LABEL/secret.fre.sealed2
 
 log "Unmounting $DEV (\"$LABEL\")..."
 umount "$MNT"
+# remove umount trap set after mount
+trap - EXIT
 
 if [ "$(blockdev --getro "$DEV")" = 1 ]; then
     message "You should now unplug the AEM device if it is intentionally read-only."
