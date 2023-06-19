@@ -103,7 +103,7 @@ while read -r luksid; do
                --header-backup-file "$LUKS_HEADER_DUMP"
     luks_header_hash=$(hashfile "$LUKS_HEADER_DUMP")
     log "Extending PCR $LUKS_PCR, value $luks_header_hash, device $luksid..."
-    tpm_pcr_extend "$LUKS_PCR" "$luks_header_hash"
+    tpmpcrextend "$LUKS_PCR" "$luks_header_hash"
 done
 
 

@@ -326,3 +326,10 @@ checksrkpass() {
     # password, signals result with exit code
     tpm_sealdata -i /dev/null -o /dev/null < "$SRK_PASSWORD_CACHE"
 }
+
+tpmpcrextend() {
+    # extends a PCR with a hash value of a suitable type
+    _pcr=$1
+    _hash=$2
+    tpm_pcr_extend "$_pcr" "$_hash"
+}
