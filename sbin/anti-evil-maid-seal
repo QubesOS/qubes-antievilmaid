@@ -8,13 +8,13 @@ trap 'rm -rf "$CACHE_DIR"' EXIT
 
 validatetpm || exit 1
 
-# Listing tcsd.service in anti-evil-maid-seal.service's Requires= and After=
+# Listing foo.service in anti-evil-maid-seal.service's Requires= and After=
 # would cause it to always be started (even when not booting in AEM mode or
 # when sealing is unnecessary) due to the way systemd evaluates conditions.
 # Putting the systemctl command in ExecStartPre= is also insufficient: The
 # user might want to run this script manually after changing the secret(s).
 
-systemctl start tcsd
+tpmstartservices
 
 if [ ! -e "$SUFFIX_CACHE" ] && [ $# -ne 1 ]; then
     message "AEM media suffix cache file does not exist"
@@ -60,7 +60,7 @@ if [ -n "$bad_pcrs" ]; then
 fi
 
 
-# regenerate the freshness token and store it's hash in TPM
+# regenerate the freshness token and store its hash in TPM
 
 head -c 20 /dev/random > "$AEM_DIR/$LABEL/secret.fre"
 updatefreshness "$AEM_DIR/$LABEL/secret.fre" "$LABEL_SUFFIX"

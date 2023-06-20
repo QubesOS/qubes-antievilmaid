@@ -94,7 +94,7 @@ if [ -z "$(getluksuuids)" ]; then
     exit 1
 fi
 
-systemctl start tcsd
+tpmstartservices
 
 # examine device
 

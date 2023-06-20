@@ -71,8 +71,7 @@ ip link set dev lo up
 mkdir -p "${TPMS_DIR%/*}"
 log "Copying sealed AEM secrets..."
 cp -Tr "$MNT/aem/${TPMS_DIR##*/}" "${TPMS_DIR}"
-tcsd_changer_identify
-tcsd
+tpmstartinitrdservices
 
 SEALED_SECRET_TXT=$TPM_DIR/$LABEL/secret.txt.sealed2
 SEALED_SECRET_KEY=$TPM_DIR/$LABEL/secret.key.sealed2

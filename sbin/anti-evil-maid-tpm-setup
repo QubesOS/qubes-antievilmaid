@@ -41,7 +41,7 @@ if [ $# = 0 ]; then  # set an SRK password
     done
 fi
 
-systemctl restart tcsd
+tpmrestartservices
 
 log "Taking ownership of the TPM..."
 tpmtakeownership "$OWNERPW" "$srkpw"

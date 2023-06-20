@@ -399,3 +399,17 @@ tpmtakeownership() {
 tpmresetdalock() {
     notty tpm_resetdalock <"$TPM_OWNER_PASSWORD_FILE"
 }
+
+tpmstartservices() {
+    systemctl start tcsd
+}
+
+tpmstartinitrdservices() {
+    tcsd_changer_identify
+    # it forks
+    tcsd
+}
+
+tpmrestartservices() {
+    systemctl restart tcsd
+}
