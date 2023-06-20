@@ -83,8 +83,7 @@ for ext in txt key otp fre; do
          [ "$output" -nt "$input" ] &&
          [ "$output" -nt /etc/anti-evil-maid.conf ]; then
         message "Skipped $input (already sealed)"
-    elif if [ ! -t 0 ]; then cat "$SRK_PASSWORD_CACHE"; fi |
-         tpm_sealdata $Z $SEAL -i "$input" -o "$output"; then
+    elif tpmsealdata "$Z" "$input" "$output"; then
         rm -f "${output%2}"
         SEALED=$((SEALED + 1))
         message "Sealed $input using $SEAL"

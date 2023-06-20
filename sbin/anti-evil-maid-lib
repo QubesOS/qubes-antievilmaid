@@ -342,6 +342,19 @@ tpmpcrextend() {
     tpm_pcr_extend "$_pcr" "$_hash"
 }
 
+tpmsealdata() {
+    # seals source specified by second argument into destination specified by
+    # the third one, non-empty first argument signifies empty SRK password
+    _nosrkpass=()
+    if [ -n "$1" ]; then
+        _nosrkpass=( -z )
+    fi
+    _input=$2
+    _output=$3
+    if [ ! -t 0 ]; then cat "$SRK_PASSWORD_CACHE"; fi |
+      tpm_sealdata "${_nosrkpass[@]}" $SEAL -i "$_input" -o "$_output"
+}
+
 tpmunsealdata() {
     # unseals source specified by second argument into destination specified by
     # the third one, non-empty first argument signifies empty SRK password
