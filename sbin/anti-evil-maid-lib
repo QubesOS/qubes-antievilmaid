@@ -241,7 +241,10 @@ synctpms() {
     _ids=$(ls "$TPMS_DIR")
     for _id in $_ids; do
         mkdir -p "$_mnt_tpms_dir/$_id"
-        cp "$TPMS_DIR/$_id/system.data" "$_mnt_tpms_dir/$_id"
+        # this file is used only with TPM1
+        if [ -f "$TPMS_DIR/$_id/system.data" ]; then
+            cp "$TPMS_DIR/$_id/system.data" "$_mnt_tpms_dir/$_id"
+        fi
 
         if [ -d "$TPMS_DIR/$_id/$_label" ]; then
             cp -r  "$TPMS_DIR/$_id/$_label" "$_mnt_tpms_dir/$_id"
