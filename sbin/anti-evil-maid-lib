@@ -372,3 +372,7 @@ tpmtakeownership() {
       notty env LC_ALL=C tpm_takeownership "${_nosrkpass[@]}" \
           2> >(grep -vF "Confirm password:" >&2)
 }
+
+tpmresetdalock() {
+    notty tpm_resetdalock <"$TPM_OWNER_PASSWORD_FILE"
+}
