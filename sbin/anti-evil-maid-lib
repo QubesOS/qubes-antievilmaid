@@ -300,6 +300,13 @@ validatetpm() {
     return 0
 }
 
+listbadpcrs() {
+    # prints those standard PCRs configured to be used via $SEAL which haven't
+    # been extended, output is empty there are no such PCRs
+    _pcrs=$(printf %s "$SEAL" | grep -Eo '\b1[3789]\b') || true
+    grep -E "^PCR-(${_pcrs//$'\n'/|}):( 00| FF){20}" "$SYSFS_TPM_DIR"/pcrs
+}
+
 tpmowned() {
     # checks whether TPM is already owned, signals results with exit code
     [ "$(cat "$SYSFS_TPM_DIR"/owned)" -ne 0 ]

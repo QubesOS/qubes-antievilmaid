@@ -51,11 +51,10 @@ esac
 
 # ensure that all standard PCRs configured to be used have been extended
 
-pcrs=$(printf %s "$SEAL" | grep -Eo '\b1[3789]\b') || true
-
-if grep -E "^PCR-(${pcrs//$'\n'/|}):( 00| FF){20}" "$SYSFS_TPM_DIR"/pcrs;
-   [ $? != 1 ]; then
+bad_pcrs=$(listbadpcrs) || true
+if [ -n "$bad_pcrs" ]; then
     message "PCR sanity check failed!"
+    message "Bad PCRs:"$'\n'"$bad_pcrs"
     message "See /usr/share/doc/anti-evil-maid/README for details."
     exit 1
 fi
