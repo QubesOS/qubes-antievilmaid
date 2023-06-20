@@ -1,0 +1,220 @@
+checktpmnvram() {
+    # checks whether the TPM NVRAM area is defined
+    # NOTE: tpm_nvinfo does not return non-zero if requested index
+    # is not a defined NVRAM area so we need to parse
+    if ! tpm_nvinfo -i "$TPM_FRESHNESS_INDEX" | grep -q 'AUTHWRITE'; then
+        return 1
+    fi
+}
+
+createtpmnvram() {
+    # create the world-readable/AUTHWRITE TPM NVRAM area to hold up to
+    # TPM_FRESHNESS_SLOTS anti-replay freshness token hashes;
+    # takes TPM owner password as an agument
+    if [ ! -e "$TPM_FRESHNESS_PASSWORD_FILE" ]; then
+        message "Generating TPM NVRAM area AUTHWRITE password"
+        head -c 16 /dev/random | hex > "$TPM_FRESHNESS_PASSWORD_FILE"
+    fi
+
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+
+    if ! tpm_nvdefine -i "$TPM_FRESHNESS_INDEX" \
+            -s $((TPM_FRESHNESS_SLOTS * 20)) \
+            -p AUTHWRITE --pwda="$_pw" --pwdo="$1"; then
+        return 1
+    fi
+}
+
+hashfile() {
+    # computes hash of a file passed as the only argument
+    _path=$1
+    sha1sum "$_path" | cut -d ' ' -f 1
+}
+
+checkfreshness() {
+    # check whether hash of an usealed freshness token (file path
+    # given as an argument) is contained in TPM NVRAM area
+    _hash=$(hashfile "$1")
+    _lastslot=$((TPM_FRESHNESS_SLOTS - 1))
+    for _i in $(seq 0 $_lastslot); do
+        _slot=$(tpm_nvread_stdout -i "$TPM_FRESHNESS_INDEX" \
+            -n "$((_i * 20))" -s 20 | hex)
+        if [ "$_hash" == "$_slot" ]; then
+            return 0
+        fi
+    done
+    message "Freshness token does not match any slot in TPM NVRAM!"
+    return 1
+}
+
+updatefreshness() {
+    # takes a path to the new freshness token as an argument and
+    # stores its sha1 hash in the appropriate freshness token slot
+    # of the TPM NVRAM area; second argument is the AEM boot device
+    # label suffix
+    if [ ! -e "$TPM_FRESHNESS_PASSWORD_FILE" ]; then
+        message "TPM NVRAM area AUTHWRITE password file does not exist!"
+        return 1
+    fi
+
+    if ! _slot=$(suffixtoslot "$2"); then
+        message "Suffix '$2' not in DB, attempting to create..."
+        if ! _slot=$(assignslottosuffix "$2"); then
+            message "Failed to add suffix '$2' into DB!"
+            return 1
+        fi
+    fi
+
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+    hashfile "$1" | unhex \
+    | tpm_nvwrite_stdin -i "$TPM_FRESHNESS_INDEX" \
+      -n "$((_slot * 20))" -s 20 --password="$_pw"
+}
+
+revokefreshness() {
+    # invalidates the freshness token of a specified AEM media (by its
+    # label suffix
+    _suff=$1
+    if _slot=$(suffixtoslot "$_suff"); then
+        message "Revoking freshness token for AEM media w/ suffix '$_suff'..."
+        _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+        if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
+                -n "$((_slot * 20))" -s 20 \
+                --password="$_pw" -m "0xff"; then
+            message "Done."
+        else
+            message "Failed!"
+        fi
+    else
+        message "AEM device with label suffix '$_suff' not found in DB!"
+    fi
+}
+resetfreshness() {
+    # invalidates ALL freshness tokens
+    message "Invalidating **ALL** freshness tokens..."
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+    if tpm_nvwrite -i "$TPM_FRESHNESS_INDEX" \
+            -s "$((TPM_FRESHNESS_SLOTS * 20))" \
+            --password="$_pw" -m "0xff"; then
+        message "Done."
+    else
+        message "Failed!"
+    fi
+}
+
+destroytpmnvram() {
+    # releases the TPM NVRAM area; TPM owner pw as first argument
+    tpm_nvrelease -i "$TPM_FRESHNESS_INDEX" --pwdo="$1"
+}
+
+listbadpcrs() {
+    # prints those standard PCRs configured to be used via $SEAL which haven't
+    # been extended, output is empty there are no such PCRs
+    _pcrs=$(printf %s "$SEAL" | grep -Eo '\b1[3789]\b') || true
+    grep -E "^PCR-(${_pcrs//$'\n'/|}):( 00| FF){20}" "$SYSFS_TPM_DIR"/pcrs
+}
+
+tpmowned() {
+    # checks whether TPM is already owned, signals results with exit code
+    [ "$(cat "$SYSFS_TPM_DIR"/owned)" -ne 0 ]
+}
+
+provisiontpmid() {
+    # stores TPM ID into an NVRAM entry 
+    _tpm_id_index=$(tpm_id -i)
+    _opw=$(cat "$TPM_OWNER_PASSWORD_FILE")
+    # create a write-once NVRAM area
+    tpm_nvdefine -i "$_tpm_id_index" -s 20 -p "WRITEDEFINE|WRITEALL" \
+                 --pwdo="$_opw"
+    # generate a random ID and write it into NVRAM
+    head -c 20 /dev/random | tpm_nvwrite_stdin -i "$_tpm_id_index" -s 20
+    # lock the area to prevent non-owners from changing ID
+    tpm_nvwrite -i "$_tpm_id_index" -s 0
+}
+
+postprovisioning() {
+    # takes care of updating /var/lib/tpms after a successful provisioning by
+    # provisiontpmid
+    _tpmid=$(tpm_id)
+    mkdir -p "/var/lib/tpms/$_tpmid"
+    systemctl stop tcsd
+    mv "$TPMS_DIR"/unknown/* "$TPMS_DIR/$_tpmid/"
+    rm -rf "$TPMS_DIR/unknown"
+    systemctl start tcsd
+}
+
+checksrkpass() {
+    # checks whether contents of $SRK_PASSWORD_CACHE file is a valid SRK
+    # password, signals result with exit code
+    tpm_sealdata -i /dev/null -o /dev/null < "$SRK_PASSWORD_CACHE"
+}
+
+tpmpcrextend() {
+    # extends a PCR with a hash value of a suitable type
+    _pcr=$1
+    _hash=$2
+    tpm_pcr_extend "$_pcr" "$_hash"
+}
+
+tpmsealdata() {
+    # seals source specified by second argument into destination specified by
+    # the third one, non-empty first argument signifies empty SRK password
+    _nosrkpass=()
+    if [ -n "$1" ]; then
+        _nosrkpass=( -z )
+    fi
+    _input=$2
+    _output=$3
+    # shellcheck disable=SC2086
+    if [ ! -t 0 ]; then cat "$SRK_PASSWORD_CACHE"; fi |
+      tpm_sealdata "${_nosrkpass[@]}" $SEAL -i "$_input" -o "$_output"
+}
+
+tpmunsealdata() {
+    # unseals source specified by second argument into destination specified by
+    # the third one, non-empty first argument signifies empty SRK password
+    _nosrkpass=()
+    if [ -n "$1" ]; then
+        _nosrkpass=( -z )
+    fi
+    _infile=$2
+    _outfile=$3
+    tpm_unsealdata "${_nosrkpass[@]}" -i "$_infile" -o "$_outfile" \
+                 < "$SRK_PASSWORD_CACHE"
+}
+
+tpmtakeownership() {
+    # takes ownership of the TPM, accepts owner and SRK passwords in this order
+    _opw=$1
+    _srkpw=$2
+
+    _lines=( "$_opw" "$_opw" )
+    _nosrkpass=()
+    if [ -n "$_srkpw" ]; then
+        _lines+=( "$_srkpw" "$_srkpw" )
+    else
+        _nosrkpass=( -z )
+    fi
+
+    printf '%s\n' "${_lines[@]}" |
+      notty env LC_ALL=C tpm_takeownership "${_nosrkpass[@]}" \
+          2> >(grep -vF "Confirm password:" >&2)
+}
+
+tpmresetdalock() {
+    notty tpm_resetdalock <"$TPM_OWNER_PASSWORD_FILE"
+}
+
+tpmstartservices() {
+    systemctl start tcsd
+}
+
+tpmstartinitrdservices() {
+    tcsd_changer_identify
+    # it forks
+    tcsd
+}
+
+tpmrestartservices() {
+    systemctl restart tcsd
+}

@@ -20,7 +20,7 @@ install() {
     inst $systemdsystemunitdir/cryptsetup-pre.target
 
     dracut_install \
-        /usr/sbin/anti-evil-maid-lib \
+        /usr/sbin/anti-evil-maid-lib* \
         base32 \
         blockdev \
         clear \
