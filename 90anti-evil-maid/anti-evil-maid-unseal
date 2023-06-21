@@ -111,7 +111,7 @@ done
 mkdir -p "$CACHE_DIR"
 echo "${LABEL##"$LABEL_PREFIX"}" >"$SUFFIX_CACHE"
 
-Z=$(tpm_z_srk)
+Z=$(tpmzsrk)
 
 if [ -n "$Z" ]; then
     true >"$SRK_PASSWORD_CACHE"

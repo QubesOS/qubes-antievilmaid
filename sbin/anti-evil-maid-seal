@@ -38,7 +38,7 @@ trap '_failure $LINENO' ERR
 # shellcheck source=../etc/anti-evil-maid.conf
 source /etc/anti-evil-maid.conf
 tpmresetdalock || true
-Z=$(tpm_z_srk)
+Z=$(tpmzsrk)
 LABEL_SUFFIX=${1-$(cat "$SUFFIX_CACHE")}
 LABEL=$LABEL_PREFIX$LABEL_SUFFIX
 
