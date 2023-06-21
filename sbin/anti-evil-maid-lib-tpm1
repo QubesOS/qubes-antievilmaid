@@ -1,3 +1,7 @@
+tpmid() {
+    tpm_id
+}
+
 checktpmnvram() {
     # checks whether the TPM NVRAM area is defined
     # NOTE: tpm_nvinfo does not return non-zero if requested index

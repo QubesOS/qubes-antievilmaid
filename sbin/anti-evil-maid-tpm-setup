@@ -52,7 +52,7 @@ echo "$OWNERPW" >"$TPM_OWNER_PASSWORD_FILE"
 # - generate NVRAM ID
 
 alias provisioned_id=false
-if [[ $(tpm_id 2>/dev/null) == "unknown" ]]; then
+if [[ $(tpmid 2>/dev/null) == "unknown" ]]; then
     # TPM reset does not clear NVRAM, reusing old ID is fine though
     log "Creating TPM ID..."
     provisiontpmid
