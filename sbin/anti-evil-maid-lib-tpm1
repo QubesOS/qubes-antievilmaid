@@ -210,7 +210,7 @@ tpmstartservices() {
 }
 
 tpmstartinitrdservices() {
-    tcsd_changer_identify
+    trousers_changer_identify
     # it forks
     tcsd
 }

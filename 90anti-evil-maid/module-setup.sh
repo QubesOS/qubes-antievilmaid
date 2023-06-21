@@ -43,7 +43,7 @@ install() {
         sort \
         tail \
         tcsd \
-        tcsd_changer_identify \
+        trousers_changer_identify \
         tee \
         tpm_id \
         tpm_nvinfo \
