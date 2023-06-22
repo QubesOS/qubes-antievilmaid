@@ -134,7 +134,8 @@ fi
 # check freshness token
 
 log "Unsealing freshness token..."
-if tpmunsealdata "$Z" "$SEALED_SECRET_FRE" "$UNSEALED_SECRET"; then
+if tpmunsealdata "$Z" "$SEALED_SECRET_FRE" "$UNSEALED_SECRET" \
+                 "$TPM_DIR/$LABEL"; then
     log "Freshness token unsealed."
     true >"$CACHE_DIR/unseal-success"
 else
@@ -164,7 +165,8 @@ fi
 
 if otp; then
     log "Unsealing TOTP shared secret seed..."
-    if tpmunsealdata "$Z" "$SEALED_SECRET_OTP" "$UNSEALED_SECRET"; then
+    if tpmunsealdata "$Z" "$SEALED_SECRET_OTP" "$UNSEALED_SECRET" \
+                     "$TPM_DIR/$LABEL"; then
         log "TOTP secret unsealed."
 
         message ""
@@ -188,7 +190,8 @@ if otp; then
         } &
         totp_loop_pid=$!
 
-        if tpmunsealdata "$Z" "$SEALED_SECRET_KEY" "$UNSEALED_SECRET"; then
+        if tpmunsealdata "$Z" "$SEALED_SECRET_KEY" "$UNSEALED_SECRET" \
+                         "$TPM_DIR/$LABEL"; then
             for _ in 1 2 3; do
                 pass=$(systemd-ask-password --timeout=0 \
                        'LUKS key file password (or "t" to show text secret)')
@@ -222,7 +225,8 @@ fi
 
 if ! otp; then
     log "Unsealing text secret..."
-    if tpmunsealdata "$Z" "$SEALED_SECRET_TXT" "$UNSEALED_SECRET"; then
+    if tpmunsealdata "$Z" "$SEALED_SECRET_TXT" "$UNSEALED_SECRET" \
+                     "$TPM_DIR/$LABEL"; then
         {
             message ""
             message "$(cat "$UNSEALED_SECRET" 2>/dev/null)"

@@ -166,7 +166,8 @@ tpmpcrextend() {
 
 tpmsealdata() {
     # seals source specified by second argument into destination specified by
-    # the third one, non-empty first argument signifies empty SRK password
+    # the third one, non-empty first argument signifies empty SRK password, the
+    # forth argument specifies path to AEM media-specific storage
     _nosrkpass=()
     if [ -n "$1" ]; then
         _nosrkpass=( -z )
@@ -180,7 +181,8 @@ tpmsealdata() {
 
 tpmunsealdata() {
     # unseals source specified by second argument into destination specified by
-    # the third one, non-empty first argument signifies empty SRK password
+    # the third one, non-empty first argument signifies empty SRK password, the
+    # forth argument specifies path to AEM media-specific storage
     _nosrkpass=()
     if [ -n "$1" ]; then
         _nosrkpass=( -z )
