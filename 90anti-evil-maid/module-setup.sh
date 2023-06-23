@@ -46,6 +46,7 @@ install() {
         trousers_changer_identify \
         tee \
         tpm_id \
+        tpm2_id \
         tpm_nvinfo \
         tpm_nvread \
         tpm_nvread_stdout \
@@ -53,6 +54,7 @@ install() {
         tpm_sealdata \
         tpm_unsealdata \
         tpm_z_srk \
+        tpm2_z_srk \
         tr \
         uniq \
         wc \
@@ -66,7 +68,6 @@ install() {
         tpm2_create \
         tpm2_createprimary \
         tpm2_evictcontrol \
-        tpm2_encryptdecrypt \
         tpm2_flushcontext \
         tpm2_load \
         tpm2_nvdefine \
@@ -80,6 +81,11 @@ install() {
         tpm2_policycommandcode \
         tpm2_startauthsession \
         tpm2_unseal
+    # other utilities
+    dracut_install \
+        mktemp \
+        openssl \
+        sha256sum
     # such tpm2-tss libraries must be listed explicitly because they are
     # discovered at runtime instead of being linked to during build
     dracut_install \

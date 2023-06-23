@@ -8,7 +8,7 @@ Requires:	trousers-changer >= 4.0.0
 Requires:	systemd >= 227
 Requires:	coreutils >= 8.25-2
 Requires:	scrypt qrencode oathtool
-Requires:	tpm2-tools
+Requires:	tpm2-tools openssl
 Requires(post):	dracut grub2-tools tboot systemd
 Obsoletes:	anti-evil-maid-dracut
 Vendor:		Invisible Things Lab
@@ -45,6 +45,7 @@ cp -r systemd $RPM_BUILD_ROOT/usr/lib
 /usr/sbin/anti-evil-maid-install
 /usr/sbin/anti-evil-maid-lib
 /usr/sbin/anti-evil-maid-lib-tpm1
+/usr/sbin/anti-evil-maid-lib-tpm2
 /usr/sbin/anti-evil-maid-seal
 /usr/sbin/anti-evil-maid-tpm-setup
 /usr/share/doc/anti-evil-maid/README

@@ -1,0 +1,324 @@
+# Value recommended by TCG TPM v2.0 Provisioning Guidance
+# https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-v2.0-Provisioning-Guidance-Published-v1r1.pdf
+# in Table 2
+TPM2_SRK_HANDLE=0x81000001
+
+# this is necessary for anti-evil-maid-seal to not try to use tarbmd TCTI which
+# has large timeouts for trying to connect with tpm2-abrmd which isn't running
+export TPM2TOOLS_TCTI="device:/dev/tpm0"
+
+# make sure we're not leaving any temporary state in the TPM (some very
+# unobvious commands create sessions/objects), this way if tpm2-abrmd will be
+# used later, its idea about the initial contents of the TPM being empty will
+# be correct (otherwise you can get "out of memory", but tpm2_getcap won't show
+# anything and tpm2_flushcontext won't clean anything unless $TPM2TOOLS_TCTI
+# is set as above)
+trap 'tpm2_flushcontext -tls' EXIT
+
+tpmid() {
+    tpm2_id
+}
+
+tpmzsrk() {
+    tpm2_z_srk
+}
+
+checktpmnvram() {
+    # checks whether the TPM NVRAM area is defined
+    # NOTE: tpm2_nvreadpublic returns all defined NV indices so we need to parse
+    tpm2_nvreadpublic | grep "$TPM_FRESHNESS_INDEX" -A 7 | grep -q 'authwrite'
+}
+
+createtpmnvram() {
+    # create the world-readable/AUTHWRITE TPM NVRAM area to hold up to
+    # TPM_FRESHNESS_SLOTS anti-replay freshness token hashes;
+    # takes TPM owner password as an agument
+    if [ ! -e "$TPM_FRESHNESS_PASSWORD_FILE" ]; then
+        message "Generating TPM NVRAM area AUTHWRITE password"
+        head -c 16 /dev/random | hex > "$TPM_FRESHNESS_PASSWORD_FILE"
+    fi
+
+    _opw=$1
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+    _session="$(mktemp)"
+    _policy="$(mktemp)"
+    tpm2_startauthsession -S "$_session"
+    tpm2_policycommandcode -Q -S "$_session" -L "$_policy" \
+                           TPM2_CC_NV_Read
+    tpm2_flushcontext "$_session"
+    rm "$_session"
+    tpm2_nvdefine -Q "$TPM_FRESHNESS_INDEX" \
+                  -L "$_policy" \
+                  -a "policyread|authread|authwrite" \
+                  -s $((TPM_FRESHNESS_SLOTS * 32)) \
+                  -P "$_opw" -p "$_pw"
+    rm "$_policy"
+}
+
+hashfile() {
+    # computes hash of a file passed as the only argument
+    _path=$1
+    sha256sum "$_path" | cut -d ' ' -f 1
+}
+
+checkfreshness() {
+    # check whether hash of an usealed freshness token (file path
+    # given as an argument) is contained in TPM NVRAM area
+    _hash=$(hashfile "$1")
+    _lastslot=$((TPM_FRESHNESS_SLOTS - 1))
+    tpm2_startauthsession -S "$CACHE_DIR/session" --policy-session
+    tpm2_policycommandcode -Q -S "$CACHE_DIR/session" TPM2_CC_NV_Read
+    for _i in $(seq 0 $_lastslot); do
+        _slot=$(tpm2_nvread "$TPM_FRESHNESS_INDEX" \
+                            -P "session:$CACHE_DIR/session" \
+                            --offset="$((_i * 32))" -s 32 | hex)
+        if [ "$_hash" == "$_slot" ]; then
+            tpm2_flushcontext "$CACHE_DIR/session"
+            return 0
+        fi
+    done
+    tpm2_flushcontext "$CACHE_DIR/session"
+    message "Freshness token does not match any slot in TPM NVRAM!"
+    return 1
+}
+
+updatefreshness() {
+    # takes a path to the new freshness token as an argument and
+    # stores its hash in the appropriate freshness token slot
+    # of the TPM NVRAM area; second argument is the AEM boot device
+    # label suffix
+    _file=$1
+    if [ ! -e "$TPM_FRESHNESS_PASSWORD_FILE" ]; then
+        message "TPM NVRAM area AUTHWRITE password file does not exist!"
+        return 1
+    fi
+
+    if ! _slot=$(suffixtoslot "$2"); then
+        message "Suffix '$2' not in DB, attempting to create..."
+        if ! _slot=$(assignslottosuffix "$2"); then
+            message "Failed to add suffix '$2' into DB!"
+            return 1
+        fi
+    fi
+
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+    hashfile "$_file" | unhex |
+      tpm2_nvwrite "$TPM_FRESHNESS_INDEX" -i - \
+                   --offset "$((_slot * 32))" -P "$_pw"
+}
+
+ffbytestream() {
+    _count=$1
+    tr '\0' '\377' < /dev/zero | dd bs="$_count" count=1
+}
+
+revokefreshness() {
+    # invalidates the freshness token of a specified AEM media (by its
+    # label suffix
+    _suff=$1
+    if _slot=$(suffixtoslot "$_suff"); then
+        message "Revoking freshness token for AEM media w/ suffix '$_suff'..."
+        _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+        if ffbytestream 32 |
+             tpm2_nvwrite "$TPM_FRESHNESS_INDEX" \
+                          --offset "$((_slot * 32))" \
+                          -P "$_pw" -i - ; then
+            message "Done."
+        else
+            message "Failed!"
+        fi
+    else
+        message "AEM device with label suffix '$_suff' not found in DB!"
+    fi
+}
+
+resetfreshness() {
+    # invalidates ALL freshness tokens
+    message "Invalidating **ALL** freshness tokens..."
+    _pw=$(cat "$TPM_FRESHNESS_PASSWORD_FILE")
+    if ffbytestream "$((TPM_FRESHNESS_SLOTS * 32))" |
+         tpm2_nvwrite "$TPM_FRESHNESS_INDEX" \
+                      -P "$_pw" -i - ; then
+        message "Done."
+    else
+        message "Failed!"
+    fi
+}
+
+destroytpmnvram() {
+    # releases the TPM NVRAM area; TPM owner pw as first argument
+    _pw=$1
+    tpm2_nvundefine "$TPM_FRESHNESS_INDEX" -C owner -P "$_pw"
+}
+
+listbadpcrs() {
+    # prints those standard PCRs configured to be used via $SEAL which haven't
+    # been extended, output is empty there are no such PCRs
+    _pcrs=$(printf %s "$SEAL" | grep -Eo '\b1[3789]\b') || true
+    tpm2_pcrread "sha256:${_pcrs//$'\n'/,}" | grep -E ": 0x((00){32}|(FF){32})"
+}
+
+tpmowned() {
+    # checks whether TPM is already owned, signals results with exit code
+    ! tpm2_changeauth --quiet -c owner 2>/dev/null
+}
+
+provisiontpmid() {
+    # stores TPM ID into an NVRAM entry
+    _tpm_id_index=$(tpm2_id -i)
+    _opw=$(cat "$TPM_OWNER_PASSWORD_FILE")
+    # create a write-once and read-by-anyone NVRAM area
+    _session="$(mktemp)"
+    _policy="$(mktemp)"
+    tpm2_startauthsession -S "$_session"
+    tpm2_policycommandcode -Q -S "$_session" -L "$_policy" TPM2_CC_NV_Read
+    tpm2_flushcontext "$_session"
+    rm "$_session"
+    tpm2_nvdefine -Q -s 20 -P "$_opw" -L "$_policy" "$_tpm_id_index" \
+                  -a "policyread|writedefine|writeall|ownerwrite|ownerread"
+    rm "$_policy"
+    # generate a random ID and write it into NVRAM
+    head -c 20 /dev/random |
+      tpm2_nvwrite -Q -C o -P "$_opw" -i - "$_tpm_id_index"
+    # lock the area to prevent changing the ID even by the owner
+    tpm2_nvwritelock -C o -P "$_opw" "$_tpm_id_index"
+}
+
+postprovisioning() {
+    # takes care of updating /var/lib/tpms after a successful provisioning by
+    # provisiontpmid
+    _tpmid=$(tpm2_id)
+    mkdir -p "/var/lib/tpms/$_tpmid"
+}
+
+checksrkpass() {
+    # checks whether contents of $SRK_PASSWORD_CACHE file is a valid SRK
+    # password, signals result with exit code
+
+    # `echo` is needed because empty input doesn't work and `echo` it provides
+    # '\n'
+    echo | tpm2_create -Q -C "$TPM2_SRK_HANDLE" -i - \
+                       -P "str:$(cat "$SRK_PASSWORD_CACHE")"
+}
+
+tpmpcrextend() {
+    # extends a PCR with a hash value of a suitable type
+    _pcr=$1
+    _hash=$2
+    tpm2_pcrextend "$_pcr:sha256=$_hash"
+}
+
+tpmsealprepare() {
+    # does necessary preparations before the use of tpmsealdata, accepts path
+    # to media-specific storage of sealed data
+    _dir=$1
+
+    # this recreates a sealing key on every run to pick up configuration/PCR
+    # changes if there were any
+
+    _pcrs=$(printf %s "$SEAL" | grep -Eo '\b[0-9]+\b')
+    _pcrs=sha256:${_pcrs//$'\n'/,}
+
+    _policy="$(mktemp)"
+    _session="$(mktemp)"
+
+    # make a suitable PCR policy
+    tpm2_startauthsession -S "$_session"
+    tpm2_policypcr -Q -S "$_session" -l "$_pcrs" -L "$_policy"
+    tpm2_flushcontext "$_session"
+    rm "$_session"
+
+    tpm2_flushcontext -t || return 1
+
+    # make a key for sealing
+    head -c 16 /dev/random |
+        tpm2_create -Q -C "$TPM2_SRK_HANDLE" \
+                    -P "str:$(cat "$SRK_PASSWORD_CACHE")" \
+                    -L "$_policy" -i - -u "$_dir/key.pub" -r "$_dir/key.priv"
+    echo "$_pcrs" > "$_dir/key.pcrs"
+
+    rm "$_policy"
+}
+
+tpmsealdata() {
+    # seals source specified by second argument into destination specified by
+    # the third one, non-empty first argument signifies empty SRK password, the
+    # forth argument specifies path to AEM media-specific storage
+    _infile=$2
+    _outfile=$3
+    _dir=$4
+
+    _ctx="$(mktemp)"
+    tpm2_load -Q -C "$TPM2_SRK_HANDLE" -P "str:$(cat "$SRK_PASSWORD_CACHE")" \
+              --private "$_dir/key.priv" --public "$_dir/key.pub" \
+              -c "$_ctx" || return 1
+
+    tpm2_unseal -Q -c "$_ctx" -p "pcr:$_pcrs" | hex |
+        openssl enc -aes-256-ctr -pbkdf2 -e \
+                    -kfile - -in "$_infile" -out "$_outfile" || return 1
+
+    tpm2_flushcontext -t || return 1
+    rm "$_ctx"
+}
+
+tpmunsealdata() {
+    # unseals source specified by second argument into destination specified by
+    # the third one, non-empty first argument signifies empty SRK password, the
+    # forth argument specifies path to AEM media-specific storage
+    #
+    # there is not need to handle the first argument, empty $SRK_PASSWORD_CACHE
+    # file will do
+    _infile=$2
+    _outfile=$3
+    _dir=$4
+
+    _pcrs=$(cat "$_dir/key.pcrs")
+    _ctx="$(mktemp)"
+    tpm2_load -Q -C "$TPM2_SRK_HANDLE" -P "str:$(cat "$SRK_PASSWORD_CACHE")" \
+              --private "$_dir/key.priv" --public "$_dir/key.pub" \
+              -c "$_ctx" 2>/dev/null || return 1
+
+    tpm2_unseal -Q -c "$_ctx" -p "pcr:$_pcrs" | hex |
+        openssl enc -aes-256-ctr -pbkdf2 -d \
+                    -kfile - -in "$_infile" -out "$_outfile" || return 1
+
+    tpm2_flushcontext -t || return 1
+    rm "$_ctx"
+}
+
+tpmtakeownership() {
+    # takes ownership of the TPM, accepts owner and SRK passwords in this order
+    _opw=$1
+    _srkpw=$2
+    tpm2_changeauth --quiet -c owner "$_opw"
+    # use the same password for lockout handle
+    tpm2_changeauth --quiet -c lockout "$_opw"
+
+    _srkctx="$(mktemp)"
+    tpm2_createprimary -Q --hierarchy=o \
+                       --key-context="$_srkctx" \
+                       --key-auth="$_srkpw" \
+                       -P "$_opw"
+    # make SRK key persistent
+    tpm2_evictcontrol -Q -C o -P "$_opw" -c "$_srkctx" "$TPM2_SRK_HANDLE"
+    rm "$_srkctx"
+}
+
+tpmresetdalock() {
+    tpm2_dictionarylockout -p "$(cat "$TPM_OWNER_PASSWORD_FILE")" \
+                           --clear-lockout
+}
+
+tpmstartservices() {
+    trousers_changer_migrate || true
+    trousers_changer_identify
+}
+
+tpmstartinitrdservices() {
+    trousers_changer_identify
+}
+
+tpmrestartservices() {
+    trousers_changer_migrate 2>/dev/null || true
+    trousers_changer_identify 2>/dev/null
+}
