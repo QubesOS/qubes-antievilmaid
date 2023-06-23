@@ -69,19 +69,15 @@ updatefreshness "$AEM_DIR/$LABEL/secret.fre" "$LABEL_SUFFIX"
 # seal and save secret(s) to root partition
 
 mkdir -p "$TPM_DIR/$LABEL"
+tpmsealprepare "$TPM_DIR/$LABEL"
 
 SEALED=0
 for ext in txt key otp fre; do
      input=$AEM_DIR/$LABEL/secret.$ext
     output=$TPM_DIR/$LABEL/secret.$ext.sealed2
 
-    # shellcheck disable=SC2086
     if [ ! -e "$input" ]; then
         message "Absent $input"
-    elif [ -e "$CACHE_DIR"/unseal-success ] &&
-         [ "$output" -nt "$input" ] &&
-         [ "$output" -nt /etc/anti-evil-maid.conf ]; then
-        message "Skipped $input (already sealed)"
     elif tpmsealdata "$Z" "$input" "$output" "$TPM_DIR/$LABEL"; then
         rm -f "${output%2}"
         SEALED=$((SEALED + 1))

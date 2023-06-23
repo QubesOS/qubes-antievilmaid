@@ -164,6 +164,12 @@ tpmpcrextend() {
     tpm_pcr_extend "$_pcr" "$_hash"
 }
 
+tpmsealprepare() {
+    # does necessary preparations before the use of tpmsealdata, accepts path
+    # to media-specific storage of sealed data
+    true # nothing to do for TPM1
+}
+
 tpmsealdata() {
     # seals source specified by second argument into destination specified by
     # the third one, non-empty first argument signifies empty SRK password, the
