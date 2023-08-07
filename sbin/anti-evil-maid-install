@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+shopt -s expand_aliases
 . anti-evil-maid-lib
 LABEL_SUFFIX_CHARS=0-9a-zA-Z=.-
 BOOT_DIR=/boot
