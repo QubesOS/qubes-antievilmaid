@@ -17,6 +17,14 @@ LUKS_PCR=13
 PLYMOUTH_MESSAGES=()
 
 plymouth_message() {
+    if [ "${#PLYMOUTH_MESSAGES[@]}" -eq 0 ]; then
+        # add vertical "padding" to avoid printing messages over plymouth's
+        # prompt help
+        plymouth message --text=""
+        plymouth message --text=""
+        plymouth message --text=""
+    fi
+
     plymouth message --text="$*"
     PLYMOUTH_MESSAGES+=("$*")
 }
