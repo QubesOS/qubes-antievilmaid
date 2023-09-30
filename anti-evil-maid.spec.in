@@ -2,14 +2,14 @@ Name:		anti-evil-maid
 Version:	@VERSION@
 Release:	1%{?dist}
 Summary:    	Anti Evil Maid for initramfs-based systems.
-Requires:	dracut grub2-tools parted tboot tpm-tools
+Requires:	dracut grub2-tools parted tpm-tools
 Requires:	tpm-extra >= 4.0.0
 Requires:	trousers-changer >= 4.0.0
 Requires:	systemd >= 227
 Requires:	coreutils >= 8.25-2
 Requires:	scrypt qrencode oathtool
 Requires:	tpm2-tools openssl
-Requires(post):	dracut grub2-tools tboot systemd
+Requires(post):	dracut grub2-tools systemd
 Obsoletes:	anti-evil-maid-dracut
 Vendor:		Invisible Things Lab
 License:	GPL
@@ -80,9 +80,6 @@ if [ "$1" = 0 ]; then
     %refresh
     chmod -f +x %trenchboot_grub || true
 fi
-
-%triggerin -- tboot
-chmod -x %trenchboot_grub
 
 %changelog
 @CHANGELOG@
