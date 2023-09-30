@@ -3,6 +3,7 @@ set -e
 
 # grub-mkconfig helper script.
 # Copyright (C) 2006,2007,2008,2009,2010  Free Software Foundation, Inc.
+# Copyright (C) 2023 3mdeb Sp. z o.o.
 #
 # GRUB is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -117,28 +118,28 @@ linux_entry ()
     prepare_boot_cache="$(prepare_grub_to_access_device ${GRUB_DEVICE_BOOT} | grub_add_tab)"
   fi
   printf '%s\n' "${prepare_boot_cache}" | sed "s/^/$submenu_indentation/"
-  tmessage="$(gettext_printf "Loading tboot ...")"
+  tmessage="$(gettext_printf "Enabling slaunch ...")"
   xmessage="$(gettext_printf "Loading Xen %s ..." ${xen_version})"
   lmessage="$(gettext_printf "Loading Linux %s ..." ${version})"
   sed "s/^/$submenu_indentation/" << EOF
 	echo	'$(echo "$tmessage" | grub_quote)'
-	multiboot	/tboot.gz placeholder logging=memory,serial ${GRUB_CMDLINE_TBOOT}
+	slaunch
 	echo	'$(echo "$xmessage" | grub_quote)'
         if [ "\$grub_platform" = "pc" -o "\$grub_platform" = "" ]; then
             xen_rm_opts=
         else
             xen_rm_opts="no-real-mode edd=off"
         fi
-	module	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args} \${xen_rm_opts}
+	multiboot2	${rel_xen_dirname}/${xen_basename} placeholder ${xen_args} \${xen_rm_opts}
 	echo	'$(echo "$lmessage" | grub_quote)'
-	module	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} aem.uuid=${GRUB_DEVICE_BOOT_UUID} rd.luks.key=/tmp/aem-keyfile rd.luks.crypttab=no
+	module2	${rel_dirname}/${basename} placeholder root=${linux_root_device_thisversion} ro ${args} aem.uuid=${GRUB_DEVICE_BOOT_UUID} rd.luks.key=/tmp/aem-keyfile rd.luks.crypttab=no
 EOF
   if test -n "${initrd}" ; then
     # TRANSLATORS: ramdisk isn't identifier. Should be translated.
     message="$(gettext_printf "Loading initial ramdisk ...")"
     sed "s/^/$submenu_indentation/" << EOF
 	echo	'$(echo "$message" | grub_quote)'
-	module	${rel_dirname}/${initrd}
+	module2	${rel_dirname}/${initrd}
 EOF
   fi
   if test -n "${sinit_module_list}" ; then
@@ -147,7 +148,7 @@ EOF
       message="$(gettext_printf "Loading SINIT module %s ..." ${sinit_module})"
       sed "s/^/$submenu_indentation/" << EOF
 	echo	'$message'
-	module	/${sinit_module}
+	slaunch_module	/${sinit_module}
 EOF
     done
   fi
