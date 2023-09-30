@@ -299,7 +299,7 @@ store your most intimate confessions. ;)
 4) Reboot the system, choose one of the entries called "AEM Qubes". This will
 attempt to perform a "measured launch" using tboot and the SINIT module you
 downloaded, which records the Xen, kernel, and initrd versions used in PCRs
-17-19 of the TPM for use in sealing and unsealing your secret. If the measured
+17-18 of the TPM for use in sealing and unsealing your secret. If the measured
 launch fails for any reason, tboot will fall back to a normal boot and AEM
 will not function.
 
@@ -312,7 +312,7 @@ As the system continues booting, AEM will automatically seal your
 secret(s). You should see a line, or multiple lines, like this one:
 
 Sealed /var/lib/anti-evil-maid/aem/secret.txt using
- --pcr 13 --pcr 17 --pcr 18 --pcr 19
+ --pcr 13 --pcr 17 --pcr 18
 
 Debug output can be read using:
 
