@@ -1,6 +1,10 @@
 name: Test build and package QubesOS RPMs
 
-on: pull_request
+on:
+  pull_request:
+  push:
+    tags:
+      - '*'
 
 jobs:
   qubes-dom0-package:
